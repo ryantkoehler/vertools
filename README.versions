@@ -1,0 +1,36 @@
+11/28/14 RTK
+VerTools 1.0
+
+Below are the list of version numbers for the (first) vertools source dump.
+These were taken from subdirectories packaged by "make_all.csh"
+
+
+alphcont_src.0.81
+bit_util_src.0.11
+blastout_src.0.61
+bpaste_src.0.21
+ccase_src.0.2
+chardump_src.0.3
+cmake_src.2.54
+comp_seq_src.1.44
+dna_util_src.0.82
+filepick_src.0.52
+filter_src.1.01
+fname_src.0.31
+gen_clis_src.0.31
+gen_nums_src.1.39
+gen_prot_src.1.35
+gen_seq_src.1.01
+getsnps_src.0.5
+lassoo_src.0.21
+num_src.1.23
+numstat_src.2.11
+pick_seq_src.0.71
+plotmat_src.0.51
+scoretab_src.1.03
+seqtweak_src.0.6
+shuffle_src.0.22
+tm_util_src.1.05
+venpipe_src.0.81
+wfmerge_src.0.4
+wordfreq_src.0.81
