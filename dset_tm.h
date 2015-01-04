@@ -1,7 +1,7 @@
 /*
 * dset_tm.h
 *
-* Copyright 2014 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
+* Copyright 2015 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
 *
 * The programs and source code of the vertools collection are free software.
 * They are distributed in the hope that they will be useful,
@@ -15,22 +15,22 @@
 */
 
 
-#define NP_S	"Nicolas Peyret, peyretnn@appliedbiosystems.com"
+#define NP_S    "Nicolas Peyret, peyretnn@appliedbiosystems.com"
 
 #define DSET_VERSION_S "dset ?"
 
-# define DSET_IMP 		80	/*	Implicit second strand */
-# define DSET_EXPNOCOAX 81	/*	Explicit second strand, no coaxial */
-# define DSET_EXPCOAX 	82	/*	Explicit second strand, with coaxial */
-# define DSET_PRIM 		83	/*	Primer mode, second implicit (kill ends) */
+# define DSET_IMP       80  /* Implicit second strand */
+# define DSET_EXPNOCOAX 81  /* Explicit second strand, no coaxial */
+# define DSET_EXPCOAX   82  /* Explicit second strand, with coaxial */
+# define DSET_PRIM      83  /* Primer mode, second implicit (kill ends) */
 
-# define DSET_EV_FULL	0	/*	Full energy (no H/S for coaxial) */
-# define DSET_EV_5P		1	/*	5' component without stacking */
-# define DSET_EV_5P_ST	2	/*	5' component with stacking */
-# define DSET_EV_3P		3	/*	3' component without stacking */
-# define DSET_EV_3P_ST	4	/*	3' component with stacking */
+# define DSET_EV_FULL   0   /* Full energy (no H/S for coaxial) */
+# define DSET_EV_5P     1   /* 5' component without stacking */
+# define DSET_EV_5P_ST  2   /* 5' component with stacking */
+# define DSET_EV_3P     3   /* 3' component without stacking */
+# define DSET_EV_3P_ST  4   /* 3' component with stacking */
 
-# define DSET_EV_NUM	5	/*	Max number for energy value index */
+# define DSET_EV_NUM    5   /* Max number for energy value index */
 
 
 /*********************** ppp ********************
@@ -41,7 +41,7 @@
 * dset_tm.c
 */
 int SeqDsetEnergyI(TM_PARS *tmPO,char *seqtopPC,char *seqbotPC,int verboseI,
-	int modeI, DOUB *tPD, DOUB *gPD, DOUB *hPD, DOUB *sPD, DOUB *xPD);
+    int modeI, DOUB *tPD, DOUB *gPD, DOUB *hPD, DOUB *sPD, DOUB *xPD);
 int ValidDsetModeI(char *seqtopPC,char *seqbotPC,int modeI);
 int DsetNumValsI(int modeI);
 int LoadTmCompleteParsI(TM_PARS *tmPO,FILE *fPF);

@@ -1,7 +1,7 @@
 /*
 * stat.h
 *
-* Copyright 2014 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
+* Copyright 2015 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
 *
 * The programs and source code of the vertools collection are free software.
 * They are distributed in the hope that they will be useful,
@@ -22,11 +22,11 @@
 
 #define PEARSON_TINY    1.0e-20
 
-#define PROBINTSTEPS	10000	/*	Number of steps for probibility integral */
+#define PROBINTSTEPS    10000   /* Number of steps for probibility integral */
 
-#define HIS_NUM_BINS	20		/*	Histogram default number of bins */
-#define HIS_MAX_BINS	1000	/*	Histogram max number of bins */
-#define HIS_BTR_XFOLD   2.0		/*	Histogram truncation X-fold default */
+#define HIS_NUM_BINS    20      /* Histogram default number of bins */
+#define HIS_MAX_BINS    1000    /* Histogram max number of bins */
+#define HIS_BTR_XFOLD   2.0     /* Histogram truncation X-fold default */
 
 
 /*********************** ppp ********************
@@ -46,7 +46,7 @@ int GetDiscreteBinStartI(DOUB binD, DOUB *binPD, DOUB loD, DOUB *loPD);
 int NumlistNaturalHistBinI(NUMLIST *nlPO, int max_bin, int dhis, 
     DOUB *binPD, DOUB *lowPD, DOUB *hiPD);
 int NaturalHistBinI(DOUB *valsPD, int num, int max, int dhis,
-	DOUB *lowPD, DOUB *binPD);
+    DOUB *lowPD, DOUB *binPD);
 int NumlistDifStatsI(NUMLIST *nlPO, DOUB *minPD, DOUB *maxPD, DOUB *avPD);
 int NumlistPairCorI(NUMLIST *flPO, NUMLIST *slPO, int rank, DOUB *rPD);
 

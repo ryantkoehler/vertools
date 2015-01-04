@@ -1,7 +1,7 @@
 /*
 * lassoo.h
 *
-* Copyright 2014 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
+* Copyright 2015 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
 *
 * The programs and source code of the vertools collection are free software.
 * They are distributed in the hope that they will be useful,
@@ -15,55 +15,55 @@
 */
 
 
-#define VERSION_S "Lassoo Version 0.21"
+#define VERSION_S "Lassoo Version 0.22"
 
-#define DFMAX		500		/*	Distance function max size */
+#define DFMAX       500     /* Distance function max size */
 
-#define LASSOO_ID 	5091
+#define LASSOO_ID   5091
 typedef struct LASSOO
 {
-	int ID;
-	char outname[NSIZE];	/*	Output filename */
-	FILE *out;				/*	Output file */
-	/***
-	*	Bit string libraries
-	*/
-	int iform;				/*	Input file format */
-    int istrict;            /* Ignore or stop on pasrse errors */
-	int bdim;				/*	Bit dimension = number of bits/record */
-	char elibname[NSIZE];	/*	External library filename */
-	struct BITPOOL *elib;	/*	External library */
-	int nelib;				/*	External library size */
-	char ilibname[NSIZE];	/*	Internal library filename */
-	struct BITPOOL *ilib;	/*	Internal library */
-	int nilib;				/*	Internal library size */
-	DOUB ilibco;			/*	Internal library coefficient */
-	char glibname[NSIZE];	/*	Good reference library filename */
-	struct BITPOOL *glib;	/*	Good reference library */
-	int nglib;				/*	Good reference library size */
-	DOUB glibco;			/*	Good library coefficient */
-	char blibname[NSIZE];	/*	Bad reference library filename */
-	struct BITPOOL *blib;	/*	Bad reference library */
-	int nblib;				/*	Bad reference library size */
-	DOUB blibco;			/*	Bad library coefficient */
-	int remain;				/*	Number of externals remaining */
-	int taken;				/*	Number of externals taken */
-	struct NUMLIST *status; /*	External pool member status flags */
-	struct NUMLIST *prank;  /*	External pool member rank during picking */
-    struct NUMLIST *iscores;/*	External internal-pool scores */
-    struct NUMLIST *gscores;/*	External good-pool scores */
-    struct NUMLIST *bscores;/*	External bad-pool scores */
-	struct SCOREC *srank;	/*	External score ranking structure */
-	/***
-	*	Run time options
-	*/
-	int pick;				/*	Number of external members to pick */
-	int win;				/*	Update window size per cycle */
-    int dform;              /*  Distance function form */
-	int dfep;				/*  Distance function end point for 1% */
-	int dfmax;				/*  Distance function cut-off max (beyond = 0) */
-	DOUB dfunc[DFMAX+1];	/*	Distance function[bdim] */
-	int verbose;			/*	Flag for reporting */
+    int ID;
+    char outname[NSIZE];    /* Output filename */
+    FILE *out;              /* Output file */
+    /***
+    *   Bit string libraries
+    */
+    int iform;              /* Input file format */
+    int istrict;            /* gnore or stop on pasrse errors */
+    int bdim;               /* Bit dimension = number of bits/record */
+    char elibname[NSIZE];   /* External library filename */
+    struct BITPOOL *elib;   /* External library */
+    int nelib;              /* External library size */
+    char ilibname[NSIZE];   /* Internal library filename */
+    struct BITPOOL *ilib;   /* Internal library */
+    int nilib;              /* Internal library size */
+    DOUB ilibco;            /* Internal library coefficient */
+    char glibname[NSIZE];   /* Good reference library filename */
+    struct BITPOOL *glib;   /* Good reference library */
+    int nglib;              /* Good reference library size */
+    DOUB glibco;            /* Good library coefficient */
+    char blibname[NSIZE];   /* Bad reference library filename */
+    struct BITPOOL *blib;   /* Bad reference library */
+    int nblib;              /* Bad reference library size */
+    DOUB blibco;            /* Bad library coefficient */
+    int remain;             /* Number of externals remaining */
+    int taken;              /* Number of externals taken */
+    struct NUMLIST *status; /* External pool member status flags */
+    struct NUMLIST *prank;  /* External pool member rank during picking */
+    struct NUMLIST *iscores;/* External internal-pool scores */
+    struct NUMLIST *gscores;/* External good-pool scores */
+    struct NUMLIST *bscores;/* External bad-pool scores */
+    struct SCOREC *srank;   /* External score ranking structure */
+    /***
+    *   Run time options
+    */
+    int pick;               /* Number of external members to pick */
+    int win;                /* Update window size per cycle */
+    int dform;              /* Distance function form */
+    int dfep;               /* Distance function end point for 1% */
+    int dfmax;              /* Distance function cut-off max (beyond = 0) */
+    DOUB dfunc[DFMAX+1];    /* Distance function[bdim] */
+    int verbose;            /* Flag for reporting */
 }LASSOO;
 
 #define CHECK_LASSOO(ob) if(ob){DestroyLassooI(ob); ob=NULL;}
@@ -71,42 +71,42 @@ typedef struct LASSOO
 
 
 /***
-*	Input format codes
+*   Input format codes
 */
-#define BSIF_01		200		/*	BitString input format as 0100110.. etc */
+#define BSIF_01     200     /* BitString input format as 0100110.. etc */
 
 /***
-*	Pool codes
+*   Pool codes
 */
-#define LASP_EXT	300		/*	External pool */
-#define LASP_INT	301		/*	Internal pool */
-#define LASP_GOOD 	302		/*	Good pool */
-#define LASP_BAD	303		/*	Bad pool */
+#define LASP_EXT    300     /* External pool */
+#define LASP_INT    301     /* Internal pool */
+#define LASP_GOOD   302     /* Good pool */
+#define LASP_BAD    303     /* Bad pool */
 
 /***
-*	Distance function codes
+*   Distance function codes
 */
-#define LASDF_GAUS  310		/*	Gaussian */
-#define LASDF_STEP  311		/*	Step */
-#define LASDF_LINE  312		/*	Linear */
-#define LASDF_INV   313		/*	Inverse */
+#define LASDF_GAUS  310     /* Gaussian */
+#define LASDF_STEP  311     /* Step */
+#define LASDF_LINE  312     /* Linear */
+#define LASDF_INV   313     /* Inverse */
 
 /***
-*	Default settings
+*   Default settings
 */
-#define DEF_VERB	TRUE	/*	Default verbosity */
-#define SCUPDATE	1000000	/*	Score report update frequency */
-#define DEF_PICK	200		/*	Default number to pick */
-#define DEF_WIN		25		/*	Default update window number */
-#define DEF_DFUNC	LASDF_GAUS  /*	Default distance function */
-#define DEF_DFEP    30		/*	Default distance function cut off */
-#define DEF_ICOEF	1.0		/*	Default Internal library coefficient */
-#define DEF_GCOEF	1.0		/*	Default Good library coefficient */
-#define DEF_BCOEF	1.0		/*	Default Bad library coefficient */
+#define DEF_VERB    TRUE    /* Default verbosity */
+#define SCUPDATE    1000000 /* Score report update frequency */
+#define DEF_PICK    200     /* Default number to pick */
+#define DEF_WIN     25      /* Default update window number */
+#define DEF_DFUNC   LASDF_GAUS  /* Default distance function */
+#define DEF_DFEP    30      /* Default distance function cut off */
+#define DEF_ICOEF   1.0     /* Default Internal library coefficient */
+#define DEF_GCOEF   1.0     /* Default Good library coefficient */
+#define DEF_BCOEF   1.0     /* Default Bad library coefficient */
 
-#define DEF_IFORM	BSIF_01	/*	Default input format */
-#define FSCO_PRINT	"\t%9.6f"
-#define PSCO_PRINT	"\t%8.6f"
+#define DEF_IFORM   BSIF_01 /* Default input format */
+#define FSCO_PRINT  "\t%9.6f"
+#define PSCO_PRINT  "\t%8.6f"
 
 
 

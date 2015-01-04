@@ -1,7 +1,7 @@
 /*
 * prim.h
 *
-* Copyright 2014 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
+* Copyright 2015 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
 *
 * The programs and source code of the vertools collection are free software.
 * They are distributed in the hope that they will be useful,
@@ -15,153 +15,153 @@
 */
 
 
-#define RTK_S 	"Ryan Koehler, ryan@verdascend.com"
-#define BD_S 	"Build date"
+#define RTK_S   "Ryan Koehler, ryan@verdascend.com"
+#define BD_S    "Build date"
 
 
 /**************** TYPES ******************/
 #define REAL double
 #define DOUB double
 
-/* Keys to keep functions out of headers; i.e. keep them private */
-#define PRIV_I	int
-#define PRIV_V	void	
+/* eys to keep functions out of headers; i.e. keep them private */
+#define PRIV_I  int
+#define PRIV_V  void    
 
 typedef unsigned long UNLG;
 typedef unsigned int *OBJPTR;
 
 
-/* Cast macros */
-#define CHAR(x)	    (char)(x)
-#define INT(x)	    (int)(x)
-#define SHORT(x)	(short int)(x)
+/* ast macros */
+#define CHAR(x)     (char)(x)
+#define INT(x)      (int)(x)
+#define SHORT(x)    (short int)(x)
 #define LONG(x)     (long int) (x)
-#define RNUM(x)	    (REAL)(x)
-#define DNUM(x)	    (double)(x)
+#define RNUM(x)     (REAL)(x)
+#define DNUM(x)     (double)(x)
 
-/* Type codes */
-#define IS_CHAR     10		/*	A character */
-#define IS_INT	    20		/*	An integer */
-#define IS_SHORT    21		/*	A short integer */
-#define IS_REAL     30		/*	A "real" number */
-#define IS_DOUB     32		/*	A double precision number */
+/* ype codes */
+#define IS_CHAR     10      /* A character */
+#define IS_INT      20      /* An integer */
+#define IS_SHORT    21      /* A short integer */
+#define IS_REAL     30      /* A "real" number */
+#define IS_DOUB     32      /* A double precision number */
 
 #define UPPER(x)    toupper((int)(x))
 
-#define TRUE	 	1
-#define FALSE	 	0
-#define BOGUS		-12345666
+#define TRUE        1
+#define FALSE       0
+#define BOGUS       -12345666
 
-#define OK			0   /* Exit code; e.g. program is OK */
-#define NOT_OK		1   /* Exit code; e.g. program not OK */
+#define OK          0   /* xit code; e.g. program is OK */
+#define NOT_OK      1   /* xit code; e.g. program not OK */
 
-#define IS_BOG(b)   	((b)==BOGUS)
-#define ERR(fn,ms)		ErrorMsg(fn, __LINE__, __FILE__, ms);
-#define BOG_CHECK(co) 	if(co) ERR("BOG_CHECK","BOGOCITY DISCOVERED!")
+#define IS_BOG(b)       ((b)==BOGUS)
+#define ERR(fn,ms)      ErrorMsg(fn, __LINE__, __FILE__, ms);
+#define BOG_CHECK(co)   if(co) ERR("BOG_CHECK","BOGOCITY DISCOVERED!")
 #define VALIDATE(ob,ty) if((ob)==NULL) \
-		{ ValidObj(NULL,0,ty,__LINE__,__FILE__); } else \
-		{ ValidObj((OBJPTR)ob, ob->ID, ty, __LINE__, __FILE__); }
+        { ValidObj(NULL,0,ty,__LINE__,__FILE__); } else \
+        { ValidObj((OBJPTR)ob, ob->ID, ty, __LINE__, __FILE__); }
 #define ALLOC(nm,sz)    AllocPO(nm,sz, __LINE__, __FILE__)
 #define REALLOC(ob,nm,sz) ReAllocPO((UNLG *)(ob),nm,sz, __LINE__, __FILE__)
-#define FREE(ob)		{FreeI((UNLG *)(ob), __LINE__, __FILE__); ob = NULL;}
-#define CHECK_FREE(ob) 	if((ob) != NULL)FREE(ob);
-#define FILECLOSE(fl)	FileClose(fl);fl=NULL
-#define CHECK_FILE(fl) 	if(((fl)!=NULL)&&((fl)!=stdout)){ FILECLOSE(fl); }
-#define NFILECLOSE(fl,nm)	NewFileClose(fl,nm);fl=NULL
-#define CHECK_NFILE(fl,nm) 	if(((fl)!=NULL)&&((fl)!=stdout))\
-								{ NFILECLOSE(fl,nm);} 
+#define FREE(ob)        {FreeI((UNLG *)(ob), __LINE__, __FILE__); ob = NULL;}
+#define CHECK_FREE(ob)  if((ob) != NULL)FREE(ob);
+#define FILECLOSE(fl)   FileClose(fl);fl=NULL
+#define CHECK_FILE(fl)  if(((fl)!=NULL)&&((fl)!=stdout)){ FILECLOSE(fl); }
+#define NFILECLOSE(fl,nm)   NewFileClose(fl,nm);fl=NULL
+#define CHECK_NFILE(fl,nm)  if(((fl)!=NULL)&&((fl)!=stdout))\
+                                { NFILECLOSE(fl,nm);} 
 #define HAND_NFILE(file) if(!(file)){file=stdout;}
-#define NOT_YET			printf("\n---- NOT YET IMPLIMENTED ----\n%s (%d)\n\n",\
-						__FILE__,__LINE__)
-#define SORT_ASCEND	1
-#define SORT_DECEND	-1
-#define ALLOC_BLOCK		5000    /* Allocate in blocks this size */
+#define NOT_YET         printf("\n---- NOT YET IMPLIMENTED ----\n%s (%d)\n\n",\
+                        __FILE__,__LINE__)
+#define SORT_ASCEND 1
+#define SORT_DECEND -1
+#define ALLOC_BLOCK     5000    /* llocate in blocks this size */
 
 
 /**************** STRINGS **************** sss **/
-#define LOWER_CASE		2
-#define UPPER_CASE		3
-#define CAP_CASE		4
-#define INIT_S(st)		st[0] = '\0'
-#define NO_S(st)	  	(st[0] == '\0')
-#define DEF_BS 			255			/*	Default buffer size */
-#define LINEGRAB    	(DEF_BS-1)	
-#define BBUFF_SIZE		2000		/*	Big buffer size */
-#define BLINEGRAB   	(BBUFF_SIZE-1)	
-#define NSIZE			1000		/*	Name buffer size */
-#define COM_LINE(bf) 	((bf[0] == '!')||(bf[0] == '#'))
+#define LOWER_CASE      2
+#define UPPER_CASE      3
+#define CAP_CASE        4
+#define INIT_S(st)      st[0] = '\0'
+#define NO_S(st)        (st[0] == '\0')
+#define DEF_BS          255         /* Default buffer size */
+#define LINEGRAB        (DEF_BS-1)  
+#define BBUFF_SIZE      2000        /* Big buffer size */
+#define BLINEGRAB       (BBUFF_SIZE-1)  
+#define NSIZE           1000        /* Name buffer size */
+#define COM_LINE(bf)    ((bf[0] == '!')||(bf[0] == '#'))
 #define EQSTRING(sa,sb,sz) (strncmp((sa),(sb),(sz))==0)
 #define STDIN_STR(sa)   (strcmp((sa),"-")==0)
-#define PASS_BLANK(st)	while( (*st != '\0') && (!isgraph(INT(*st))) )	\
-						{	st++;  }
-#define PASS_WORD(st)	while( (*st != '\0') && (isgraph(INT(*st))) )		\
-						{	st++;  }
+#define PASS_BLANK(st)  while( (*st != '\0') && (!isgraph(INT(*st))) )  \
+                        {   st++;  }
+#define PASS_WORD(st)   while( (*st != '\0') && (isgraph(INT(*st))) )       \
+                        {   st++;  }
 #define NEXT_WORD(st)   PASS_WORD(st) PASS_BLANK(st)
 
-/**	Replace isprint which has problems with tab */ 
-#define ISLINE(c)	 	( isgraph(INT(c)) || ((c)==' ') || ((c)=='\t') )
+/** Replace isprint which has problems with tab */ 
+#define ISLINE(c)       ( isgraph(INT(c)) || ((c)==' ') || ((c)=='\t') )
 
 /**************** Standardized warnings / errors **/
-#define WARN_LEV	1
-#define PROB_LEV	2
-#define ABORT_LEV	3
+#define WARN_LEV    1
+#define PROB_LEV    2
+#define ABORT_LEV   3
 
 #define LINEBAR_S \
-	"# ---------------------------------------------------------------------\n"
+    "# ---------------------------------------------------------------------\n"
 #define LINESEP_S \
-	"# *********************************************************************\n"
-#define NEWLINE			PrintI("\n")
-#define BARLINE			PrintI(LINEBAR_S)
-#define SEPLINE			PrintI(LINESEP_S)
-#define WARNLINE		ErrorBanner(WARN_LEV,NULL)
-#define PROBLINE		ErrorBanner(PROB_LEV,NULL)
-#define ABORTLINE		ErrorBanner(ABORT_LEV,NULL)
-#define ERRLINE			DB_PrI("\nERROR AT: %s, line %d\n",__FILE__,__LINE__)
+    "# *********************************************************************\n"
+#define NEWLINE         PrintI("\n")
+#define BARLINE         PrintI(LINEBAR_S)
+#define SEPLINE         PrintI(LINESEP_S)
+#define WARNLINE        ErrorBanner(WARN_LEV,NULL)
+#define PROBLINE        ErrorBanner(PROB_LEV,NULL)
+#define ABORTLINE       ErrorBanner(ABORT_LEV,NULL)
+#define ERRLINE         DB_PrI("\nERROR AT: %s, line %d\n",__FILE__,__LINE__)
 
 
 /**************** MATH ******************/
 #ifndef PI
-#define PI	    		3.14159265358979323846
+#define PI              3.14159265358979323846
 #endif
-#define TOO_BIG     	1234566600 
-#define TOO_BIG_R   	1234566600.1
-#define TOO_BIG_D   	1000000000000.1
-#define TINY_R			0.0000000001
-#define MAX_PRT_PREC    10                  /* Max precision for print */
-#define DEGTORAD    	(PI/180.000000)
-#define RADTODEG    	(180.000000/PI)
-#define LOG_E_TEN_R 	2.302585092994045901093613792909
-#define LOG_E_TWO_R 	0.693147180559945286226763982995
-#define COS_R(an)   	RNUM(cos((double)((an) * DEGTORAD)))
-#define SIN_R(an)   	RNUM(sin((double)((an) * DEGTORAD)))
-#define TAN_R(an)   	RNUM(tan((double)((an) * DEGTORAD)))
-#define LOG(v)			RNUM(log(DNUM(v)))
-#define LOG_10(v)		RNUM(log(DNUM(v))/LOG_E_TEN_R)
-#define LOG_2(v)		RNUM(log(DNUM(v))/LOG_E_TWO_R)
-#define CEIL(v)			RNUM(ceil(DNUM(v)))
-#define FLOOR(v)		RNUM(floor(DNUM(v)))
-#define SQRT_R(x)   	RNUM(sqrt((double)(x)))
+#define TOO_BIG         1234566600 
+#define TOO_BIG_R       1234566600.1
+#define TOO_BIG_D       1000000000000.1
+#define TINY_R          0.0000000001
+#define MAX_PRT_PREC    10                  /* ax precision for print */
+#define DEGTORAD        (PI/180.000000)
+#define RADTODEG        (180.000000/PI)
+#define LOG_E_TEN_R     2.302585092994045901093613792909
+#define LOG_E_TWO_R     0.693147180559945286226763982995
+#define COS_R(an)       RNUM(cos((double)((an) * DEGTORAD)))
+#define SIN_R(an)       RNUM(sin((double)((an) * DEGTORAD)))
+#define TAN_R(an)       RNUM(tan((double)((an) * DEGTORAD)))
+#define LOG(v)          RNUM(log(DNUM(v)))
+#define LOG_10(v)       RNUM(log(DNUM(v))/LOG_E_TEN_R)
+#define LOG_2(v)        RNUM(log(DNUM(v))/LOG_E_TWO_R)
+#define CEIL(v)         RNUM(ceil(DNUM(v)))
+#define FLOOR(v)        RNUM(floor(DNUM(v)))
+#define SQRT_R(x)       RNUM(sqrt((double)(x)))
 
 #define NUM_SIGN(r)     ( (RNUM(r) < 0.0) ? (-1) : (1) )
 #define EQUAL(r,s,d)    (ABS_VAL(RNUM(r)-RNUM(s))<=RNUM(d))
-#define ABS_VAL(r)  	( (RNUM(r) < 0.0) ? (-(r)) : (r) )
+#define ABS_VAL(r)      ( (RNUM(r) < 0.0) ? (-(r)) : (r) )
 #define ROUND(x)        INT( ((x) > 0.0) ? (x) + 0.5 : (x) - 0.5)
-#define PERCENT_R(f,w)	(RNUM(f)/RNUM(w)*100.0)
+#define PERCENT_R(f,w)  (RNUM(f)/RNUM(w)*100.0)
 #define MAX_NUM(r,y)    (((r)>(y))?(r):(y))
 #define MIN_NUM(r,y)    (((r)<(y))?(r):(y))
 #define ODD_NUM(i)      ((int)(i)&1)
 #define EVEN_NUM(i)     (!ODD_NUM(i))
-#define LIMIT_NUM(vi,lo,hi)	{vi=MAX_NUM(vi,lo);vi=MIN_NUM(vi,hi);}
-#define BAD_I		      	INT(-TOO_BIG - 1)
-#define BAD_R		      	RNUM(TOO_BIG_R * -1.000001)
-#define BAD_D		      	RNUM(TOO_BIG_D * -1.000001)
-#define BAD_INT(r) 	   		(INT(r) < -TOO_BIG)
-#define BAD_REAL(r)     	(RNUM(r) < -TOO_BIG_R)
-#define BAD_DOUB(r)     	(DNUM(r) < -TOO_BIG_D)
+#define LIMIT_NUM(vi,lo,hi) {vi=MAX_NUM(vi,lo);vi=MIN_NUM(vi,hi);}
+#define BAD_I               INT(-TOO_BIG - 1)
+#define BAD_R               RNUM(TOO_BIG_R * -1.000001)
+#define BAD_D               RNUM(TOO_BIG_D * -1.000001)
+#define BAD_INT(r)          (INT(r) < -TOO_BIG)
+#define BAD_REAL(r)         (RNUM(r) < -TOO_BIG_R)
+#define BAD_DOUB(r)         (DNUM(r) < -TOO_BIG_D)
 
 
 /*********************** Globals ********************************* 
-*	dbflags is a CHARACTER ARRAY, so the number flags must be < 256 
+*   dbflags is a CHARACTER ARRAY, so the number flags must be < 256 
 */
 #define NUM_DB_FLAGS 257
 #define DB dbflagsGC
@@ -191,41 +191,41 @@ extern FILE *outfileGPF;
 
 /****************** Object IDs ************************************ iii ****/
 /***
-*	Geometry
+*   Geometry
 */
-#define COORD_ID 		50
-#define MATRIX_ID 		51
-#define COORSYS_ID 		52
+#define COORD_ID        50
+#define MATRIX_ID       51
+#define COORSYS_ID      52
 /***
-*	Sets, Lists, Histograms, grids,...
+*   Sets, Lists, Histograms, grids,...
 */
-#define SET_ID 			60
-#define LIST_ID			62
+#define SET_ID          60
+#define LIST_ID         62
 /***
-*	Graphics things 
+*   Graphics things 
 */
-#define COLOR_ID 		75
-#define PS_PARAM_ID 	76
-#define GIF_PARAM_ID 	77
+#define COLOR_ID        75
+#define PS_PARAM_ID     76
+#define GIF_PARAM_ID    77
 #define MOL_PLOT_PAR_ID 80
 
 
-#define MATH_ADD 	1
-#define MATH_SUB 	2
-#define MATH_MUL 	3
-#define MATH_DIV 	4
-#define MATH_MIN 	5
-#define MATH_MAX 	6
+#define MATH_ADD    1
+#define MATH_SUB    2
+#define MATH_MUL    3
+#define MATH_DIV    4
+#define MATH_MIN    5
+#define MATH_MAX    6
 
 
 /**
-*	Which random number functions to use?
+*   Which random number functions to use?
 */
-#define RAND 		random
-#define SRAND 		srandom
-#define RAND_DEN	2147483648.0
-/*	if rand() and srand()
-*	define RAND_DEN (RAND_MAX + 1)
+#define RAND        random
+#define SRAND       srandom
+#define RAND_DEN    2147483648.0
+/* if rand() and srand()
+*   define RAND_DEN (RAND_MAX + 1)
 */
 
 
@@ -248,9 +248,9 @@ void MixArrays(void *fPO, void*sPO, void *tPO, int vt, int n, int mix);
 void DumpArray(void *aPO, int vt, int start, int end, char *formS, FILE *oPF);
 void ArraySum(void *aPO, int vt, int start, int end, DOUB *sumPD);
 int ArrayStatsI(void *aPO, int vt, int start, int end, DOUB *loPD, DOUB *hiPD, 
-	DOUB *avPD, DOUB *sdPD);
+    DOUB *avPD, DOUB *sdPD);
 int ArrayHistI(void *aPO, int vt, int start, int end, DOUB bsD, 
-	DOUB lvD, DOUB hvD, int *ncPI, DOUB **hPPD);
+    DOUB lvD, DOUB hvD, int *ncPI, DOUB **hPPD);
 int ArrayRandSequenceI(int *seq,int len,int max,int unique);
 void InvertMask(char *maskPC,int len);
 int MaskCountI(char *maskPC,int len);
@@ -262,7 +262,7 @@ void SortArray(void *aPO, int vt, int n, int dir);
 */
 int DataTableDimsI(FILE *inPF,int hr,int *ncolPI,int *nrowPI);
 int FileStatsI(FILE *fPF, int *linePI, int *minPI, int *maxPI, int *comPI, 
-	int *blankPI);
+    int *blankPI);
 int FileLinesI(FILE *fPF, int ig_com, int ig_blank);
 int EatOneLineI(FILE *fPF);
 
@@ -337,7 +337,7 @@ int DoubArrayPrecisionI(DOUB *valsPD, int n, int *pPI, int *wPI, char *formS);
 */
 void VersionSplash(FILE *outPF, char *verS, char *preS, int bars);
 void GetSystemInfo(char *userS, char *hostS, char *osS, char *verS, 
-	char *archS);
+    char *archS);
 void PrintSysInfo(FILE *outPF,char *preS);
 int DeRefSymLinkI(char *lnS, char *drS, int max);
 

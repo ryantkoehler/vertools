@@ -1,7 +1,7 @@
 /*
 * dna_in.c
 *
-* Copyright 2014 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
+* Copyright 2015 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
 *
 * The programs and source code of the vertools collection are free software.
 * They are distributed in the hope that they will be useful,
@@ -21,164 +21,164 @@
 #include "prim.h"
 #include "dna.h"
 
-#define DB_DNA_IO	if(DB[105])		
+#define DB_DNA_IO   if(DB[105])     
 
 /***************************************************************************
-*	Guess format based on extension and attempt to load sequence set
-*	If error then complain if problems, else keep silent
+*   Guess format based on extension and attempt to load sequence set
+*   If error then complain if problems, else keep silent
 */
 int GuessAndGetSeqsetI(char *fnameS, SEQSET **ssPPO,int clean,int error)
 {
-	int type,got;
-	SEQSET *ssPO;
+    int type,got;
+    SEQSET *ssPO;
 
-	DB_DNA_IO DB_PrI(">> GuessAndGetSeqsetI fname=|%s|\n",fnameS);
-	*ssPPO=NULL;
-	type=GuessSeqFileTypeI(fnameS,error);
-	if(IS_BOG(type)) { 
-		if(error) {
-			PROBLINE;
-			printf("Unrecognized file extension; don't know format type\n"); 
-		}
-		DB_DNA_IO DB_PrI("<< GuessAndGetSeqsetI FALSE\n");
-		return(FALSE); 
-	}
-	got = ReadInSeqsetI(fnameS,type,clean,&ssPO,error);
-	if(!got) { 
-		DB_DNA_IO DB_PrI("<< GuessAndGetSeqsetI FALSE\n");
-		return(FALSE); 
-	}
-	*ssPPO = ssPO;
-	DB_DNA_IO DB_PrI("<< GuessAndGetSeqsetI TRUE\n");
-	return(TRUE);
+    DB_DNA_IO DB_PrI(">> GuessAndGetSeqsetI fname=|%s|\n",fnameS);
+    *ssPPO=NULL;
+    type=GuessSeqFileTypeI(fnameS,error);
+    if(IS_BOG(type)) { 
+        if(error) {
+            PROBLINE;
+            printf("Unrecognized file extension; don't know format type\n"); 
+        }
+        DB_DNA_IO DB_PrI("<< GuessAndGetSeqsetI FALSE\n");
+        return(FALSE); 
+    }
+    got = ReadInSeqsetI(fnameS,type,clean,&ssPO,error);
+    if(!got) { 
+        DB_DNA_IO DB_PrI("<< GuessAndGetSeqsetI FALSE\n");
+        return(FALSE); 
+    }
+    *ssPPO = ssPO;
+    DB_DNA_IO DB_PrI("<< GuessAndGetSeqsetI TRUE\n");
+    return(TRUE);
 }
 /***************************************************************************
-*	Attempt to read in sequence set from file fnameS with format type
-*	Returns TRUE is successful and sets SEQSET pointer to new object`
+*   Attempt to read in sequence set from file fnameS with format type
+*   Returns TRUE is successful and sets SEQSET pointer to new object`
 *
-*	If error flag is TRUE, then complain about problems, else keep silent
+*   If error flag is TRUE, then complain about problems, else keep silent
 */
 int ReadInSeqsetI(char *fnameS, int type, int clean, SEQSET **ssPPO, int error)
 {
-	SEQSET *ssPO;
-	FILE *fPF;
+    SEQSET *ssPO;
+    FILE *fPF;
 
-	DB_DNA_IO DB_PrI(">> ReadInSeqsetI type=%d name=|%s|\n",type,fnameS);
-	*ssPPO = NULL;
-	if(!(fPF=OpenUFilePF(fnameS,"r",NULL))) {
-		DB_DNA_IO DB_PrI("<< ReadInSeqsetI FILE FAIL = FALSE\n");
-		return(FALSE);
-	}
-	ssPO = GetSeqsetPO(fPF,type,clean,error);
-	FILECLOSE(fPF);
-	if(ssPO == NULL) {
-		DB_DNA_IO DB_PrI("<< ReadInSeqsetI failed to get seqset = FALSE\n");
-		return(FALSE);
-	}
-	SetSeqsetSource(ssPO,fnameS);
-	GetFilePartsI(fnameS,NULL,ssPO->name,NULL);
-	*ssPPO = ssPO;
-	DB_DNA_IO DB_PrI("<< ReadInSeqsetI %p TRUE\n",ssPO);
-	return(TRUE);
+    DB_DNA_IO DB_PrI(">> ReadInSeqsetI type=%d name=|%s|\n",type,fnameS);
+    *ssPPO = NULL;
+    if(!(fPF=OpenUFilePF(fnameS,"r",NULL))) {
+        DB_DNA_IO DB_PrI("<< ReadInSeqsetI FILE FAIL = FALSE\n");
+        return(FALSE);
+    }
+    ssPO = GetSeqsetPO(fPF,type,clean,error);
+    FILECLOSE(fPF);
+    if(ssPO == NULL) {
+        DB_DNA_IO DB_PrI("<< ReadInSeqsetI failed to get seqset = FALSE\n");
+        return(FALSE);
+    }
+    SetSeqsetSource(ssPO,fnameS);
+    GetFilePartsI(fnameS,NULL,ssPO->name,NULL);
+    *ssPPO = ssPO;
+    DB_DNA_IO DB_PrI("<< ReadInSeqsetI %p TRUE\n",ssPO);
+    return(TRUE);
 }
 /****************************************************************************
-*	Returns new SEQSET datatype or NULL on failure
+*   Returns new SEQSET datatype or NULL on failure
 */
 SEQSET *GetSeqsetPO(FILE *fPF,int type,int clean,int error)
 {
-	int n,ok;
-	SEQSET *ssPO;
-	SEQ *seqPO;
+    int n,ok;
+    SEQSET *ssPO;
+    SEQ *seqPO;
 
-	DB_DNA_IO DB_PrI(">> GetSeqsetPO type=%d\n",type);
-	/***
-	*	Allocate empty set object
-	*/
-	if(!(ssPO=CreateSeqsetPO(0))) {
-		printf("Problem allocating sequence set object\n");
-		return(NULL);
-	}
-	DB_DNA_IO DB_PrI("+ have SEQSET shell allocated\n");
-	/***
-	*	For each seq, allocate, parse, and keep
-	*/
-	n = 0;
-	while(TRUE)
-	{
-		if(!(seqPO=CreateSeqPO(0,NULL,NULL))) {
-			printf("Problem allocating sequence to load\n");
-			CHECK_SEQSET(ssPO);
-			return(NULL);
-		}
-		/***
-		*	Parse sequence
-		*/
-		ok = ParseSeqI(fPF,type,clean,error,seqPO);
-		if(ok!=TRUE) {
-			CHECK_SEQ(seqPO);
-			break;
-		}
-		DB_DNA_IO DB_PrI("+ ok read seq %d\n",n);
-		/***
-		*	Add to collection
-		*/
-		if(!AddSeqToSeqsetI(seqPO,ssPO)) {
-			CHECK_SEQ(seqPO);
-			CHECK_SEQSET(ssPO);
-			return(NULL);
-		}
-		n++;
-	}
-	DB_DNA_IO DB_PrI("+ n=%d\n",n);
-	/***
-	*	If nothing actually read in, kill the shell and return NULL
-	*/
-	if (n < 1) {
-		CHECK_SEQSET(ssPO);
-		DB_DNA_IO DB_PrI("<< GetSeqsetPO NULL\n");
-		return(NULL);
-	}
-	DB_DNA_IO DB_PrI("<< GetSeqsetPO %p\n",ssPO);
-	return(ssPO);
+    DB_DNA_IO DB_PrI(">> GetSeqsetPO type=%d\n",type);
+    /***
+    *   Allocate empty set object
+    */
+    if(!(ssPO=CreateSeqsetPO(0))) {
+        printf("Problem allocating sequence set object\n");
+        return(NULL);
+    }
+    DB_DNA_IO DB_PrI("+ have SEQSET shell allocated\n");
+    /***
+    *   For each seq, allocate, parse, and keep
+    */
+    n = 0;
+    while(TRUE)
+    {
+        if(!(seqPO=CreateSeqPO(0,NULL,NULL))) {
+            printf("Problem allocating sequence to load\n");
+            CHECK_SEQSET(ssPO);
+            return(NULL);
+        }
+        /***
+        *   Parse sequence
+        */
+        ok = ParseSeqI(fPF,type,clean,error,seqPO);
+        if(ok!=TRUE) {
+            CHECK_SEQ(seqPO);
+            break;
+        }
+        DB_DNA_IO DB_PrI("+ ok read seq %d\n",n);
+        /***
+        *   Add to collection
+        */
+        if(!AddSeqToSeqsetI(seqPO,ssPO)) {
+            CHECK_SEQ(seqPO);
+            CHECK_SEQSET(ssPO);
+            return(NULL);
+        }
+        n++;
+    }
+    DB_DNA_IO DB_PrI("+ n=%d\n",n);
+    /***
+    *   If nothing actually read in, kill the shell and return NULL
+    */
+    if (n < 1) {
+        CHECK_SEQSET(ssPO);
+        DB_DNA_IO DB_PrI("<< GetSeqsetPO NULL\n");
+        return(NULL);
+    }
+    DB_DNA_IO DB_PrI("<< GetSeqsetPO %p\n",ssPO);
+    return(ssPO);
 }
 /****************************************************************************
-*	Attempts to parse sequence of format iform from file
+*   Attempts to parse sequence of format iform from file
 *
-*	Loaded ok = TRUE
-*	End of file (done) = FALSE
-*	Errors = BOGUS
+*   Loaded ok = TRUE
+*   End of file (done) = FALSE
+*   Errors = BOGUS
 */
 int ParseSeqI(FILE *inPF,int iform,int clean,int error,SEQ *seqPO)
 {
-	int ok;
+    int ok;
 
-	DB_DNA_IO DB_PrI(">> ParseSeqI iform=%d\n",iform);
-	VALIDATE(seqPO,SEQ_ID);
-	InitSeq(seqPO,FALSE,FALSE);
-	/***
-	*	Get name first
-	*/
-	switch(iform)
-	{
-		case SEQFM_RAW: 	
+    DB_DNA_IO DB_PrI(">> ParseSeqI iform=%d\n",iform);
+    VALIDATE(seqPO,SEQ_ID);
+    InitSeq(seqPO,FALSE,FALSE);
+    /***
+    *   Get name first
+    */
+    switch(iform)
+    {
+        case SEQFM_RAW:     
             ok = ParseRawSeqI(inPF,error,seqPO);
-			break;
-		case SEQFM_FASTA: 	
-			ok = ParseFastaSeqI(inPF,error,seqPO);
-			break;
-		default:
-			printf("Bogus input format code=%d\n",iform);
-			ERR("ParseSeqI","bogus format code");
-			return(FALSE);
-	}
-	if(ok != TRUE)
-	{
-		DB_DNA_IO DB_PrI("<< ParseSeqI PROB_seq %d\n",ok);
-		return(ok);
-	}
-	ok = FinishSeqSettingsI(seqPO,clean,error);
-	DB_DNA_IO DB_PrI("<< ParseSeqI GOOD %d\n",ok);
-	return(ok);
+            break;
+        case SEQFM_FASTA:   
+            ok = ParseFastaSeqI(inPF,error,seqPO);
+            break;
+        default:
+            printf("Bogus input format code=%d\n",iform);
+            ERR("ParseSeqI","bogus format code");
+            return(FALSE);
+    }
+    if(ok != TRUE)
+    {
+        DB_DNA_IO DB_PrI("<< ParseSeqI PROB_seq %d\n",ok);
+        return(ok);
+    }
+    ok = FinishSeqSettingsI(seqPO,clean,error);
+    DB_DNA_IO DB_PrI("<< ParseSeqI GOOD %d\n",ok);
+    return(ok);
 }
 /*************************************************************************
 *   Raw format = single line, first token = name, rest = sequence 
@@ -192,14 +192,14 @@ int ParseRawSeqI(FILE *fPF,int error,SEQ *seqPO)
     char nameS[NSIZE];
     char seqS[BBUFF_SIZE+1];
 
-	VALIDATE(seqPO,SEQ_ID);
-	InitSeq(seqPO,FALSE,FALSE);
+    VALIDATE(seqPO,SEQ_ID);
+    InitSeq(seqPO,FALSE,FALSE);
     t = n = s = 0;
-	while((c = fgetc(fPF)) != EOF) {
+    while((c = fgetc(fPF)) != EOF) {
         /***
         *   End of line. If we've got name & seq, done
         */
-		if(!ISLINE(c)) {
+        if(!ISLINE(c)) {
             if(n || s) {
                 break;
             }
@@ -207,7 +207,7 @@ int ParseRawSeqI(FILE *fPF,int error,SEQ *seqPO)
         /***
         *   Space, so if already have name we're into next token(s)
         */
-		if(!isgraph(INT(c))) {
+        if(!isgraph(INT(c))) {
             if(n) {
                 t++;
             }
@@ -268,7 +268,7 @@ int ParseRawSeqI(FILE *fPF,int error,SEQ *seqPO)
     */
     if(seqPO->len < 1) {
         if(error) {
-			PROBLINE;
+            PROBLINE;
             printf("PROBLEM parsing RAW format line. Starts with |%s|\n",nameS);
         }
         return(BOGUS);
@@ -288,14 +288,14 @@ int ParseFastaSeqI(FILE *fPF,int error,SEQ *seqPO)
     char nameS[NSIZE];
     char seqS[BBUFF_SIZE+1];
 
-	VALIDATE(seqPO,SEQ_ID);
-	InitSeq(seqPO,FALSE,FALSE);
+    VALIDATE(seqPO,SEQ_ID);
+    InitSeq(seqPO,FALSE,FALSE);
     t = n = s = 0;
     /***
     *   Find head line, starts with '>' in first position
     */
-	while((c = fgetc(fPF)) != EOF) {
-		if(c == '>') {
+    while((c = fgetc(fPF)) != EOF) {
+        if(c == '>') {
             t++;
             break;
         }
@@ -310,8 +310,8 @@ int ParseFastaSeqI(FILE *fPF,int error,SEQ *seqPO)
     /***
     *   Collect name
     */
-	while((c = fgetc(fPF)) != EOF) {
-		if(!ISLINE(c)) {
+    while((c = fgetc(fPF)) != EOF) {
+        if(!ISLINE(c)) {
             break;
         }
         if(n < NSIZE) {
@@ -322,19 +322,19 @@ int ParseFastaSeqI(FILE *fPF,int error,SEQ *seqPO)
     *   Now collect sequence until end or next record
     */
     t = 0;
-	while((c = fgetc(fPF)) != EOF) {
+    while((c = fgetc(fPF)) != EOF) {
         if( (c == '>') && (t == 0) ) {
             ungetc(c,fPF);
             break;
         }
-		if(!ISLINE(c)) {
+        if(!ISLINE(c)) {
             t = 0;
             continue;
         }
         /***
         *   Don't collect spaces or numbers
         */
-		if( (!isgraph(INT(c))) || (isdigit(INT(c))) ) {
+        if( (!isgraph(INT(c))) || (isdigit(INT(c))) ) {
             continue;
         }
         if( (t==0) && (c=='#') ) {
@@ -371,7 +371,7 @@ int ParseFastaSeqI(FILE *fPF,int error,SEQ *seqPO)
     TrimSeqTrailingCharsI(seqPO, TRUE);
     if(seqPO->len < 1) {
         if(error) {
-			PROBLINE;
+            PROBLINE;
             printf("PROBLEM parsing FASTA format. Starts with |%s|\n",nameS);
         }
         return(BOGUS);
@@ -387,7 +387,7 @@ int TrimSeqTrailingCharsI(SEQ *seqPO, int what)
 {
     int i,n;
 
-	VALIDATE(seqPO,SEQ_ID);
+    VALIDATE(seqPO,SEQ_ID);
     i = seqPO->len -1;
     n = 0;
     while(i>=0) {

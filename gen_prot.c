@@ -1,7 +1,7 @@
 /*
 * gen_prot.c
 *
-* Copyright 2014 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
+* Copyright 2015 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
 *
 * The programs and source code of the vertools collection are free software.
 * They are distributed in the hope that they will be useful,
@@ -23,19 +23,19 @@
 
 #define DEBUG if(DB[7])
 
-#define VERSION_S	"Gen_Prot version 1.35"
+#define VERSION_S   "Gen_Prot version 1.36"
 
 /***
-*	Header file prototype tag; after this is found, header contents
-*		are replaced with (newly generated) prototypes
+*   Header file prototype tag; after this is found, header contents
+*       are replaced with (newly generated) prototypes
 */
-#define PROT_TAG_S 	"ppp"
+#define PROT_TAG_S  "ppp"
 
 /***
-*	Maximum size (in chars) of header prior to "ppp" replace tag
-*	This is loaded and saved for rewriting
+*   Maximum size (in chars) of header prior to "ppp" replace tag
+*   This is loaded and saved for rewriting
 */
-#define HEAD_SPACE	1000000
+#define HEAD_SPACE  1000000
 
 
 int main(int argc, char **argv);
@@ -51,427 +51,427 @@ int EndsWithEndifI(FILE *fPF);
 
 /**************************************************************************/
 int main(int argc, char **argv)
-{ Init(argc,argv); exit( AllDoneI(Gen_protfileI(argc,argv),NULL) );	}
+{ Init(argc,argv); exit( AllDoneI(Gen_protfileI(argc,argv),NULL) ); }
 /**************************************************************************/
 void Gen_protUse()
 {
-	VersionSplash(NULL,VERSION_S,"#   ",TRUE);
+    VersionSplash(NULL,VERSION_S,"#   ",TRUE);
     printf("Usage: <prog_name> ...[options]\n");
-	printf("   -out XXX  Output to file XXX\n");
-	printf("   -ap XXX   Append output to file XXX (just adds to end)\n");
-	printf("   -rp XXX   Replace after \"ppp\" in XXX with output\n");
-	printf("   -lis      Treat input as a list of C files \n");
-	printf("   -ter      Terse output (no file-name header)\n");
-	printf("   -stat     Stats only; how many functions, prototypes, etc?\n");
-	printf("\n");
-	printf("NOTES:\n");
-	printf("   -Functions must be flush left (i.e. start in col 1) to work\n");
-	printf("   -With \"-rp\" option, all header contents following the \"ppp\" are replaced,\n");
-	printf("    though a trailing \"#endif\" will be kept if found in the original\n");
-	printf("\n");
+    printf("   -out XXX  Output to file XXX\n");
+    printf("   -ap XXX   Append output to file XXX (just adds to end)\n");
+    printf("   -rp XXX   Replace after \"ppp\" in XXX with output\n");
+    printf("   -lis      Treat input as a list of C files \n");
+    printf("   -ter      Terse output (no file-name header)\n");
+    printf("   -stat     Stats only; how many functions, prototypes, etc?\n");
+    printf("\n");
+    printf("NOTES:\n");
+    printf("   -Functions must be flush left (i.e. start in col 1) to work\n");
+    printf("   -With \"-rp\" option, all header contents following the \"ppp\" are replaced,\n");
+    printf("    though a trailing \"#endif\" will be kept if found in the original\n");
+    printf("\n");
 }
 /**************************************************************************
-*	Main program
+*   Main program
 */
 int Gen_protfileI(int argc, char **argv)
 {
-	int f,n,tn,sing,ter,stat,endif;
-	char bufS[DEF_BS];
-	char inS[NSIZE],outS[NSIZE],apS[NSIZE],rpS[NSIZE],fileS[NSIZE];
-	char *headPC;
-	FILE *inPF, *outPF, *fPF;
+    int f,n,tn,sing,ter,stat,endif;
+    char bufS[DEF_BS];
+    char inS[NSIZE],outS[NSIZE],apS[NSIZE],rpS[NSIZE],fileS[NSIZE];
+    char *headPC;
+    FILE *inPF, *outPF, *fPF;
 
-	INIT_S(outS); INIT_S(apS); INIT_S(rpS);
-	outPF = NULL;
-	ter = stat = FALSE;
-	sing = TRUE;
+    INIT_S(outS); INIT_S(apS); INIT_S(rpS);
+    outPF = NULL;
+    ter = stat = FALSE;
+    sing = TRUE;
     if(!ParseArgsI(argc,argv,
         "S -out S -lis B -ter B -stat B -ap S -rp S",
         inS,outS,
-		&sing,&ter,&stat,apS,rpS,
+        &sing,&ter,&stat,apS,rpS,
         (int *)NULL))
     {
-		Gen_protUse();
-		return(FALSE);
-	}
-	/***
-	*	Open input or bail
-	*	Input = C source file or listing of C files
-	*/
-	if(!(inPF = OpenUFilePF(inS,"r",NULL)))
-	{
-		return(FALSE);
-	}
-	GetFilePartsI(inS,NULL,NULL,bufS);
-	if(!strcasecmp(bufS,"LIS"))
-	{	
-		sing = FALSE;	
-	}
-	/***
-	*	Open output file
-	*	output replace (read), append, new
-	*/
-	if(!NO_S(rpS))
-	{
-		if(!(outPF = OpenUFilePF(rpS,"r",NULL)))
-		{
-			FILECLOSE(inPF);	return(FALSE);
-		}
-	}
-	else if(!NO_S(apS))
-	{
-		if(!(outPF = OpenUFilePF(apS,"a",NULL)))
-		{
-			FILECLOSE(inPF);	return(FALSE);
-		}
-	}
-	else if(!NO_S(outS))
-	{
-		if(!(outPF = OpenUFilePF(outS,"w",NULL)))
-		{
-			FILECLOSE(inPF);	return(FALSE);
-		}
-	}
-	/***
-	*	If replacing, load pre-"ppp" here
-	*/
-	endif = FALSE;
-	if(!NO_S(rpS))
-	{
-		endif = EndsWithEndifI(outPF);
-		if( !(headPC=LoadHeadOfFilePC(outPF)) )
-		{
-			FILECLOSE(inPF);	return(FALSE);
-		}
-		FILECLOSE(outPF);
-		if(!(outPF = OpenUFilePF(rpS,"w",NULL)))
-		{
-			CHECK_FREE(headPC);
-			FILECLOSE(inPF);	return(FALSE);
-		}
-		WriteHeadOfFile(headPC,outPF);
-		CHECK_FREE(headPC);
-	}
-	if(outPF && (!stat))
-	{
-		fprintf(outPF,"/*********************** ppp ********************\n");
-		fprintf(outPF,"* C function listing generated by gen_prot\n");
-		TimeStamp("* ",outPF);
-		fprintf(outPF,"*/\n");
-	}
-	/***
-	*
-	*/
-	if(ter)
-	{
-		INIT_S(inS);
-	}
-	/***
-	*	Either this one or a list 
-	*/
-	if(sing)
-	{
-		n = HandleFileI(inPF,inS,stat,outPF);
-		if(stat)
-			printf("%d functions in %s\n",n,inS);
-	}
-	else
-	{
-		f = tn = 0;
-		while(fgets(bufS,LINEGRAB,inPF) != NULL)
-		{
-			if(COM_LINE(bufS))
-			{
-				continue;
-			}
-			INIT_S(fileS);
-			sscanf(bufS,"%s",fileS);
-			if(strstr(bufS,"break"))
-			{
-				break;
-			}
-			/***
-			*	Only *.c files processed
-			*/
-			GetFilePartsI(fileS,NULL,NULL,bufS);
-			if(strcasecmp(bufS,"C"))
-			{
-				continue;
-			}
-			fPF = OpenUFilePF(fileS,"r",NULL);
-			if(fPF)
-			{
-				n = HandleFileI(fPF,fileS,stat,outPF);
-				f++;
-				tn += n;
-				if(stat)
-				{
-					printf("%d functions in %s\n",n,fileS);
-				}
-			}
-			CHECK_FILE(fPF);
-		}
-		if(stat)
-		{
-			printf("%d total functions in %d files\n",tn,f);
-		}
-	}
-	FILECLOSE(inPF);
-	if(outPF)
-	{
-		if(!NO_S(rpS))
-		{
-			if(endif)
-			{
-				fprintf(outPF,"\n");
-				fprintf(outPF,"#endif\n");
-			}
-			printf("UPDATED FILE: %s\n",rpS);
-			FILECLOSE(outPF);
-		}
-		else if(!NO_S(apS))
-		{
-			printf("APPENDED FILE: %s\n",apS);
-			FILECLOSE(outPF);
-		}
-		else
-		{
-			CHECK_NFILE(outPF,outS);
-		}
-	}
-	return(TRUE);
+        Gen_protUse();
+        return(FALSE);
+    }
+    /***
+    *   Open input or bail
+    *   Input = C source file or listing of C files
+    */
+    if(!(inPF = OpenUFilePF(inS,"r",NULL)))
+    {
+        return(FALSE);
+    }
+    GetFilePartsI(inS,NULL,NULL,bufS);
+    if(!strcasecmp(bufS,"LIS"))
+    {   
+        sing = FALSE;   
+    }
+    /***
+    *   Open output file
+    *   output replace (read), append, new
+    */
+    if(!NO_S(rpS))
+    {
+        if(!(outPF = OpenUFilePF(rpS,"r",NULL)))
+        {
+            FILECLOSE(inPF);    return(FALSE);
+        }
+    }
+    else if(!NO_S(apS))
+    {
+        if(!(outPF = OpenUFilePF(apS,"a",NULL)))
+        {
+            FILECLOSE(inPF);    return(FALSE);
+        }
+    }
+    else if(!NO_S(outS))
+    {
+        if(!(outPF = OpenUFilePF(outS,"w",NULL)))
+        {
+            FILECLOSE(inPF);    return(FALSE);
+        }
+    }
+    /***
+    *   If replacing, load pre-"ppp" here
+    */
+    endif = FALSE;
+    if(!NO_S(rpS))
+    {
+        endif = EndsWithEndifI(outPF);
+        if( !(headPC=LoadHeadOfFilePC(outPF)) )
+        {
+            FILECLOSE(inPF);    return(FALSE);
+        }
+        FILECLOSE(outPF);
+        if(!(outPF = OpenUFilePF(rpS,"w",NULL)))
+        {
+            CHECK_FREE(headPC);
+            FILECLOSE(inPF);    return(FALSE);
+        }
+        WriteHeadOfFile(headPC,outPF);
+        CHECK_FREE(headPC);
+    }
+    if(outPF && (!stat))
+    {
+        fprintf(outPF,"/*********************** ppp ********************\n");
+        fprintf(outPF,"* C function listing generated by gen_prot\n");
+        TimeStamp("* ",outPF);
+        fprintf(outPF,"*/\n");
+    }
+    /***
+    *
+    */
+    if(ter)
+    {
+        INIT_S(inS);
+    }
+    /***
+    *   Either this one or a list 
+    */
+    if(sing)
+    {
+        n = HandleFileI(inPF,inS,stat,outPF);
+        if(stat)
+            printf("%d functions in %s\n",n,inS);
+    }
+    else
+    {
+        f = tn = 0;
+        while(fgets(bufS,LINEGRAB,inPF) != NULL)
+        {
+            if(COM_LINE(bufS))
+            {
+                continue;
+            }
+            INIT_S(fileS);
+            sscanf(bufS,"%s",fileS);
+            if(strstr(bufS,"break"))
+            {
+                break;
+            }
+            /***
+            *   Only *.c files processed
+            */
+            GetFilePartsI(fileS,NULL,NULL,bufS);
+            if(strcasecmp(bufS,"C"))
+            {
+                continue;
+            }
+            fPF = OpenUFilePF(fileS,"r",NULL);
+            if(fPF)
+            {
+                n = HandleFileI(fPF,fileS,stat,outPF);
+                f++;
+                tn += n;
+                if(stat)
+                {
+                    printf("%d functions in %s\n",n,fileS);
+                }
+            }
+            CHECK_FILE(fPF);
+        }
+        if(stat)
+        {
+            printf("%d total functions in %d files\n",tn,f);
+        }
+    }
+    FILECLOSE(inPF);
+    if(outPF)
+    {
+        if(!NO_S(rpS))
+        {
+            if(endif)
+            {
+                fprintf(outPF,"\n");
+                fprintf(outPF,"#endif\n");
+            }
+            printf("UPDATED FILE: %s\n",rpS);
+            FILECLOSE(outPF);
+        }
+        else if(!NO_S(apS))
+        {
+            printf("APPENDED FILE: %s\n",apS);
+            FILECLOSE(outPF);
+        }
+        else
+        {
+            CHECK_NFILE(outPF,outS);
+        }
+    }
+    return(TRUE);
 }
 /*****************************************************************************
-*	Finds and outputs function prototypes for a single C file
+*   Finds and outputs function prototypes for a single C file
 */
 int HandleFileI(FILE *inPF, char *nameS, int stat, FILE *outPF)
 {
-	int n,com,in,len;
-	char bufS[DEF_BS],*cPC;
+    int n,com,in,len;
+    char bufS[DEF_BS],*cPC;
 
-	DEBUG DB_PrI(">> HandleFileI outPF = %x\n",outPF);
-	if(!outPF)
-	{
-		outPF = stdout;
-	}
-	if((!stat)&&(isgraph(INT(nameS[0]))))
-	{
-		fprintf(outPF,
-		"/****************************************************************\n");
-		fprintf(outPF,"* %s\n",nameS);
-		fprintf(outPF,"*/\n");
-	}
-	n = in = com = 0;
-	while (fgets(bufS,LINEGRAB,inPF) != NULL)
-	{
-		if((!com) && (strstr(bufS,"/*")))
-			com = TRUE;
-		if((com) && (strstr(bufS,"*/")))
-			com = FALSE;
-		if((com) || (bufS[0]=='#'))
-			continue;
-		/***
-		*	Assume functions start with a letter a column 1 and have '('
-		*/
-		if( (LegitFunctDecI(bufS)) && strstr(bufS,"(") )
-		{
-			DEBUG DB_PrI("+ Func |%s|\n",bufS);
-			/***
-			*	If no ')' on this line, then multi-line arg list
-			*/
-			if(!strstr(bufS,")"))
-			{
-				DEBUG DB_PrI("+ multi-line function start\n");
-				if(!stat)
-					fputs(bufS,outPF);
-				while (fgets(bufS,LINEGRAB,inPF) != NULL)
-				{
-					ReplaceChars('\n',bufS,'\0',bufS);
-					if(strstr(bufS,")"))
-					{
-						if(!strstr(bufS,";"))
-							strcat(bufS,";"); n++;
-						if(!stat)
-							fprintf(outPF,"%s\n",bufS);
-						break;
-					}
-					if(!stat)
-					{
-						fprintf(outPF,"%s\n",bufS);
-					}
-				}
-			}
-			else if(LegitFunctDecI(bufS))
-			{
-				DEBUG DB_PrI("+ single-line function\n");
-				if(strstr(bufS,";"))
-				{
-					DEBUG DB_PrI("+  already prototype; ignore\n");
-					continue;	
-				}
-				ReplaceChars('\n',bufS,'\0',bufS);
-				len = DelimSubStringI(bufS,'(',')',NULL);
-				if(len < 1)
-				{
-					cPC = strstr(bufS,"(");
-					*cPC = '\0';
-					strcat(cPC,"(void);");
-				}
-				else if(!strstr(bufS,";"))
-					strcat(bufS,";");	n++;
-				if(!stat)
-				{
-					fprintf(outPF,"%s\n",bufS);
-				}
-			}
-		}
-	}
-	if((!stat)&&(isgraph(INT(nameS[0]))))
-	{
-		fprintf(outPF,"\n");
-	}
-	DEBUG DB_PrI("<< HandleFileI %d\n",n);
-	return(n);
+    DEBUG DB_PrI(">> HandleFileI outPF = %x\n",outPF);
+    if(!outPF)
+    {
+        outPF = stdout;
+    }
+    if((!stat)&&(isgraph(INT(nameS[0]))))
+    {
+        fprintf(outPF,
+        "/****************************************************************\n");
+        fprintf(outPF,"* %s\n",nameS);
+        fprintf(outPF,"*/\n");
+    }
+    n = in = com = 0;
+    while (fgets(bufS,LINEGRAB,inPF) != NULL)
+    {
+        if((!com) && (strstr(bufS,"/*")))
+            com = TRUE;
+        if((com) && (strstr(bufS,"*/")))
+            com = FALSE;
+        if((com) || (bufS[0]=='#'))
+            continue;
+        /***
+        *   Assume functions start with a letter a column 1 and have '('
+        */
+        if( (LegitFunctDecI(bufS)) && strstr(bufS,"(") )
+        {
+            DEBUG DB_PrI("+ Func |%s|\n",bufS);
+            /***
+            *   If no ')' on this line, then multi-line arg list
+            */
+            if(!strstr(bufS,")"))
+            {
+                DEBUG DB_PrI("+ multi-line function start\n");
+                if(!stat)
+                    fputs(bufS,outPF);
+                while (fgets(bufS,LINEGRAB,inPF) != NULL)
+                {
+                    ReplaceChars('\n',bufS,'\0',bufS);
+                    if(strstr(bufS,")"))
+                    {
+                        if(!strstr(bufS,";"))
+                            strcat(bufS,";"); n++;
+                        if(!stat)
+                            fprintf(outPF,"%s\n",bufS);
+                        break;
+                    }
+                    if(!stat)
+                    {
+                        fprintf(outPF,"%s\n",bufS);
+                    }
+                }
+            }
+            else if(LegitFunctDecI(bufS))
+            {
+                DEBUG DB_PrI("+ single-line function\n");
+                if(strstr(bufS,";"))
+                {
+                    DEBUG DB_PrI("+  already prototype; ignore\n");
+                    continue;   
+                }
+                ReplaceChars('\n',bufS,'\0',bufS);
+                len = DelimSubStringI(bufS,'(',')',NULL);
+                if(len < 1)
+                {
+                    cPC = strstr(bufS,"(");
+                    *cPC = '\0';
+                    strcat(cPC,"(void);");
+                }
+                else if(!strstr(bufS,";"))
+                    strcat(bufS,";");   n++;
+                if(!stat)
+                {
+                    fprintf(outPF,"%s\n",bufS);
+                }
+            }
+        }
+    }
+    if((!stat)&&(isgraph(INT(nameS[0]))))
+    {
+        fprintf(outPF,"\n");
+    }
+    DEBUG DB_PrI("<< HandleFileI %d\n",n);
+    return(n);
 }
 /***************************************************************************/
 int LegitFunctDecI(char *bufS)
 {
-	int ok,t,i;
+    int ok,t,i;
 
-	ok = FALSE;
-	if(EQSTRING(bufS,"int ",4))
-		ok++;
-	else if(EQSTRING(bufS,"void ",5))
-		ok++;
-	else if(EQSTRING(bufS,"REAL ",5))
-		ok++;
-	else if(EQSTRING(bufS,"float ",6))
-		ok++;
-	else if(EQSTRING(bufS,"char ",5))
-		ok++;
-	else if(EQSTRING(bufS,"double ",7))
-		ok++;
-	else if(EQSTRING(bufS,"DOUB ",5))
-		ok++;
-	/***
-	*	Check for pointer to something
-	*/
-	if((!ok)&&(isgraph(INT(bufS[0]))))
-	{
-		i = t = 0;
-		while(ISLINE(bufS[i]))
-		{
-			if(!isgraph(INT(bufS[i])))
-				t++;
-			if((t==1)&&(bufS[i]=='*'))
-				ok++;
-			i++;
-		}
-	}
-	return(ok);
+    ok = FALSE;
+    if(EQSTRING(bufS,"int ",4))
+        ok++;
+    else if(EQSTRING(bufS,"void ",5))
+        ok++;
+    else if(EQSTRING(bufS,"REAL ",5))
+        ok++;
+    else if(EQSTRING(bufS,"float ",6))
+        ok++;
+    else if(EQSTRING(bufS,"char ",5))
+        ok++;
+    else if(EQSTRING(bufS,"double ",7))
+        ok++;
+    else if(EQSTRING(bufS,"DOUB ",5))
+        ok++;
+    /***
+    *   Check for pointer to something
+    */
+    if((!ok)&&(isgraph(INT(bufS[0]))))
+    {
+        i = t = 0;
+        while(ISLINE(bufS[i]))
+        {
+            if(!isgraph(INT(bufS[i])))
+                t++;
+            if((t==1)&&(bufS[i]=='*'))
+                ok++;
+            i++;
+        }
+    }
+    return(ok);
 }
 /*************************************************************************/
 void MoveToReplace(FILE *fPF)
 {
-	int pos, incom;
-	char bufS[NSIZE];
+    int pos, incom;
+    char bufS[NSIZE];
 
-	incom = FALSE;
-	pos = ftell(fPF);
-	while(fgets(bufS,LINEGRAB,fPF) != NULL)
-	{
-		if((!incom) && (strstr(bufS,"/*")))
-			incom = TRUE;
-		if((incom) && (strstr(bufS,"*/")))
-			incom = FALSE;
-		if((incom) && (strstr(bufS,PROT_TAG_S)))
-		{
-			break;
-		}
-		pos = ftell(fPF);
-	}
-	fseek(fPF,pos,0);
+    incom = FALSE;
+    pos = ftell(fPF);
+    while(fgets(bufS,LINEGRAB,fPF) != NULL)
+    {
+        if((!incom) && (strstr(bufS,"/*")))
+            incom = TRUE;
+        if((incom) && (strstr(bufS,"*/")))
+            incom = FALSE;
+        if((incom) && (strstr(bufS,PROT_TAG_S)))
+        {
+            break;
+        }
+        pos = ftell(fPF);
+    }
+    fseek(fPF,pos,0);
 }
 /****************************************************************************
-*	Attempt to read in start of file up to HEAD_SPACE
+*   Attempt to read in start of file up to HEAD_SPACE
 */
 char *LoadHeadOfFilePC(FILE *inPF)
 {
-	int i,n;
-	char *headPC;
+    int i,n;
+    char *headPC;
 
-	if(! (headPC = (char *)ALLOC(HEAD_SPACE,sizeof(char))))
-	{
-		PROBLINE;
-		printf("Failed to allocate for header\n");
-		return(NULL);
-	}
-	n = fread(headPC,sizeof(char),HEAD_SPACE,inPF);
-	headPC[n-1] = '\0';
-	/****
-	*	Now look for a "ppp" line
-	*/
-	i = 0;
-	while(i<(n-3))
-	{
-		if( (headPC[i]=='p') && (headPC[i+1]=='p') && (headPC[i+2]=='p') )
-		{
-			while( (i>0) && ISLINE(headPC[i]) )
-			{
-				i--;
-			}
-			break;
-		}
-		i++;
-	}
-	headPC[i] = '\0';
-	return(headPC);
+    if(! (headPC = (char *)ALLOC(HEAD_SPACE,sizeof(char))))
+    {
+        PROBLINE;
+        printf("Failed to allocate for header\n");
+        return(NULL);
+    }
+    n = fread(headPC,sizeof(char),HEAD_SPACE,inPF);
+    headPC[n-1] = '\0';
+    /****
+    *   Now look for a "ppp" line
+    */
+    i = 0;
+    while(i<(n-3))
+    {
+        if( (headPC[i]=='p') && (headPC[i+1]=='p') && (headPC[i+2]=='p') )
+        {
+            while( (i>0) && ISLINE(headPC[i]) )
+            {
+                i--;
+            }
+            break;
+        }
+        i++;
+    }
+    headPC[i] = '\0';
+    return(headPC);
 }
 /****************************************************************************/
 void WriteHeadOfFile(char *headPC,FILE *outPF)
 {
-	int i;
+    int i;
 
-	HAND_NFILE(outPF);
-	i = 0;
-	while(headPC[i]!='\0')
-	{
-		fputc(headPC[i++],outPF);
-	}
-	fprintf(outPF,"\n");
+    HAND_NFILE(outPF);
+    i = 0;
+    while(headPC[i]!='\0')
+    {
+        fputc(headPC[i++],outPF);
+    }
+    fprintf(outPF,"\n");
 }
 /***************************************************************************
 *
 */
 int EndsWithEndifI(FILE *fPF)
 {
-	int fpos,end;
-	char bufS[DEF_BS], wordS[DEF_BS];
+    int fpos,end;
+    char bufS[DEF_BS], wordS[DEF_BS];
 
-	BOG_CHECK(!fPF);
-	fpos = ftell(fPF);
-	/***
-	*	First token on every line
-	*	If last one is "endif" then returns TRUE
-	*/
-	end = FALSE;
-	while(fgets(bufS,LINEGRAB,fPF) != NULL)
-	{
-		INIT_S(wordS);
-		sscanf(bufS,"%s",wordS);
-		if(NO_S(wordS))
-		{
-			continue;
-		}
-		if(EQSTRING(wordS,"#endif",6))
-		{
-			end = TRUE;
-		}
-		else
-		{
-			end = FALSE;
-		}
-	}
-	fseek(fPF,fpos,0);
-	return(end);
+    BOG_CHECK(!fPF);
+    fpos = ftell(fPF);
+    /***
+    *   First token on every line
+    *   If last one is "endif" then returns TRUE
+    */
+    end = FALSE;
+    while(fgets(bufS,LINEGRAB,fPF) != NULL)
+    {
+        INIT_S(wordS);
+        sscanf(bufS,"%s",wordS);
+        if(NO_S(wordS))
+        {
+            continue;
+        }
+        if(EQSTRING(wordS,"#endif",6))
+        {
+            end = TRUE;
+        }
+        else
+        {
+            end = FALSE;
+        }
+    }
+    fseek(fPF,fpos,0);
+    return(end);
 }

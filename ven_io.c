@@ -1,7 +1,7 @@
 /*
 * ven_io.c
 *
-* Copyright 2014 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
+* Copyright 2015 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
 *
 * The programs and source code of the vertools collection are free software.
 * They are distributed in the hope that they will be useful,
@@ -25,17 +25,17 @@
 #define DB_VENIO if(DB[142])
 
 /*************************************************************************
-*	Write the whip
+*   Write the whip
 */
 void WriteVenpipeHeader(VENPIPE *vPO, char *nameS, FILE *oPF)
 {
     char bufS[DEF_BS];
 
-	HAND_NFILE(oPF);
-	if(!NO_S(nameS)) {
-		fprintf(oPF,"# %s\n",nameS);
-	}
-	if(vPO->do_pfe) {
+    HAND_NFILE(oPF);
+    if(!NO_S(nameS)) {
+        fprintf(oPF,"# %s\n",nameS);
+    }
+    if(vPO->do_pfe) {
         sprintf(bufS,"MFE\tPFE");
     }
     else {
@@ -44,94 +44,94 @@ void WriteVenpipeHeader(VENPIPE *vPO, char *nameS, FILE *oPF)
     /***
     *   Main sham
     */
-	VersionSplash(oPF,VEN_VERSION_S,"#  ",TRUE);
-	fprintf(oPF,"# Input     %s\n",vPO->inname);
-	fprintf(oPF,"# Reporting %s\n",bufS);
+    VersionSplash(oPF,VEN_VERSION_S,"#  ",TRUE);
+    fprintf(oPF,"# Input     %s\n",vPO->inname);
+    fprintf(oPF,"# Reporting %s\n",bufS);
     fprintf(oPF,"#  MFE, Miniumum Free Energy\n");
-	if(vPO->do_pfe) {
+    if(vPO->do_pfe) {
         fprintf(oPF,"#  PFE, Partition Free Energy\n");
     }
     if(vPO->do_dmb) {
-	    fprintf(oPF,"# Matching base counts\n");
-	    if(!BAD_INT(vPO->dmb_f)) {
-	        fprintf(oPF,"#  Positions %d to %d considered",vPO->dmb_f,vPO->dmb_l);
-	        if(vPO->mrre) {
+        fprintf(oPF,"# Matching base counts\n");
+        if(!BAD_INT(vPO->dmb_f)) {
+            fprintf(oPF,"#  Positions %d to %d considered",vPO->dmb_f,vPO->dmb_l);
+            if(vPO->mrre) {
                 fprintf(oPF," (from end)\n");
             }
             fprintf(oPF,"\n");
         }
         else {
-	        fprintf(oPF,"#  All positions considered\n");
+            fprintf(oPF,"#  All positions considered\n");
         }
     }
-	/***
-	*	Vienna settings 
-	*/
-	DumpVenergy(vPO->ven, oPF);
+    /***
+    *   Vienna settings 
+    */
+    DumpVenergy(vPO->ven, oPF);
     /***
     *   Columns 
     */
-	fprintf(oPF,"# Name\tMFE");
-	if(vPO->do_pfe) {
-	    fprintf(oPF,"\tPFE");
+    fprintf(oPF,"# Name\tMFE");
+    if(vPO->do_pfe) {
+        fprintf(oPF,"\tPFE");
     }
     if(vPO->do_dmb) {
-	    fprintf(oPF,"\tLen\tHyb\tOpen");
-	    if(vPO->do_pfe) {
-	        fprintf(oPF,"\tpHySt\tpHyWk\tpOpen\tpHyb");
+        fprintf(oPF,"\tLen\tHyb\tOpen");
+        if(vPO->do_pfe) {
+            fprintf(oPF,"\tpHySt\tpHyWk\tpOpen\tpHyb");
         }
     }
-	fprintf(oPF,"\n");
+    fprintf(oPF,"\n");
 }
 /***********************************************************************/
 void DumpVenergy(VENERGY *vePO, FILE *oPF)
 {
-	VALIDATE(vePO,VENERGY_ID);
-	HAND_NFILE(oPF);
-	fprintf(oPF,"#\n");
-	fprintf(oPF,"################## Vienna Settings ##################\n");
-	fprintf(oPF,"# Version        %s\n",VLIB_VERSION_S);
-	if(NO_S(vePO->vparfile)) {
-		fprintf(oPF,"# ViennaParams   none = defaults\n");
-	}
-	else {
-		fprintf(oPF,"# ViennaParams   %s\n",vePO->vparfile);
-		if(vePO->do_saltcorrect) {
-			fprintf(oPF,"# CorrectedSalt  %4.2e M\n",vePO->salt);
-		}
-		else {
-			fprintf(oPF,"# CorrectedSalt  FALSE\n");
-		}
-	}
-	fprintf(oPF,"# ViennaTemp     %2.1f C\n",vePO->temp);
+    VALIDATE(vePO,VENERGY_ID);
+    HAND_NFILE(oPF);
+    fprintf(oPF,"#\n");
+    fprintf(oPF,"################## Vienna Settings ##################\n");
+    fprintf(oPF,"# Version        %s\n",VLIB_VERSION_S);
+    if(NO_S(vePO->vparfile)) {
+        fprintf(oPF,"# ViennaParams   none = defaults\n");
+    }
+    else {
+        fprintf(oPF,"# ViennaParams   %s\n",vePO->vparfile);
+        if(vePO->do_saltcorrect) {
+            fprintf(oPF,"# CorrectedSalt  %4.2e M\n",vePO->salt);
+        }
+        else {
+            fprintf(oPF,"# CorrectedSalt  FALSE\n");
+        }
+    }
+    fprintf(oPF,"# ViennaTemp     %2.1f C\n",vePO->temp);
 /*
-	fprintf(oPF,"# ViennaBackTrac %d\n",vePO->do_backtrack);
-	fprintf(oPF,"# noLonelyPairs  %d\n",vePO->nolonelypairs);
+    fprintf(oPF,"# ViennaBackTrac %d\n",vePO->do_backtrack);
+    fprintf(oPF,"# noLonelyPairs  %d\n",vePO->nolonelypairs);
 */
-	fprintf(oPF,"#\n");
+    fprintf(oPF,"#\n");
 }
 /***********************************************************************/
 void HandleVenpipeOut(VENPIPE *venPO, FILE *outPF)
 {
-	int len, ssc_array[MAX_VSLEN], pssc_array[MAX_VSLEN];
-	char nameS[DEF_BS],enS[DEF_BS], matS[DEF_BS];
+    int len, ssc_array[MAX_VSLEN], pssc_array[MAX_VSLEN];
+    char nameS[DEF_BS],enS[DEF_BS], matS[DEF_BS];
     char *ssPC, *pssPC, *seqPC;
 
-	HAND_NFILE(outPF);
-	strcpy(nameS,venPO->tname);
-	seqPC = venPO->tseq;
-	ssPC = venPO->tss;
-	pssPC = venPO->tss2;
+    HAND_NFILE(outPF);
+    strcpy(nameS,venPO->tname);
+    seqPC = venPO->tseq;
+    ssPC = venPO->tss;
+    pssPC = venPO->tss2;
     len = venPO->tlen;
 
     /***
     *   Energy story
     */
     if(venPO->do_pfe) {
-		sprintf(enS,"%7.3f\t%7.3f", venPO->ten, venPO->ten2);
+        sprintf(enS,"%7.3f\t%7.3f", venPO->ten, venPO->ten2);
     }
     else {
-		sprintf(enS,"%7.3f",venPO->ten);
+        sprintf(enS,"%7.3f",venPO->ten);
     }
     /***
     *   Matching base story
@@ -144,22 +144,22 @@ void HandleVenpipeOut(VENPIPE *venPO, FILE *outPF)
         }
         FillSeqStructMatchOutI(venPO, ssc_array, pssc_array ,len, matS);
     }
-	/***
-	*	What to dump?
-	*/
-	if( (venPO->do_ss) || (venPO->do_mbtab) ) {
-		fprintf(outPF,"# %-15s\t%s",nameS,enS);
-		if(venPO->do_dmb) {
-			fprintf(outPF,"\t%s",matS);
-		}
-		fprintf(outPF,"\n");
-		fprintf(outPF,"# Sequence  %s\n",seqPC);
-	    if(venPO->do_ss) {
-		    fprintf(outPF,"  MFE_Strc  %s\n",ssPC);
+    /***
+    *   What to dump?
+    */
+    if( (venPO->do_ss) || (venPO->do_mbtab) ) {
+        fprintf(outPF,"# %-15s\t%s",nameS,enS);
+        if(venPO->do_dmb) {
+            fprintf(outPF,"\t%s",matS);
+        }
+        fprintf(outPF,"\n");
+        fprintf(outPF,"# Sequence  %s\n",seqPC);
+        if(venPO->do_ss) {
+            fprintf(outPF,"  MFE_Strc  %s\n",ssPC);
             if(venPO->do_pfe) {
-    		    fprintf(outPF,"  PFE_Strc  %s\n",pssPC);
+                fprintf(outPF,"  PFE_Strc  %s\n",pssPC);
             }
-		    fprintf(outPF,"\n");
+            fprintf(outPF,"\n");
         }
         else {
             if(venPO->do_pfe) {
@@ -170,29 +170,29 @@ void HandleVenpipeOut(VENPIPE *venPO, FILE *outPF)
             }
         }
     }
-	else if(venPO->ofas) {
-		fprintf(outPF,">%s  %s",nameS,enS);
-		if(venPO->do_dmb) {
-			fprintf(outPF,"\t%s",matS);
-		}
-		fprintf(outPF,"\n");
-		fprintf(outPF,"%-15s\n",seqPC);
-	}
-	else if(venPO->oraw) {
-		fprintf(outPF,"# %-15s\t%s",nameS,enS);
-		if(venPO->do_dmb) {
-			fprintf(outPF,"\t%s",matS);
-		}
-		fprintf(outPF,"\n");
+    else if(venPO->ofas) {
+        fprintf(outPF,">%s  %s",nameS,enS);
+        if(venPO->do_dmb) {
+            fprintf(outPF,"\t%s",matS);
+        }
+        fprintf(outPF,"\n");
+        fprintf(outPF,"%-15s\n",seqPC);
+    }
+    else if(venPO->oraw) {
+        fprintf(outPF,"# %-15s\t%s",nameS,enS);
+        if(venPO->do_dmb) {
+            fprintf(outPF,"\t%s",matS);
+        }
+        fprintf(outPF,"\n");
         fprintf(outPF,RAW_PFORM_S,nameS,seqPC);
-	}
-	else {
-		fprintf(outPF,"%-15s\t%s",nameS,enS);
-		if(venPO->do_dmb) {
-			fprintf(outPF,"\t%s",matS);
-		}
-		fprintf(outPF,"\n");
-	}
+    }
+    else {
+        fprintf(outPF,"%-15s\t%s",nameS,enS);
+        if(venPO->do_dmb) {
+            fprintf(outPF,"\t%s",matS);
+        }
+        fprintf(outPF,"\n");
+    }
     return;
 }
 /***********************************************************************/
@@ -223,7 +223,7 @@ int DumpOneMatchBaseTabI(VENPIPE *venPO, char *nameS, int len, int *sscPI,
     if(!GetMatchBaseSeqCoordsI(venPO, len, &first, &last, NULL)) {
         return(FALSE);
     }
-	HAND_NFILE(outPF);
+    HAND_NFILE(outPF);
     fprintf(outPF,"%s",nameS);
     for(i=first;i<last;i++) 
     {
@@ -241,8 +241,8 @@ int GetMatchBaseSeqCoordsI(VENPIPE *vpPO, int len, int *stPI, int *enPI, int *rP
 
     first = 0;
     last = len;
-	if(!BAD_INT(vpPO->dmb_f)) {
-	    if(vpPO->mrre) {
+    if(!BAD_INT(vpPO->dmb_f)) {
+        if(vpPO->mrre) {
             first = len - vpPO->dmb_l;
             last = len - vpPO->dmb_f + 1;
         }
@@ -288,7 +288,7 @@ int FillSeqStructMatchOutI(VENPIPE *vpPO, int *sscPI, int *psscPI, int len, char
     */
     n1 = NumArrayValsI(sscPI, IS_INT, first, last, 1.0, 1000.0);
     sprintf(matS,"%3d\t%3d\t%3d",range,n1,range-n1);
-	if(vpPO->do_pfe) {
+    if(vpPO->do_pfe) {
         n1 = NumArrayValsI(psscPI, IS_INT, first, last, 1.0, 1.0);
         n2 = NumArrayValsI(psscPI, IS_INT, first, last, 2.0, 1000.0);
         sprintf(bufS,"\t%3d\t%3d\t%3d\t%3d",n2, n1, range-(n1+n2), n1+n2);
@@ -303,7 +303,7 @@ int StrucStringToArrayI(char *seqS, int len, int *aPI)
 {
     int i,v;
 
-	for(i=0;i<len;i++)
+    for(i=0;i<len;i++)
     {
         switch(seqS[i])
         {

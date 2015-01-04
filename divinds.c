@@ -1,7 +1,7 @@
 /*
 * divinds.c
 *
-* Copyright 2014 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
+* Copyright 2015 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
 *
 * The programs and source code of the vertools collection are free software.
 * They are distributed in the hope that they will be useful,
@@ -20,8 +20,8 @@
 #include "prim.h"
 #include "divinds.h"
 
-#define DB_STAT 	if(DB[17])
-#define DB_DIVIN 	if(DB[18])
+#define DB_STAT     if(DB[17])
+#define DB_DIVIN    if(DB[18])
 
 /****************************************************************************
 *   nI = Total number of individuals, sI = number of classes 
@@ -36,9 +36,9 @@ double BrillouinIndexD(int nI, int *nAI, int sI)
     DB_DIVIN DB_PrI("+ div %f\n");
     for(iI = 0; iI < sI; iI++)
     {
-		fD = LogFactorialD(nAI[iI]);
-		divD -= fD;
-		DB_DIVIN DB_PrI("+  - %9.5f => div %f\n",fD,divD);
+        fD = LogFactorialD(nAI[iI]);
+        divD -= fD;
+        DB_DIVIN DB_PrI("+  - %9.5f => div %f\n",fD,divD);
     }
     divD /= DNUM(nI);
     DB_DIVIN DB_PrI("<< BrillouinIndexD %f\n",divD);
@@ -80,9 +80,9 @@ double BrillouinMaxIndexD(int nI, int sI)
     return(divD);
 }
 /****************************************************************************
-*	Shannon index
-*	nI = total number of items (array sum)
-*	nAI = array of counts for each of [sI] items
+*   Shannon index
+*   nI = total number of items (array sum)
+*   nAI = array of counts for each of [sI] items
 */
 double ShannonWeaverIndexD(int n, int *nAI, int s)
 {
@@ -92,21 +92,21 @@ double ShannonWeaverIndexD(int n, int *nAI, int s)
     divD = 0.0;
     for(i = 0; i < s; i++)
     {
-		if(nAI[i] > 0)
-		{
-			pD = DNUM(nAI[i])/DNUM(n);
-			pD *= LOG_2(pD);
+        if(nAI[i] > 0)
+        {
+            pD = DNUM(nAI[i])/DNUM(n);
+            pD *= LOG_2(pD);
 /*
 printf("[%d] = %d p=%f lg2p=%f pD=%f\n",i,nAI[i], DNUM(nAI[i])/DNUM(n),
-	LOG_2(DNUM(nAI[i])/DNUM(n)) ,pD);
+    LOG_2(DNUM(nAI[i])/DNUM(n)) ,pD);
 */
-			divD += pD;
-		}
+            divD += pD;
+        }
     }
-	if(divD<0.0)
-	{
-		divD = -divD;
-	}
+    if(divD<0.0)
+    {
+        divD = -divD;
+    }
     return(divD);
 }
 /****************************************************************************/
@@ -128,10 +128,10 @@ double ShannonWeEvenIndexD(int nI, int *nAI, int sI)
     return(evD);
 }
 /****************************************************************************
-*	Shannon index
-*	Log 10 version
-*	nI = total number of items (array sum)
-*	nAI = array of counts for each of [sI] items
+*   Shannon index
+*   Log 10 version
+*   nI = total number of items (array sum)
+*   nAI = array of counts for each of [sI] items
 */
 double ShannonWeaver10IndexD(int n, int *nAI, int s)
 {
@@ -141,21 +141,21 @@ double ShannonWeaver10IndexD(int n, int *nAI, int s)
     divD = 0.0;
     for(i = 0; i < s; i++)
     {
-		if(nAI[i] > 0 )
-		{
-			pD = DNUM(nAI[i])/DNUM(n);
-			pD *= LOG_10(pD);
-			divD += pD;
-		}
+        if(nAI[i] > 0 )
+        {
+            pD = DNUM(nAI[i])/DNUM(n);
+            pD *= LOG_10(pD);
+            divD += pD;
+        }
     }
-	if(divD<0.0)
-	{
-		divD = -divD;
-	}
+    if(divD<0.0)
+    {
+        divD = -divD;
+    }
     return(divD);
 }
 /****************************************************************************
-*	Log 10 version
+*   Log 10 version
 */
 double ShannonWe10MaxIndexD(int sI)
 {
@@ -165,7 +165,7 @@ double ShannonWe10MaxIndexD(int sI)
     return(mD);
 }
 /****************************************************************************
-*	Log 10 version
+*   Log 10 version
 */
 double ShannonWe10EvenIndexD(int nI, int *nAI, int sI)
 {
@@ -177,7 +177,7 @@ double ShannonWe10EvenIndexD(int nI, int *nAI, int sI)
     return(evD);
 }
 /****************************************************************************
-*	Simpson's diversity index 
+*   Simpson's diversity index 
 */
 double SimpsonIndexD(int n, int *nAI, int s)
 {
@@ -190,9 +190,9 @@ double SimpsonIndexD(int n, int *nAI, int s)
     divD = 0.0;
     for(i = 0; i < s; i++)
     {
-		numD = DNUM(nAI[i])*DNUM(nAI[i]-1);
-		pD = numD/denD;
-		divD += pD;
+        numD = DNUM(nAI[i])*DNUM(nAI[i]-1);
+        pD = numD/denD;
+        divD += pD;
     }
     DB_DIVIN DB_PrI("<< SimpsonIndexD %3.3f\n",divD);
     return(divD);

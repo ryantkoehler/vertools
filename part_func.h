@@ -1,7 +1,7 @@
 /*
 * part_func.h
 *
-* Copyright 2014 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
+* Copyright 2015 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
 *
 * The programs and source code of the vertools collection are free software.
 * They are distributed in the hope that they will be useful,
@@ -252,7 +252,7 @@ void  assign_plist_from_pr( plist **pl,
                             int length,
                             double cutoff);
 
-/* this doesn't work if free_pf_arrays() is called before */
+/* his doesn't work if free_pf_arrays() is called before */
 void assign_plist_gquad_from_pr(plist **pl,
                                 int length,
                                 double cut_off);
@@ -395,7 +395,7 @@ DEPRECATED(void init_pf_fold(int length));
  *  \see get_centroid_struct_pl(), get_centroid_struct_pr()
  */
 DEPRECATED(char *centroid(int length,
-                          double *dist));     /* mean pair distance of ensemble */
+                          double *dist));     /* ean pair distance of ensemble */
 
 /**
  *  get the mean pair distance of ensemble

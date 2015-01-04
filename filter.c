@@ -1,7 +1,7 @@
 /*
 * filter.c
 *
-* Copyright 2014 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
+* Copyright 2015 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
 *
 * The programs and source code of the vertools collection are free software.
 * They are distributed in the hope that they will be useful,
@@ -30,64 +30,64 @@ int main(int argc, char **argv)
 /*******************************************************************/
 void Filter_numsUse()
 {
-	VersionSplash(NULL,VERSION_S,"#  ",TRUE);
+    VersionSplash(NULL,VERSION_S,"#  ",TRUE);
     printf("Usage: <infile> ['-' for stdin] [...options]\n");
-	printf("   <infile>  File to be filtered\n");
-	printf("   -out XXX  Output to file XXX\n");
-	printf("   -col #    Take values from column # (def = 1)\n");
-	printf("   -sc #     Skip (ignore) characters up to position # / line\n");
-	printf("   -rg # #   Qualify line if value is in range from # to #\n");
-	printf("   -gt #     Qualify line if value is greater than (or equal) #\n");
-	printf("   -lt #     Qualify line if value is less than (or equal) #\n");
-	printf("   -lrg # #  Qualify line number range # to #\n");
-	printf("   -wlis XXX Qualify line with words (first token) listed in XXX\n");
-	printf("   -kc       Keep case for token comparison (default ignore)\n");
-	printf("   -wst      Word start only needs to match line (not full token)\n");
-	printf("   -wsub     Word substring only needs to match line (not full token)\n");
-	printf("   -rann #   Qualify random number of lines #     [NOTE: exact, NO stdin]\n");
-	printf("   -ranf #   Qualify random fraction (0 - 1) #    [NOTE: exact, NO stdin]\n");
-	printf("   -ranm #   Set random mask dimension to # (rather than count input lines)\n");
-	printf("   -ranp #   Qualify random probability (0 -1) #  [NOTE: approximate]\n");
-	printf("   -seed #   Set random seed to #\n");
-	printf("   -icbn     Ignore chars before numbers (i.e. strip leading chars)\n");
-	printf("   -not      Invert line qualification test(s)\n");
-	printf("   -flag     Preceed lines with 1/0 for good/bad\n");
-	printf("   -pln      Preceed lines with line number\n");
-	printf("   -stat     Report only stats about values\n");
-	printf("\n");
-	printf("NOTE: Filtered file lines limited to %d chars wide\n",FILTBUF_SIZE);
-	printf("      Also, -rann and -ranf fractions limited by -ranm 'M' to at most 'M'\n");
-	printf("\n");
+    printf("   <infile>  File to be filtered\n");
+    printf("   -out XXX  Output to file XXX\n");
+    printf("   -col #    Take values from column # (def = 1)\n");
+    printf("   -sc #     Skip (ignore) characters up to position # / line\n");
+    printf("   -rg # #   Qualify line if value is in range from # to #\n");
+    printf("   -gt #     Qualify line if value is greater than (or equal) #\n");
+    printf("   -lt #     Qualify line if value is less than (or equal) #\n");
+    printf("   -lrg # #  Qualify line number range # to #\n");
+    printf("   -wlis XXX Qualify line with words (first token) listed in XXX\n");
+    printf("   -kc       Keep case for token comparison (default ignore)\n");
+    printf("   -wst      Word start only needs to match line (not full token)\n");
+    printf("   -wsub     Word substring only needs to match line (not full token)\n");
+    printf("   -rann #   Qualify random number of lines #     [NOTE: exact, NO stdin]\n");
+    printf("   -ranf #   Qualify random fraction (0 - 1) #    [NOTE: exact, NO stdin]\n");
+    printf("   -ranm #   Set random mask dimension to # (rather than count input lines)\n");
+    printf("   -ranp #   Qualify random probability (0 -1) #  [NOTE: approximate]\n");
+    printf("   -seed #   Set random seed to #\n");
+    printf("   -icbn     Ignore chars before numbers (i.e. strip leading chars)\n");
+    printf("   -not      Invert line qualification test(s)\n");
+    printf("   -flag     Preceed lines with 1/0 for good/bad\n");
+    printf("   -pln      Preceed lines with line number\n");
+    printf("   -stat     Report only stats about values\n");
+    printf("\n");
+    printf("NOTE: Filtered file lines limited to %d chars wide\n",FILTBUF_SIZE);
+    printf("      Also, -rann and -ranf fractions limited by -ranm 'M' to at most 'M'\n");
+    printf("\n");
 }
 /**************************************************************************/
 int Filter_numsI(int argc, char **argv)
 {
-	char bufS[FILTBUF_SIZE+1], *cPC;
-	int j,ok,num,nok,line,tline;
+    char bufS[FILTBUF_SIZE+1], *cPC;
+    int j,ok,num,nok,line,tline;
     FILTER *filtPO;
     
     filtPO = CreateFilterPO();
-	if(!ParseArgsI(argc, argv,
-		"S -not B -stat B -rg D2 -gt D -lt D -col I -out S\
-		-seed I -ranf D -ranp D\
-		-rann I -sc I -flag B -icbn B\
-		-lrg I2 -wlis S -kc B -tst B -tsub B\
+    if(!ParseArgsI(argc, argv,
+        "S -not B -stat B -rg D2 -gt D -lt D -col I -out S\
+        -seed I -ranf D -ranp D\
+        -rann I -sc I -flag B -icbn B\
+        -lrg I2 -wlis S -kc B -tst B -tsub B\
         -ranm I -pln B",
-		filtPO->inname, &filtPO->do_not, &filtPO->do_stat, 
+        filtPO->inname, &filtPO->do_not, &filtPO->do_stat, 
         &filtPO->min,&filtPO->max, &filtPO->min, &filtPO->max, 
         &filtPO->col, filtPO->outname, 
         &filtPO->seed, &filtPO->ranf, &filtPO->ranp, 
         &filtPO->rann, &filtPO->skipc, &filtPO->do_flag, 
         &filtPO->do_icbn,
-		&filtPO->firstl,&filtPO->lastl, filtPO->wlisname, 
+        &filtPO->firstl,&filtPO->lastl, filtPO->wlisname, 
         &filtPO->do_kc, &filtPO->do_wst, &filtPO->do_wsub, 
         &filtPO->ranm, &filtPO->do_pln,
-		(int *)NULL))
-	{
-		Filter_numsUse();
+        (int *)NULL))
+    {
+        Filter_numsUse();
         CHECK_FILTER(filtPO);
-		return(FALSE);
-	}
+        return(FALSE);
+    }
     /***
     *   Check options and set things up
     */
@@ -96,72 +96,72 @@ int Filter_numsI(int argc, char **argv)
         return(FALSE);
     }
     if(!CheckFilterOptionsI(filtPO)) {
-		CHECK_FILTER(filtPO);
-		return(FALSE);
+        CHECK_FILTER(filtPO);
+        return(FALSE);
     }
-	/***
-	*	Filter lines 
-	*/
-	tline = line = num = nok = 0;
-	while(fgets(bufS,FILTBUF_SIZE,filtPO->in) != NULL) 
+    /***
+    *   Filter lines 
+    */
+    tline = line = num = nok = 0;
+    while(fgets(bufS,FILTBUF_SIZE,filtPO->in) != NULL) 
     {
-		tline++;
-		/***
-		*	Only non-comment, non-blank lines count 
-		*/
-		if( COM_LINE(bufS) || BlankStringI(bufS) ) {		
-			continue;	
-		}
-		line++;
-		/***
-		*	Jump past any up front chars to ingore 
-		*/
-		cPC = bufS;
+        tline++;
+        /***
+        *   Only non-comment, non-blank lines count 
+        */
+        if( COM_LINE(bufS) || BlankStringI(bufS) ) {        
+            continue;   
+        }
+        line++;
+        /***
+        *   Jump past any up front chars to ingore 
+        */
+        cPC = bufS;
         for(j=0;j<filtPO->skipc;j++)
         {
             if(!ISLINE(*cPC)) {
                 break;
-			}
+            }
             cPC++;
         }
         if(!ISLINE(*cPC)) {
-			continue;
-		}
+            continue;
+        }
         /***
         *   Qualified?
         */
         ok = IsFiltLineOkI(filtPO, line, cPC); 
         num++;
-		/***
-		*	Invert status
-		*/
-		if(filtPO->do_not) {
-			ok = !ok;
-		}
-		nok += ok;
+        /***
+        *   Invert status
+        */
+        if(filtPO->do_not) {
+            ok = !ok;
+        }
+        nok += ok;
         /***
         *   Now output
         */
         if(filtPO->do_stat) {
             continue;
         }
-		if(filtPO->do_flag) {
-			if(filtPO->do_pln) {
+        if(filtPO->do_flag) {
+            if(filtPO->do_pln) {
                 fprintf(filtPO->out,"%d\t",line);
             }
-			fprintf(filtPO->out,"%d\t",ok);
-		    fputs(bufS,filtPO->out);
-		}
-        else if(ok) {
-			if(filtPO->do_pln) {
-                fprintf(filtPO->out,"%d\t",line);
-            }
-		    fputs(bufS,filtPO->out);
+            fprintf(filtPO->out,"%d\t",ok);
+            fputs(bufS,filtPO->out);
         }
-	}
+        else if(ok) {
+            if(filtPO->do_pln) {
+                fprintf(filtPO->out,"%d\t",line);
+            }
+            fputs(bufS,filtPO->out);
+        }
+    }
     ReportFilterStats(filtPO, num, nok); 
     CHECK_FILTER(filtPO);
-	return(TRUE);
+    return(TRUE);
 }
 /*************************************************************************/
 FILTER *CreateFilterPO()
@@ -201,10 +201,10 @@ void InitFilter(FILTER *fpPO)
     INIT_S(fpPO->wlisname);
     fpPO->wlis = NULL;
     fpPO->col = DEF_COL;
-	fpPO->min = -TOO_BIG_D;
-	fpPO->max = TOO_BIG_D;
+    fpPO->min = -TOO_BIG_D;
+    fpPO->max = TOO_BIG_D;
     fpPO->firstl = fpPO->lastl = BAD_I;
-	fpPO->seed = BAD_I;
+    fpPO->seed = BAD_I;
     fpPO->rann = fpPO->ranm = BAD_I;
     fpPO->ranf = fpPO->ranp = BAD_D;
     fpPO->do_not = FALSE;
@@ -222,7 +222,7 @@ int CheckFilterOptionsI(FILTER *filtPO)
     /***
     *   Random set and masks
     */
-	Srand(filtPO->seed);
+    Srand(filtPO->seed);
     if(!HandleFilterMaskingI(filtPO)) {
         return(FALSE);
     }
@@ -247,36 +247,36 @@ int HandleFilterMaskingI(FILTER *filtPO)
         n = filtPO->ranm;
         LIMIT_NUM(n, 1, TOO_BIG);
     }
-	else if ( (!BAD_INT(filtPO->rann)) || (!BAD_DOUB(filtPO->ranf)) ) {
+    else if ( (!BAD_INT(filtPO->rann)) || (!BAD_DOUB(filtPO->ranf)) ) {
         /*
-	    *	Last two args mean ignore comments and blanks
+        *   Last two args mean ignore comments and blanks
         *   Then rewind file and allocate space for lines
         */
-	    n = FileLinesI(filtPO->in,TRUE,TRUE);
-	    rewind(filtPO->in);
+        n = FileLinesI(filtPO->in,TRUE,TRUE);
+        rewind(filtPO->in);
     }
     /***
     *   Anything to allocate and set?
     */
     if(n>0) {
         filtPO->n_mask = n;
-	    filtPO->mask = (char *)ALLOC(filtPO->n_mask,sizeof(char));
+        filtPO->mask = (char *)ALLOC(filtPO->n_mask,sizeof(char));
         if(!filtPO->mask) {
-		    PROBLINE;
-		    printf("Can't allocate mask for %d input lines\n",filtPO->n_mask);
+            PROBLINE;
+            printf("Can't allocate mask for %d input lines\n",filtPO->n_mask);
             return(FALSE);
         }
         /***
         *   Calculate / use fraction to mask subset
         */
-	    if(!BAD_INT(filtPO->rann)) {
-		    fracD = RNUM(filtPO->rann) / RNUM(filtPO->n_mask);
+        if(!BAD_INT(filtPO->rann)) {
+            fracD = RNUM(filtPO->rann) / RNUM(filtPO->n_mask);
         }
         else {
-		    fracD = filtPO->ranf;
+            fracD = filtPO->ranf;
         }
         LIMIT_NUM(fracD, 0.0, 1.0);
-		MaskRandSubsetI(filtPO->mask,filtPO->n_mask,RNUM(fracD));
+        MaskRandSubsetI(filtPO->mask,filtPO->n_mask,RNUM(fracD));
     }
     return(TRUE);
 }
@@ -287,8 +287,8 @@ int HandleFilterListSetsI(FILTER *filtPO)
 {
     if(!NO_S(filtPO->wlisname)) {
         if( ! (filtPO->wlis = CreateWordlistPO(filtPO->wlisname,NSIZE))) {
-			PROBLINE;
-			printf("Failed to get tokens from %s\n",filtPO->wlisname);
+            PROBLINE;
+            printf("Failed to get tokens from %s\n",filtPO->wlisname);
             return(FALSE);
         }
     }
@@ -299,16 +299,16 @@ int HandleFilterListSetsI(FILTER *filtPO)
 */
 int OpenFilterFilesI(FILTER *filtPO)
 {
-    if(!(filtPO->in = OpenUFilePF(filtPO->inname,"r",NULL))) { 	
-		return(FALSE); 	
-	}
-	if(!NO_S(filtPO->outname)) {
-		if(!(filtPO->out = OpenUFilePF(filtPO->outname,"w",NULL)))
-		{ 	
-			return(FALSE); 
-		}
-	}
-	HAND_NFILE(filtPO->out);
+    if(!(filtPO->in = OpenUFilePF(filtPO->inname,"r",NULL))) {  
+        return(FALSE);  
+    }
+    if(!NO_S(filtPO->outname)) {
+        if(!(filtPO->out = OpenUFilePF(filtPO->outname,"w",NULL)))
+        {   
+            return(FALSE); 
+        }
+    }
+    HAND_NFILE(filtPO->out);
     return(TRUE);
 }
 /*************************************************************************
@@ -318,7 +318,7 @@ void ReportFilterStats(FILTER *filtPO, int num, int nok)
 {
     printf("#  %d data lines\n",num);
     printf("#  %d qualified data lines (%5.2f%%)\n",
-        nok, PERCENT_R(nok,num));	
+        nok, PERCENT_R(nok,num));   
 }
 /*************************************************************************
 *   Get number value from word and set it to pointer
@@ -329,27 +329,27 @@ int FiltGetWordNumValI(FILTER *filtPO, char *wordS, DOUB *valPD)
     char *wPC;
     DOUB rD;
 
-	/***
-	*	Ignore chars before digits?
-	*/
-	w = 0;
-	if(filtPO->do_icbn) {
-	    while( (isgraph(INT(wordS[w]))) && (!isdigit(INT(wordS[w]))) ) {
+    /***
+    *   Ignore chars before digits?
+    */
+    w = 0;
+    if(filtPO->do_icbn) {
+        while( (isgraph(INT(wordS[w]))) && (!isdigit(INT(wordS[w]))) ) {
             w++;
-		}
-		if( (w>0) && (wordS[w-1]=='-') ) {
-		    w--;
-		}
+        }
+        if( (w>0) && (wordS[w-1]=='-') ) {
+            w--;
+        }
     }
-	wPC = &wordS[w];
-	/***
-	*	Get number 
-	*/
-	rD = BAD_D;
-	sscanf(wPC,"%lf",&rD);
+    wPC = &wordS[w];
+    /***
+    *   Get number 
+    */
+    rD = BAD_D;
+    sscanf(wPC,"%lf",&rD);
     if(BAD_DOUB(rD)) {
         return(FALSE);
-	}
+    }
     *valPD = rD;
     return(TRUE);
 }
@@ -362,19 +362,19 @@ int IsFiltLineOkI(FILTER *filtPO, int line, char *cPC)
     DOUB rD;
     int ok;
 
-	/***
-	*	Just filtering on line number
-	*/
-	ok = TRUE;
+    /***
+    *   Just filtering on line number
+    */
+    ok = TRUE;
     if( !BAD_INT(filtPO->firstl) ) {
-		if( (line < filtPO->firstl) || (line > filtPO->lastl) ) {
-		    ok = FALSE;
-		}
+        if( (line < filtPO->firstl) || (line > filtPO->lastl) ) {
+            ok = FALSE;
+        }
     }
-	/***
-	*	Random fractions
+    /***
+    *   Random fractions
     *   If we've got a mask (i.e. random fractions), use that
-	*/
+    */
     else if(filtPO->mask) {
         /***
         *   If mask is smaller than number of lines, disqualify
@@ -386,35 +386,35 @@ int IsFiltLineOkI(FILTER *filtPO, int line, char *cPC)
             ok = INT(filtPO->mask[line-1]);
         }
     }
-	else if(!BAD_INT(filtPO->ranp)) {
+    else if(!BAD_INT(filtPO->ranp)) {
         rD = RandD(1.0);
         ok = (rD < filtPO->ranp);
     }
-	/***
-	*	Get column entry then check 
+    /***
+    *   Get column entry then check 
     *   If can't get word or number from column, simply set not ok
-	*/
-	else {
-	    ok = GetNthWordI(cPC,filtPO->col,wordS);
+    */
+    else {
+        ok = GetNthWordI(cPC,filtPO->col,wordS);
         /***    
         *   Get number from word (if not token or number list)
         */
-	    if( ok && (!filtPO->wlis) ) {
+        if( ok && (!filtPO->wlis) ) {
             ok = FiltGetWordNumValI(filtPO, wordS, &rD);
-    		/***
-    		*	Too big or small?
-    		*/
-    		if( ok && ( (rD < filtPO->min) || (rD > filtPO->max)) ) {	
-    			ok = FALSE;	
-    		}
-	    }
-	    /***
-		*	In number or token list?
-		*/
-	    if( ok && (filtPO->wlis) ) {
+            /***
+            *   Too big or small?
+            */
+            if( ok && ( (rD < filtPO->min) || (rD > filtPO->max)) ) {   
+                ok = FALSE; 
+            }
+        }
+        /***
+        *   In number or token list?
+        */
+        if( ok && (filtPO->wlis) ) {
             ok = WordInWordlistI(filtPO->wlis, wordS, filtPO->do_kc, filtPO->do_wst, 
                                 filtPO->do_wsub, NULL);
         }
-	}
+    }
     return(ok);
 }

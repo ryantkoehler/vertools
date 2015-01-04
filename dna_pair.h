@@ -1,7 +1,7 @@
 /*
 * dna_pair.h
 *
-* Copyright 2014 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
+* Copyright 2015 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
 *
 * The programs and source code of the vertools collection are free software.
 * They are distributed in the hope that they will be useful,
@@ -15,66 +15,66 @@
 */
 
  
-#define PAIR_VERSION_S 	"DNA_Pairing, version 0.62"
+#define PAIR_VERSION_S  "DNA_Pairing, version 0.62"
 
 /***
-*	Data structure for pair-wise comparision parameters
+*   Data structure for pair-wise comparision parameters
 */
-#define PP_IND_NUM 		16	/*	Number of NN pairs; 16 = 4 bases X 4 bases */
-#define PPARS_ID		4012
+#define PP_IND_NUM      16  /* Number of NN pairs; 16 = 4 bases X 4 bases */
+#define PPARS_ID        4012
 typedef struct PPARS 
 {
-	int ID;
-	char parfile[NSIZE];	/*	Parameter file name */
-	int parset;				/*	Parameter setting */
-	int alg;				/*	Comparison algorithm to use */
-	int rval;				/*	Comparison return value; i.e. max, total..? */
-	int ctype;				/*	Comparison type; similar / compliment */
-	REAL thresh;			/*	Score threshold; ignore matches below this */
-	char msfile[NSIZE];		/* 	Match score parameter file */
-	REAL mscore[PP_IND_NUM];/* 	Match score array */
-	int min_word;			/*	Minimum word overlap to count in alignment */ 
-	int min_loop;			/*	Minimum loop size for loop alignment */ 
-	int cl3,cl5;			/*	Flag to "clamp" 3' and 5' ends */
-    int do_ham;             /* Flag for Hamming dist; No alignment */
-	REAL mA,mC,mG,mT;		/*	Max values for ACGT */
+    int ID;
+    char parfile[NSIZE];    /* Parameter file name */
+    int parset;             /* Parameter setting */
+    int alg;                /* Comparison algorithm to use */
+    int rval;               /* Comparison return value; i.e. max, total..? */
+    int ctype;              /* Comparison type; similar / compliment */
+    REAL thresh;            /* Score threshold; ignore matches below this */
+    char msfile[NSIZE];     /* Match score parameter file */
+    REAL mscore[PP_IND_NUM];/* Match score array */
+    int min_word;           /* Minimum word overlap to count in alignment */ 
+    int min_loop;           /* Minimum loop size for loop alignment */ 
+    int cl3,cl5;            /* Flag to "clamp" 3' and 5' ends */
+    int do_ham;             /* lag for Hamming dist; No alignment */
+    REAL mA,mC,mG,mT;       /* Max values for ACGT */
 }PPARS;
 
 
-#define PP_COM_SIM	1		/*	Compare similarity */
-#define PP_COM_COM	2		/*	Compare complimentarity */
-#define PP_COM_LOOP	4		/*	Compare loop formation */
-#define PP_COM_PCOM	5		/*	Compare parallele complimentarity */
+#define PP_COM_SIM  1       /* Compare similarity */
+#define PP_COM_COM  2       /* Compare complimentarity */
+#define PP_COM_LOOP 4       /* Compare loop formation */
+#define PP_COM_PCOM 5       /* Compare parallele complimentarity */
 
-#define PP_PSET_ID	6		/*	Parameter setting for Identity */
-#define PP_PSET_COM	7		/*	Parameter setting for Complment */
-#define PP_PSET_TH	8		/*	Parameter setting for Thermodynamic */
+#define PP_PSET_ID  6       /* Parameter setting for Identity */
+#define PP_PSET_COM 7       /* Parameter setting for Complment */
+#define PP_PSET_TH  8       /* Parameter setting for Thermodynamic */
 
-#define PP_R_MAX	10		/*	Return max value */
-#define PP_R_TOT	11		/*	Return total alignment vals over thresh */
-#define PP_R_NUM	12		/*	Return number of alignment vals over thresh */
-#define PP_R_EFR	13		/*	Return expect / find ratio */
+#define PP_R_MAX    10      /* Return max value */
+#define PP_R_TOT    11      /* Return total alignment vals over thresh */
+#define PP_R_NUM    12      /* Return number of alignment vals over thresh */
+#define PP_R_EFR    13      /* Return expect / find ratio */
 
-#define ALGO_MATCH 	21		/*	Simple max matching */
-#define ALGO_BMATCH 22		/*	Block-weighted simple matching */
-#define ALGO_CONT	23		/*	Max contiguous block simple matching */
-#define ALGO_CON3 	25		/*	Max contiguous block from 3' end */
-#define ALGO_CON5 	26		/*	Max contiguous block from 3' end */
-#define NPAIR_ALGS	27
+#define ALGO_MATCH  21      /* Simple max matching */
+#define ALGO_BMATCH 22      /* Block-weighted simple matching */
+#define ALGO_CONT   23      /* Max contiguous block simple matching */
+#define ALGO_CON3   25      /* Max contiguous block from 3' end */
+#define ALGO_CON5   26      /* Max contiguous block from 3' end */
+#define NPAIR_ALGS  27
 
-#define DEF_ALGO		ALGO_MATCH	/*	Default match algorithm */
-#define DEF_CTYPE		PP_COM_SIM	/*	Default comparison type */
-#define DEF_RVAL		PP_R_MAX	/*	Default return value type */
-#define DEF_MIN_WORD	1			/*	Default min word size */
-#define DEF_MIN_LOOP	3			/*	Default min loop size */
-#define DEF_CLAMP3		0			/*	Default 3' clamp */
-#define DEF_CLAMP5		0			/*	Default 5' clamp */
-#define DEF_C_THRESH	0.0			/*	Default score threshold */
-#define DEF_S_EXP		1.0			/*	Default score exponent */
+#define DEF_ALGO        ALGO_MATCH  /* Default match algorithm */
+#define DEF_CTYPE       PP_COM_SIM  /* Default comparison type */
+#define DEF_RVAL        PP_R_MAX    /* Default return value type */
+#define DEF_MIN_WORD    1           /* Default min word size */
+#define DEF_MIN_LOOP    3           /* Default min loop size */
+#define DEF_CLAMP3      0           /* Default 3' clamp */
+#define DEF_CLAMP5      0           /* Default 5' clamp */
+#define DEF_C_THRESH    0.0         /* Default score threshold */
+#define DEF_S_EXP       1.0         /* Default score exponent */
 
 
-#define S_EXP_STEP		0.1
-#define S_EXP_MAX		20
+#define S_EXP_STEP      0.1
+#define S_EXP_MAX       20
 
 
 #define CHECK_PPARS(po) if(po){DestroyPparsI(po); po=NULL;}
@@ -94,13 +94,13 @@ REAL SeqLoopScoreR(char *sS,int len,int fi,int si,int n,PPARS *ppPO);
 * dna_pair.c
 */
 int CompareSeqToSeqsetI(SEQ *qseqPO, SEQSET *ssPO, PPARS *pparPO,
-	REAL *scoresPR, int *offsPI);
+    REAL *scoresPR, int *offsPI);
 int ScoreSeqCompareI(char *fS, int flen, char *sS, int slen, PPARS *ppPO,
-	REAL *scPR);
+    REAL *scPR);
 int ScoreSeqParallelI(char *fS,int flen,char *sS,int slen,PPARS *ppPO,
-	REAL *scPR);
+    REAL *scPR);
 int ScoreSeqAntiParallelI(char *fS,int flen,char *sS,int slen,PPARS *ppPO, 
-	REAL *scPR);
+    REAL *scPR);
 int OkAlignClampI(PPARS *ppPO, char *fS,int fi,char *sS,int si,int n);
 REAL AlignedSeqScoreR(PPARS *ppPO, char *fS,int fi,char *sS,int si,int n);
 REAL AlignedSeqMatchScoreR(PPARS *ppPO, char *fS,int fi,char *sS,int si,int n);

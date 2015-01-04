@@ -1,7 +1,7 @@
 /*
 * pick_seq.h
 *
-* Copyright 2014 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
+* Copyright 2015 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
 *
 * The programs and source code of the vertools collection are free software.
 * They are distributed in the hope that they will be useful,
@@ -15,71 +15,71 @@
 */
 
 
-#define VERSION_S "Pick_Seq Version 0.71"
+#define VERSION_S "Pick_Seq Version 0.72"
 
 
 /***
-*	Data structure for pair-wise comparision parameters
+*   Data structure for pair-wise comparision parameters
 */
-#define PP_IND_NUM 		16
+#define PP_IND_NUM      16
 
 #define PICKSEQ_ID      5111
 typedef struct PICKSEQ 
 {
-	int ID;
-	char seqname[NSIZE];	/*	Input sequence filename */
-	int iform;				/*	INput sequence format code */
-	struct SEQSET *seqs;	/*	Structure with sequences */
-	int nseq;				/*	Total number of seqs */
-	char outname[NSIZE];	/*	Output file name */
-	FILE *out;				/*	Output file */
-	int alg;				/*	Algorithm to use */
-	int num;				/*	Number to pick */
-	int rnum;				/*	Real number to pick (fixed don't count) */
-	int cyc;				/*	Number of cycles (monte carlo) */
-	int rep;				/*	Number of replacement tries (swaps) */
-	int rseed;				/*	Random number seed */
-	int sirf;				/*	Save intermediate result frequency (cycles) */
-	int siru;				/*	Save intermediate results with unique names */
-	struct PPARS *pp;		/* 	Pair-wise comparision structure */
-	REAL smat,cmat;			/*	Score coefficients for Sim/Comp matches */
-	REAL scon,ccon;			/*	Score coefficients for Sim/Comp cont matches */
-	REAL scb,ccb;			/*	Score coefficients for Sim/Comp block match */
-	int do_mswm;			/*	Score mat via weighted matching */
-	int do_cswm;			/*	Score con via weighted matching */
-	char biasname[NSIZE];	/*	Input bias value filename */
-	REAL *bias;				/*	Array of bias values to skew picking */
-	char fixname[NSIZE];	/*	Fix subset file name */
-	char *fixmap;			/*  Mask to lable some seqs as fixed */
-	int nfix;				/*	Number of seqs fixed */
-	char mwfname[NSIZE];	/*	Weighted matching file name */
-	struct SCOREC *recs;	/*  Structure for scoring / sorting */
-	char *tmask;			/*  Mask to track swaps already tried */
-	REAL *tscores;			/*	Array to hold scores for trial swap */
-	REAL worst,best;		/*	Current best, worst scores */
-	REAL rworst,ave;		/*	Current real-worst, average scores */
-	int tie,btie;			/*	Current worst / best number of ties */
-	int mtry;				/*	Max replacements to try */
-	int verbose;			/*	Flag to report what's going on */
+    int ID;
+    char seqname[NSIZE];    /* Input sequence filename */
+    int iform;              /* INput sequence format code */
+    struct SEQSET *seqs;    /* Structure with sequences */
+    int nseq;               /* Total number of seqs */
+    char outname[NSIZE];    /* Output file name */
+    FILE *out;              /* Output file */
+    int alg;                /* Algorithm to use */
+    int num;                /* Number to pick */
+    int rnum;               /* Real number to pick (fixed don't count) */
+    int cyc;                /* Number of cycles (monte carlo) */
+    int rep;                /* Number of replacement tries (swaps) */
+    int rseed;              /* Random number seed */
+    int sirf;               /* Save intermediate result frequency (cycles) */
+    int siru;               /* Save intermediate results with unique names */
+    struct PPARS *pp;       /* Pair-wise comparision structure */
+    REAL smat,cmat;         /* Score coefficients for Sim/Comp matches */
+    REAL scon,ccon;         /* Score coefficients for Sim/Comp cont matches */
+    REAL scb,ccb;           /* Score coefficients for Sim/Comp block match */
+    int do_mswm;            /* Score mat via weighted matching */
+    int do_cswm;            /* Score con via weighted matching */
+    char biasname[NSIZE];   /* Input bias value filename */
+    REAL *bias;             /* Array of bias values to skew picking */
+    char fixname[NSIZE];    /* Fix subset file name */
+    char *fixmap;           /* Mask to lable some seqs as fixed */
+    int nfix;               /* Number of seqs fixed */
+    char mwfname[NSIZE];    /* Weighted matching file name */
+    struct SCOREC *recs;    /* Structure for scoring / sorting */
+    char *tmask;            /* Mask to track swaps already tried */
+    REAL *tscores;          /* Array to hold scores for trial swap */
+    REAL worst,best;        /* Current best, worst scores */
+    REAL rworst,ave;        /* Current real-worst, average scores */
+    int tie,btie;           /* Current worst / best number of ties */
+    int mtry;               /* Max replacements to try */
+    int verbose;            /* Flag to report what's going on */
 }PICKSEQ;
 
 #define CHECK_PICKSEQ(ps) if(ps){DestroyPickseqI(ps); ps=NULL;}
 
-#define PS_ALG_SWAP		33
+#define PS_ALG_SWAP     33
 
-#define DEF_PS_SMAT		0.5		/*	Default Match similarity cost */
-#define DEF_PS_CMAT		1.0		/*  Default Match complement cost */
-#define DEF_PS_SCON		1.5		/*  Default Contig similarity cost */
-#define DEF_PS_CCON 	2.0		/*  Default Contig complement cost */
-#define DEF_PS_SCB		0.0		/*  Default Block-match similarity cost */
-#define DEF_PS_CCB  	0.0		/*  Default Block-match complement cost */
+#define DEF_PS_SMAT     0.5     /* Default Match similarity cost */
+#define DEF_PS_CMAT     1.0     /* Default Match complement cost */
+#define DEF_PS_SCON     1.5     /* Default Contig similarity cost */
+#define DEF_PS_CCON     2.0     /* Default Contig complement cost */
+#define DEF_PS_SCB      0.0     /* Default Block-match similarity cost */
+#define DEF_PS_CCB      0.0     /* Default Block-match complement cost */
 
-#define DEF_PS_NUM		10		/*	Default number of seqs to pick */
-#define DEF_PS_CYC		50		/*	Default number of cycles */
-#define DEF_PS_REP		100
-#define DEF_PS_ALG		PS_ALG_SWAP
+#define DEF_PS_NUM      10      /* Default number of seqs to pick */
+#define DEF_PS_CYC      50      /* Default number of cycles */
+#define DEF_PS_REP      100
+#define DEF_PS_ALG      PS_ALG_SWAP
 
-#define UPDATE_NUM 		10000	/*	Feedback updating frequency */
+#define UPDATE_NUM      10000   /* Feedback updating frequency */
 
 
 /*********************** ppp ********************

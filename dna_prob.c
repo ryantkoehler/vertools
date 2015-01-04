@@ -1,7 +1,7 @@
 /*
 * dna_prob.c
 *
-* Copyright 2014 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
+* Copyright 2015 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
 *
 * The programs and source code of the vertools collection are free software.
 * They are distributed in the hope that they will be useful,
@@ -25,7 +25,7 @@
 
 
 /**************************************************************************
-*	Check probe-replated options
+*   Check probe-replated options
 */
 int CheckDnuProbeOptionsI(DNA_UTIL *duPO)
 {
@@ -60,83 +60,83 @@ int CheckDnuProbeOptionsI(DNA_UTIL *duPO)
     return(TRUE);
 }
 /**************************************************************************
-*	Output probes to length
+*   Output probes to length
 */
 int HandleDuProbesOutI(DNA_UTIL *duPO,FILE *outPF)
 {
-	int len,plen,plen2,minlen,pos,fpos,flen;
-	char bufS[DEF_BS],*seqPC,nameS[NSIZE],pnameS[NSIZE];
+    int len,plen,plen2,minlen,pos,fpos,flen;
+    char bufS[DEF_BS],*seqPC,nameS[NSIZE],pnameS[NSIZE];
 
-	HAND_NFILE(outPF);
-	FillSeqNameStringI(duPO->seq,nameS,NSIZE-1);
-	len = GetSeqLenI(duPO->seq);
-	if(!GetSeqSeqI(duPO->seq,&seqPC)) {
-		return(FALSE);
-	}
-	pos = duPO->opl_st -1;
-	plen = duPO->do_pol;
-	plen2 = (duPO->do_pml > 0) ? duPO->do_pml : plen;
-	minlen = (duPO->do_pat > 0) ? duPO->do_pat : plen - 1;
-	/***
-	*	Tell story.
+    HAND_NFILE(outPF);
+    FillSeqNameStringI(duPO->seq,nameS,NSIZE-1);
+    len = GetSeqLenI(duPO->seq);
+    if(!GetSeqSeqI(duPO->seq,&seqPC)) {
+        return(FALSE);
+    }
+    pos = duPO->opl_st -1;
+    plen = duPO->do_pol;
+    plen2 = (duPO->do_pml > 0) ? duPO->do_pml : plen;
+    minlen = (duPO->do_pat > 0) ? duPO->do_pat : plen - 1;
+    /***
+    *   Tell story.
     *   Listed or number-based probes
-	*/
+    */
     if( !NO_S(duPO->olpname) ) {
-		fprintf(outPF,"# Listed probes from file: %s\n",duPO->olpname);
-        /*  Make sure to rewind input file */
+        fprintf(outPF,"# Listed probes from file: %s\n",duPO->olpname);
+        /* Make sure to rewind input file */
         BOG_CHECK(! duPO->olp);
         rewind(duPO->olp);
-	}
-	else {
-		if( (plen<1) || (len<minlen) ) {
-			printf("# Sequence %s has only %d bases\n",nameS,len);
-			printf("# Can't extract probes of length %d!!!\n",duPO->do_pol);	
-			return(FALSE);
-		}
+    }
+    else {
+        if( (plen<1) || (len<minlen) ) {
+            printf("# Sequence %s has only %d bases\n",nameS,len);
+            printf("# Can't extract probes of length %d!!!\n",duPO->do_pol);    
+            return(FALSE);
+        }
         if(duPO->do_pml > 0) {
-		    fprintf(outPF,"# Sampled probes %d to %d long every %d from %d\n",
-			    plen, plen2, duPO->opl_j, pos + 1);
+            fprintf(outPF,"# Sampled probes %d to %d long every %d from %d\n",
+                plen, plen2, duPO->opl_j, pos + 1);
         }
         else {
-		    fprintf(outPF,"# Sampled probes %d long every %d from %d\n",
-			    plen, duPO->opl_j, pos + 1);
+            fprintf(outPF,"# Sampled probes %d long every %d from %d\n",
+                plen, duPO->opl_j, pos + 1);
         }
-	}
+    }
     if( duPO->olp_up ) {
         fprintf(outPF,"#    Extra window of %d up and %d down added\n", 
             duPO->olp_up, duPO->olp_dn);
     }
-	/***	
-	*	Walk along the sham
-	*/
-	while(TRUE)
-	{
-		/***
-		*	Reading from file?
-		*/
+    /***    
+    *   Walk along the sham
+    */
+    while(TRUE)
+    {
+        /***
+        *   Reading from file?
+        */
         if(duPO->olp) {
-			if(!fgets(bufS,LINEGRAB,duPO->olp)) {
+            if(!fgets(bufS,LINEGRAB,duPO->olp)) {
                 break;
-			}
-			if(COM_LINE(bufS)) {
-				continue;
-			}
-			plen = pos = 0;
-			sscanf(bufS,"%d %d",&plen,&pos);
-			if( (plen<1) || (pos<1) ) {
-				continue;
-        	}
-			pos -= 1;
+            }
+            if(COM_LINE(bufS)) {
+                continue;
+            }
+            plen = pos = 0;
+            sscanf(bufS,"%d %d",&plen,&pos);
+            if( (plen<1) || (pos<1) ) {
+                continue;
+            }
+            pos -= 1;
             minlen = plen;
-		}
-		/***
-		*	Adjust coords by windows?
-		*/
-		fpos = pos - duPO->olp_up;
-		LIMIT_NUM(fpos,0,len-1);
-		flen = plen + duPO->olp_up + duPO->olp_dn;
-		flen = MIN_NUM(flen,len-fpos);
-	    plen2 = (duPO->do_pml > 0) ? duPO->do_pml : flen;
+        }
+        /***
+        *   Adjust coords by windows?
+        */
+        fpos = pos - duPO->olp_up;
+        LIMIT_NUM(fpos,0,len-1);
+        flen = plen + duPO->olp_up + duPO->olp_dn;
+        flen = MIN_NUM(flen,len-fpos);
+        plen2 = (duPO->do_pml > 0) ? duPO->do_pml : flen;
 /*
 printf("xxx up=%d dn=%d fpos=%d flen=%d\n", duPO->olp_up,duPO->olp_dn,fpos,flen);
 */
@@ -144,47 +144,47 @@ printf("xxx up=%d dn=%d fpos=%d flen=%d\n", duPO->olp_up,duPO->olp_dn,fpos,flen)
         *   Supplied file coords 
         */
         if(duPO->olp) {
-			if( (fpos < 0) || (flen < plen) || ((fpos+flen) > len) ) {
-            	printf("# Sequence %s is length %d\n",nameS,len);
-            	printf("# Can't extract probe of %d bases starting at %d\n",
-					plen, fpos+1);
-            	printf("#   Input <len> <start> :\t"); fputs(bufS,stdout);
+            if( (fpos < 0) || (flen < plen) || ((fpos+flen) > len) ) {
+                printf("# Sequence %s is length %d\n",nameS,len);
+                printf("# Can't extract probe of %d bases starting at %d\n",
+                    plen, fpos+1);
+                printf("#   Input <len> <start> :\t"); fputs(bufS,stdout);
                 continue;
-			}
-		    sprintf(pnameS,"%s__%d_%d",nameS, fpos + 1, fpos + flen);
+            }
+            sprintf(pnameS,"%s__%d_%d",nameS, fpos + 1, fpos + flen);
             HandleDuOneProbeOutI(duPO, &seqPC[fpos], flen, pnameS, outPF);
-		}
+        }
         /***
         *   Stepping coords
         */
-		else 
-		{
+        else 
+        {
 /*
 printf("xxx flen=%d plen2=%d fpos+flen=%d\n", flen,plen2,fpos+flen);
 */
-            /* Was "flen < minlen" for V0.64 */
-			if(flen <= minlen) {
+            /* as "flen < minlen" for V0.64 */
+            if(flen <= minlen) {
                 break;
-			}
+            }
             /***
             *   Dump probe(s)
             */
             while( (flen <= plen2) && ((fpos + flen) <= len) ){
-		        sprintf(pnameS,"%s__%d_%d",nameS, fpos + 1, fpos + flen);
+                sprintf(pnameS,"%s__%d_%d",nameS, fpos + 1, fpos + flen);
                 HandleDuOneProbeOutI(duPO, &seqPC[fpos], flen, pnameS, outPF);
                 flen++;
             }
         }
-		pos += duPO->opl_j;
-	}
-	return(TRUE);
+        pos += duPO->opl_j;
+    }
+    return(TRUE);
 }
 /**************************************************************************
-*	Dump one probe
+*   Dump one probe
 */
 int HandleDuOneProbeOutI(DNA_UTIL *duPO, char *seqPC, int len, char *pnameS, FILE *outPF)
 {
-	HAND_NFILE(outPF);
+    HAND_NFILE(outPF);
     /***
     *   Check ambigs / SNPs
     */
@@ -196,14 +196,14 @@ int HandleDuOneProbeOutI(DNA_UTIL *duPO, char *seqPC, int len, char *pnameS, FIL
     } 
     else {
         if(duPO->oform == SEQFM_FASTA) {
-		    fprintf(outPF,"> %s\n",pnameS);
-	    }	
-	    else {
-	        ReplaceChars(' ',pnameS,'_',pnameS);
-	        fprintf(outPF,"%s\t",pnameS);
+            fprintf(outPF,"> %s\n",pnameS);
+        }   
+        else {
+            ReplaceChars(' ',pnameS,'_',pnameS);
+            fprintf(outPF,"%s\t",pnameS);
         }
         PrintString(seqPC,len,outPF);
-	    fprintf(outPF,"\n");
+        fprintf(outPF,"\n");
     }
     return(TRUE);
 }

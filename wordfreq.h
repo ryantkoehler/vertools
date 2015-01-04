@@ -1,7 +1,7 @@
 /*
 * wordfreq.h
 *
-* Copyright 2014 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
+* Copyright 2015 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
 *
 * The programs and source code of the vertools collection are free software.
 * They are distributed in the hope that they will be useful,
@@ -14,47 +14,47 @@
 *
 */
 
-#define VERSION_S	"WordFreq, version 0.81"
+#define VERSION_S   "WordFreq, version 0.82"
 
-#define WFU_NLEN		255
+#define WFU_NLEN        255
 
-#define WF_UTIL_ID  	5171
+#define WF_UTIL_ID      5171
 typedef struct WF_UTIL
 {
-	int ID;
-	FILE *in;				/*	Input file */
-	char inname[WFU_NLEN];	/*	Input filename */
-	int iform;				/*	Input file format */
-	FILE *out;				/*	Output file */
-	char outname[WFU_NLEN];	/*	Output filename */
-	int owhat;				/*	Output what? */
-	int igprob;				/*	Flag to ignore problems and continue on */
-	struct SEQ *seq;		/*	Sequence object */
-	int n;					/*	Count of seqs processed */
-	int firsts,lasts;		/*	First / last sequence */
-	int firstb,lastb;		/*	First / last base */
-	char lisname[WFU_NLEN];	/*	Pre-cooked list name */
-	struct WORDFREQ *wf;	/*	Word frequence object */
-	int size;				/*	Word size */
-	int tw;					/*	Total words */
-	int step;				/*	Step between samples */
-	int min,max;			/*	Min max counts to report */
-	int do_rre;				/*	Range relative to the end */
-	int do_not;				/*	Invert flagging */
-	int do_deg;				/*	Flag to collapse degen records */
-	int do_norm;			/*  Flag to normalize counts */
-	int do_ilc;			    /*	Flag to ignore lower case */
-	int do_iuc;			    /*	Flag to ignore upper case */
-	int pmat_s;		        /*	Staring base for Position-specific matrix */
-	int pmat_e;		        /*	Ending base for Position-specific matrix */
-	int pmat_r;		        /*	Position-specific matrix rows */
-	int pmat_c;		        /*	Position-specific matrix cols */
-	struct TABLE *pmat;		/*	Position-specific matrix */
+    int ID;
+    FILE *in;               /* Input file */
+    char inname[WFU_NLEN];  /* Input filename */
+    int iform;              /* Input file format */
+    FILE *out;              /* Output file */
+    char outname[WFU_NLEN]; /* Output filename */
+    int owhat;              /* Output what? */
+    int igprob;             /* Flag to ignore problems and continue on */
+    struct SEQ *seq;        /* Sequence object */
+    int n;                  /* Count of seqs processed */
+    int firsts,lasts;       /* First / last sequence */
+    int firstb,lastb;       /* First / last base */
+    char lisname[WFU_NLEN]; /* Pre-cooked list name */
+    struct WORDFREQ *wf;    /* Word frequence object */
+    int size;               /* Word size */
+    int tw;                 /* Total words */
+    int step;               /* Step between samples */
+    int min,max;            /* Min max counts to report */
+    int do_rre;             /* Range relative to the end */
+    int do_not;             /* Invert flagging */
+    int do_deg;             /* Flag to collapse degen records */
+    int do_norm;            /* Flag to normalize counts */
+    int do_ilc;             /* Flag to ignore lower case */
+    int do_iuc;             /* Flag to ignore upper case */
+    int pmat_s;             /* Staring base for Position-specific matrix */
+    int pmat_e;             /* Ending base for Position-specific matrix */
+    int pmat_r;             /* Position-specific matrix rows */
+    int pmat_c;             /* Position-specific matrix cols */
+    struct TABLE *pmat;     /* Position-specific matrix */
 }WF_UTIL;
 
-#define CHECK_WF_UTIL(tu)	if(tu){DestroyWf_utilI(tu); tu=NULL;}
+#define CHECK_WF_UTIL(tu)   if(tu){DestroyWf_utilI(tu); tu=NULL;}
 
-#define MAX_PSM_SIZE	4	/*	Max word-size for postition specific matrix */
+#define MAX_PSM_SIZE    4   /* Max word-size for postition specific matrix */
 
 
 /*********************** ppp ********************

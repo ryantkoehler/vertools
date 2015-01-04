@@ -1,7 +1,7 @@
 /*
 * score_io.c
 *
-* Copyright 2014 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
+* Copyright 2015 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
 *
 * The programs and source code of the vertools collection are free software.
 * They are distributed in the hope that they will be useful,
@@ -25,11 +25,11 @@
 #define DB_SCF if(DB[61])
 
 /*************************************************************************
-*	Load settings for SCFIELD from parameter file
+*   Load settings for SCFIELD from parameter file
 */
 int LoadScfieldI(FILE *inPF, int error, SCFIELD **sfPPO)
 {
-	char bufS[BBUFF_SIZE],nameS[NSIZE];
+    char bufS[BBUFF_SIZE],nameS[NSIZE];
     DOUB xD,yD,xPI[MAX_SC_VALS], yPI[MAX_SC_VALS], stepD, fxD, dyD;
     int ngive, i, n, s, g;
     SCFIELD *sfPO;
@@ -37,15 +37,15 @@ int LoadScfieldI(FILE *inPF, int error, SCFIELD **sfPPO)
     DB_SCF DB_PrI(">> LoadScfieldI\n");
     InitArrayI(xPI, IS_DOUB, 0, MAX_SC_VALS, 0.0);
     InitArrayI(yPI, IS_DOUB, 0, MAX_SC_VALS, 0.0);
-	/***
+    /***
     *   Should start with 'SCFIELD START' 
-	*	First real line should be 
-	*/
+    *   First real line should be 
+    */
     INIT_S(nameS); 
     s = ngive = 0;
-	while(fgets(bufS,BLINEGRAB,inPF))
-	{
-		if(COM_LINE(bufS)) {   
+    while(fgets(bufS,BLINEGRAB,inPF))
+    {
+        if(COM_LINE(bufS)) {   
             continue;
         }
         if(BlankStringI(bufS)) {
@@ -182,32 +182,32 @@ int LoadScfieldI(FILE *inPF, int error, SCFIELD **sfPPO)
         }
         xD += stepD;
     }
-	/***
-	*	Set pointer and return
-	*/
+    /***
+    *   Set pointer and return
+    */
     *sfPPO = sfPO;
     DB_SCF DB_PrI("<< LoadScfieldI TRUE\n");
-	return(TRUE);
+    return(TRUE);
 }
 /****************************************************************************
-*	Attempt to load an array of SCFIELDS;
-*	These are returned via an array of pointers 
+*   Attempt to load an array of SCFIELDS;
+*   These are returned via an array of pointers 
 */
 int LoadScfieldArrayI(FILE *inPF, SCFIELD ***scPPPO)
 {
-	int n,i,fpos;
+    int n,i,fpos;
     char bufS[BBUFF_SIZE];
-	SCFIELD *sfPO, *fsetPA[MAX_SC_VALS], **scPPO;
+    SCFIELD *sfPO, *fsetPA[MAX_SC_VALS], **scPPO;
 
     DB_SCF DB_PrI(">> LoadScfieldArrayI\n");
-	*scPPPO = NULL;
+    *scPPPO = NULL;
     /***
     *   Go through file, looking for start blocks and trying to parse those
     */
-	n = 0;
+    n = 0;
     fpos = ftell(inPF);
-	while(fgets(bufS,BLINEGRAB,inPF)) {
-		if(COM_LINE(bufS)) {   
+    while(fgets(bufS,BLINEGRAB,inPF)) {
+        if(COM_LINE(bufS)) {   
             continue;
         }
         if(BlankStringI(bufS)) {
@@ -224,7 +224,7 @@ int LoadScfieldArrayI(FILE *inPF, SCFIELD ***scPPPO)
                 return(FALSE);
             }
             fseek(inPF,fpos,0);
-	        if(! LoadScfieldI(inPF, TRUE, &sfPO) ) {
+            if(! LoadScfieldI(inPF, TRUE, &sfPO) ) {
                 PROBLINE;
                 printf("Failed to load Scfield [%d]\n",n);
                 return(FALSE);
@@ -233,41 +233,41 @@ int LoadScfieldArrayI(FILE *inPF, SCFIELD ***scPPPO)
         }
         fpos = ftell(inPF);
     }
-	if(n<1) {
+    if(n<1) {
         DB_SCF DB_PrI("<< LoadScfieldArrayI (none) %d\n",n);
-		return(n);
-	}
-	/***
-	*	Allocate SCFLIELD pointer array and fill
-	*/
-	scPPO = (SCFIELD **)ALLOC(n,sizeof(SCFIELD *));
-	if(!scPPO) {
-		printf("Failed to allocate for %d score fields\n",n);
-		return(FALSE);
-	}
-	for(i=0;i<n;i++) {
+        return(n);
+    }
+    /***
+    *   Allocate SCFLIELD pointer array and fill
+    */
+    scPPO = (SCFIELD **)ALLOC(n,sizeof(SCFIELD *));
+    if(!scPPO) {
+        printf("Failed to allocate for %d score fields\n",n);
+        return(FALSE);
+    }
+    for(i=0;i<n;i++) {
         DB_SCF {
             DB_PrI("+ SCFIELD[%d] :\n",i);
             ReportScfieldI(fsetPA[i], TRUE, NULL);
         }
-		scPPO[i] = fsetPA[i];
+        scPPO[i] = fsetPA[i];
     }
-	*scPPPO = scPPO;
+    *scPPPO = scPPO;
     DB_SCF DB_PrI("<< LoadScfieldArrayI %d\n",n);
-	return(n);
+    return(n);
 }
 /****************************************************************************
-*	Dump a scfield to file
+*   Dump a scfield to file
 *   The flag full dictates output behavior
 */
 int ReportScfieldI(SCFIELD *sfPO, int full, FILE *oPF)
 {
-	int i;
+    int i;
     DOUB xD;
     char preS[DEF_BS];
 
-	VALIDATE(sfPO,SCFIELD_ID);
-	HAND_NFILE(oPF);
+    VALIDATE(sfPO,SCFIELD_ID);
+    HAND_NFILE(oPF);
     INIT_S(preS);
     if (full) {
         sprintf(preS,"#\t");
@@ -294,16 +294,16 @@ int ReportScfieldI(SCFIELD *sfPO, int full, FILE *oPF)
             xD += sfPO->step;
         }
     }
-	return(sfPO->n);
+    return(sfPO->n);
 }
 /****************************************************************************
-*	Report an array of SCFIELDs
+*   Report an array of SCFIELDs
 */
 int ReportScfieldArrayI(SCFIELD **scPPO, int n, int full, FILE *oPF)
 {
-	int i;
+    int i;
 
-	HAND_NFILE(oPF);
+    HAND_NFILE(oPF);
     for(i=0; i<n; i++) {
         if ((full > 1) && (i>0)) {
             fprintf(oPF,"#\n");

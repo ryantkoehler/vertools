@@ -1,7 +1,7 @@
 /*
 * bit_util.c
 *
-* Copyright 2014 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
+* Copyright 2015 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
 *
 * The programs and source code of the vertools collection are free software.
 * They are distributed in the hope that they will be useful,
@@ -31,51 +31,51 @@ int main(int argc, char **argv)
 /**************************************************************************/
 void Bit_utilUse(void)
 {
-	VersionSplash(NULL,VERSION_S,"#  ",TRUE);
-	printf("Usage: <infile> ['-' for stdin] [...options]\n");
-	printf("   <infile>   Bit record file to read in\n");
+    VersionSplash(NULL,VERSION_S,"#  ",TRUE);
+    printf("Usage: <infile> ['-' for stdin] [...options]\n");
+    printf("   <infile>   Bit record file to read in\n");
     printf("   -ibit      Input bit format: <name> <01011...> per line\n");
     printf("   -itab      Input table format\n");
     printf("   -stp       Strict parsing; Default is to skip input errors\n");
-	printf("   -out XXX   Set output to XXX\n");
+    printf("   -out XXX   Set output to XXX\n");
     printf("   -obit      Output bit format\n");
     printf("   -osbit     Output spaced bit format\n");
     printf("   -otab      Output table\n");
     printf("   -dump      Dump bitstring data\n");
-	printf("   -rran # #  Record range restricted # to # (1-base count)\n");
-	printf("   -ostat     Output bitstring stats\n");
-	printf("   -stat      Report overall stats for input file\n");
-	printf("   -fmat      Full matrix\n");
-	printf("   -rap       Report all pairs, even if redundant\n");
-	printf("   -sbit XXX  Second set of bit records from file XXX\n");
+    printf("   -rran # #  Record range restricted # to # (1-base count)\n");
+    printf("   -ostat     Output bitstring stats\n");
+    printf("   -stat      Report overall stats for input file\n");
+    printf("   -fmat      Full matrix\n");
+    printf("   -rap       Report all pairs, even if redundant\n");
+    printf("   -sbit XXX  Second set of bit records from file XXX\n");
     printf("   -band      Bitwise AND between <in> and <sbin> records\n");
     printf("   -bor       Bitwise OR  between <in> and <sbin> records\n");
     printf("   -bxor      Bitwise XOR between <in> and <sbin> records\n");
     printf("   -b3        All 3 bitwise operators between <in> and <in'>\n");
     printf("   -bnot      Bitwise NOT for records\n");
-	printf("   -twn #     Tweak number # of bits\n");
-	printf("   -twf #     Tweak faction # of bits\n");
-	printf("   -seed #    Set random seed for tweaks\n");
+    printf("   -twn #     Tweak number # of bits\n");
+    printf("   -twf #     Tweak faction # of bits\n");
+    printf("   -seed #    Set random seed for tweaks\n");
     printf("\n");
 }
 /**************************************************************************
-*	Main program
+*   Main program
 */
 int Bit_utilI(int argc, char **argv)
 {
     int itab, ibit, otab, obit, osbit;
-	BIT_UTIL *buPO;
+    BIT_UTIL *buPO;
 
-	buPO = CreateBit_utilPO();
+    buPO = CreateBit_utilPO();
     itab = ibit = FALSE;
     otab = obit = osbit = FALSE;
-	if(!ParseArgsI(argc,argv,
+    if(!ParseArgsI(argc,argv,
         "S -out S -rran I2 -dump B\
         -stat B -ostat B -fmat B\
         -ibit B -itab B -obit B -osbit B -otab B\
         -twn I -twf D -sbit S -band B -bor B -bxor B -bnot B\
         -seed I -b3 B -stp B -rap B",
-		buPO->inname, buPO->outname, 
+        buPO->inname, buPO->outname, 
         &buPO->firstr,&buPO->lastr, &buPO->do_dump,
         &buPO->do_stat, &buPO->do_ostat, &buPO->do_fmat,
         &ibit, &itab, &obit, &osbit, &otab,
@@ -85,94 +85,94 @@ int Bit_utilI(int argc, char **argv)
         (int *)NULL))
     {
         Bit_utilUse();
-		CHECK_BIT_UTIL(buPO);
-		return(FALSE);
-	}
-	/***
+        CHECK_BIT_UTIL(buPO);
+        return(FALSE);
+    }
+    /***
     *   Set input / output format 
-	*/
+    */
     buPO->iform = FigureBitFileTypeI(ibit,ibit,FALSE,itab,buPO->inname,TRUE);
-	if(!buPO->iform) {
+    if(!buPO->iform) {
         printf("Problem with input seq(s)\n");
-		CHECK_BIT_UTIL(buPO);
-		return(FALSE);
-	}
-	buPO->oform = buPO->iform;
+        CHECK_BIT_UTIL(buPO);
+        return(FALSE);
+    }
+    buPO->oform = buPO->iform;
     if( obit || osbit || otab ) {
         buPO->oform = FigureBitFileTypeI(obit,osbit,FALSE,otab,buPO->outname,TRUE);
     }
-	/***
-	*	Set up / load
-	*/
-	if(!SetupBtuI(buPO)) {
-		CHECK_BIT_UTIL(buPO);
-		return(FALSE);
-	}
-    if(!CheckBtuOptionsI(buPO)) {
-		CHECK_BIT_UTIL(buPO);
-		return(FALSE);
+    /***
+    *   Set up / load
+    */
+    if(!SetupBtuI(buPO)) {
+        CHECK_BIT_UTIL(buPO);
+        return(FALSE);
     }
-	HandleBtuHeader(buPO,buPO->out);
-	/***
-	*   Do whatever and output
-	*/
+    if(!CheckBtuOptionsI(buPO)) {
+        CHECK_BIT_UTIL(buPO);
+        return(FALSE);
+    }
+    HandleBtuHeader(buPO,buPO->out);
+    /***
+    *   Do whatever and output
+    */
     HandleBtuModsI(buPO);
     HandleBtuFiltersI(buPO);
     HandleBtuOutput(buPO,buPO->out);
-	/***
-	*	All done
-	*/
-	CHECK_BIT_UTIL(buPO);
-	return(TRUE);
+    /***
+    *   All done
+    */
+    CHECK_BIT_UTIL(buPO);
+    return(TRUE);
 }
 /*****************************************************************************
-*	Create data struct
+*   Create data struct
 */
 BIT_UTIL *CreateBit_utilPO()
 {
-	BIT_UTIL *buPO;
+    BIT_UTIL *buPO;
 
-	if(! (buPO = (BIT_UTIL *)ALLOC(1,sizeof(BIT_UTIL)) ) )
-	{
-		printf("# Failed to allocate working object\n");
-		return(NULL);
-	}
-	buPO->ID = BIT_UTIL_ID;
-	InitBit_util(buPO);
-	return(buPO);
+    if(! (buPO = (BIT_UTIL *)ALLOC(1,sizeof(BIT_UTIL)) ) )
+    {
+        printf("# Failed to allocate working object\n");
+        return(NULL);
+    }
+    buPO->ID = BIT_UTIL_ID;
+    InitBit_util(buPO);
+    return(buPO);
 }
 /*****************************************************************************
-*	Free datastructure and substructs
+*   Free datastructure and substructs
 */
 int DestroyBit_utilI(BIT_UTIL *buPO)
 {
-	VALIDATE(buPO,BIT_UTIL_ID);
-	CHECK_NFILE(buPO->out,buPO->outname);
-	CHECK_BITPOOL(buPO->bits);
-	CHECK_FREE(buPO->mmask);
-	CHECK_FREE(buPO->bmask);
-	CHECK_BITPOOL(buPO->sbits);
-	CHECK_BITPOOL(buPO->pretwk);
-	FREE(buPO);
-	return(TRUE);
+    VALIDATE(buPO,BIT_UTIL_ID);
+    CHECK_NFILE(buPO->out,buPO->outname);
+    CHECK_BITPOOL(buPO->bits);
+    CHECK_FREE(buPO->mmask);
+    CHECK_FREE(buPO->bmask);
+    CHECK_BITPOOL(buPO->sbits);
+    CHECK_BITPOOL(buPO->pretwk);
+    FREE(buPO);
+    return(TRUE);
 }
 /*****************************************************************************
-*	Set null / default values
+*   Set null / default values
 */
 void InitBit_util(BIT_UTIL *buPO)
 {
-	VALIDATE(buPO,BIT_UTIL_ID);
+    VALIDATE(buPO,BIT_UTIL_ID);
 
-	INIT_S(buPO->inname);
-	buPO->iform = BOGUS;
-	INIT_S(buPO->outname);
-	buPO->out = NULL;
-	buPO->oform = BOGUS;
+    INIT_S(buPO->inname);
+    buPO->iform = BOGUS;
+    INIT_S(buPO->outname);
+    buPO->out = NULL;
+    buPO->oform = BOGUS;
     buPO->outbits = buPO->outcomp = FALSE;
     buPO->bits = buPO->sbits = NULL;
     buPO->bsize = 0;
     buPO->firstr = buPO->lastr = BOGUS;
-	INIT_S(buPO->sbname);
+    INIT_S(buPO->sbname);
     buPO->do_stat = buPO->do_ostat = FALSE;
     buPO->do_fmat = buPO->do_rap = FALSE;
     buPO->do_band = buPO->do_bor = buPO->do_bxor = FALSE;
@@ -195,7 +195,7 @@ int CheckBtuOptionsI(BIT_UTIL *buPO)
     else {
         buPO->outbits = TRUE;
     }
-	return(TRUE);
+    return(TRUE);
 }
 /**************************************************************************/
 int SetupBtuI(BIT_UTIL *buPO)
@@ -244,13 +244,13 @@ int SetupTweaksI(BIT_UTIL *buPO)
 /**************************************************************************/
 int OpenBtuFilesI(BIT_UTIL *buPO)
 {
-	if(!NO_S(buPO->outname)) {
-		if(!(buPO->out=OpenUFilePF(buPO->outname,"w",NULL))) {
-			return(FALSE);
-		}
-	}
-	HAND_NFILE(buPO->out);
-	return(TRUE);
+    if(!NO_S(buPO->outname)) {
+        if(!(buPO->out=OpenUFilePF(buPO->outname,"w",NULL))) {
+            return(FALSE);
+        }
+    }
+    HAND_NFILE(buPO->out);
+    return(TRUE);
 }
 /**************************************************************************/
 int LoadBtuBitpoolsI(BIT_UTIL *buPO)
@@ -358,18 +358,18 @@ int HandleBtuFiltersI(BIT_UTIL *buPO)
 /**************************************************************************/
 int IsBitpoolRecOkI(BIT_UTIL *buPO, BITPOOL *bpPO, int r)
 {
-	int ok;
+    int ok;
 
     ok = TRUE;
     /***
     *   Record in range?
     */
     if(buPO->firstr > 0) {
-	    if( (r < (buPO->firstr -1)) || (r >= buPO->lastr) ) {
+        if( (r < (buPO->firstr -1)) || (r >= buPO->lastr) ) {
             ok = FALSE;
         }
     }
-	return(ok);
+    return(ok);
 }
 /*************************************************************************/
 void HandleBtuHeader(BIT_UTIL *buPO, FILE *outPF)
@@ -402,7 +402,7 @@ void HandleBtuOutput(BIT_UTIL *buPO, FILE *outPF)
     DOUB sumD;
     char nameS[NSIZE], pformS[DEF_BS];
 
-	HAND_NFILE(outPF);
+    HAND_NFILE(outPF);
     /***
     *   Set auto formatting and get format string 
     */
@@ -488,7 +488,7 @@ void HandleBtuFmat(BIT_UTIL *buPO, FILE *outPF)
     char nameS[NSIZE], cnameS[NSIZE];
     BITPOOL *rbitsPO, *cbitsPO;
 
-	HAND_NFILE(outPF);
+    HAND_NFILE(outPF);
     WriteBtuFmatHeader(buPO, outPF);
     /***
     *   Get row and col bitpools and dimensions
@@ -570,7 +570,7 @@ void WriteBtuFmatHeader(BIT_UTIL *buPO, FILE *outPF)
     char nameS[NSIZE];
     BITPOOL *bitsPO;
 
-	HAND_NFILE(outPF);
+    HAND_NFILE(outPF);
     fprintf(outPF,"# Full pairwise comparison matrix\n");
     if(buPO->outcomp) {
         if(buPO->do_b3) {

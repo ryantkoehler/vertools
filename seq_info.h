@@ -1,7 +1,7 @@
 /*
 * seq_info.h
 *
-* Copyright 2014 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
+* Copyright 2015 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
 *
 * The programs and source code of the vertools collection are free software.
 * They are distributed in the hope that they will be useful,
@@ -16,10 +16,10 @@
 
 
 /**
-*	Word-based info 
+*   Word-based info 
 */
-#define MAX_WFI 	10000	/*	Buffer size; .i.e max len */
-#define MAX_WSIZE 	20		/*	Max word size to consider */
+#define MAX_WFI     10000   /* Buffer size; .i.e max len */
+#define MAX_WSIZE   20      /* Max word size to consider */
 
 
 
@@ -34,12 +34,12 @@
 DOUB SeqWordFreqInfoD(char *seqPC,int len,int min,int max);
 int Fill123WordCountsI(char *seqS,int len,int *onePI,int *twoPI,int *thrPI);
 int Seq123ShannonInfoI(char *seqPC, int len, DOUB *onePD, DOUB *twoPD,
-	DOUB *thrPD);
+    DOUB *thrPD);
 int Seq123ShannonEvenInfoI(char *seqPC, int len, DOUB *onePD, DOUB *twoPD,
-	DOUB *thrPD);
+    DOUB *thrPD);
 int Seq123BrillouinInfoI(char *seqPC, int len, DOUB *onePD, DOUB *twoPD,
-	DOUB *thrPD);
+    DOUB *thrPD);
 int Seq123BergerParkerInfoI(char *seqPC, int len, DOUB *onePD, DOUB *twoPD,
-	DOUB *thrPD);
+    DOUB *thrPD);
 DOUB NormBergerParkerIndexD(int max,int num,int adim);
 

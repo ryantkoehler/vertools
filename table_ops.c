@@ -1,7 +1,7 @@
 /*
 * table_ops.c
 *
-* Copyright 2014 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
+* Copyright 2015 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
 *
 * The programs and source code of the vertools collection are free software.
 * They are distributed in the hope that they will be useful,
@@ -21,160 +21,160 @@
 #include "table.h"
 #include "score.h"
 
-#define DB_TAB		if(DB[70])
-#define DB_TAB_LO	if(DB[71])
+#define DB_TAB      if(DB[70])
+#define DB_TAB_LO   if(DB[71])
 
 /**************************************************************************
-*	Mix values in first two tables into third
+*   Mix values in first two tables into third
 *   All dimensions must be compatible
 */
 int MixTablesI(TABLE *ftabPO, TABLE *stabPO, TABLE *ttabPO, int mask, int mix,
-	int error)
+    int error)
 {
-	int r,c;
-	DOUB fD,sD,vD;
+    int r,c;
+    DOUB fD,sD,vD;
 
-	VALIDATE(ftabPO,TABLE_ID);
-	VALIDATE(stabPO,TABLE_ID);
-	VALIDATE(ttabPO,TABLE_ID);
-	if(!SameDimTablesI(ftabPO, stabPO, mask, error)) {
-		return(FALSE);
-	}
-	if(!SameDimTablesI(ftabPO, ttabPO, mask, error)) {
-		return(FALSE);
-	}
-	/***
-	*	Get and set new value for each cell
-	*/
-	for(c=0;c<ftabPO->ncol;c++)
-	{
-		if( (mask) && (!ftabPO->cmask[c]) ) {
-			continue;
-		}
-		for(r=0;r<ftabPO->nrow;r++)
-		{
-			if( (mask) && (!ftabPO->rmask[r]) ) {
-				continue;
-			}
-			GetTableValI(ftabPO,r,c,&fD);
-			GetTableValI(stabPO,r,c,&sD);
-			switch(mix)
-			{
-				case MATH_ADD:		vD = fD + sD;	break;
-				case MATH_SUB:		vD = fD - sD;	break;
-				case MATH_MUL:		vD = fD * sD;	break;
-				case MATH_DIV:		
-					if(sD == 0.0)
-					{ 	vD = 0.0;	}
-					else
-					{ 	vD = fD / sD;	}
-					break;
-				case MATH_MIN:		vD = MIN_NUM(fD,sD);	break;
-				case MATH_MAX:		vD = MAX_NUM(fD,sD);	break;
-				default:
-					printf("Bogus mix code: %d\n",mix);
-					ERR("MixTablesI","bad mixing operation code");
-					return(FALSE);
-			}
-			SetTableValI(ttabPO,r,c,vD);
-		}
-	}
-	return(TRUE);
+    VALIDATE(ftabPO,TABLE_ID);
+    VALIDATE(stabPO,TABLE_ID);
+    VALIDATE(ttabPO,TABLE_ID);
+    if(!SameDimTablesI(ftabPO, stabPO, mask, error)) {
+        return(FALSE);
+    }
+    if(!SameDimTablesI(ftabPO, ttabPO, mask, error)) {
+        return(FALSE);
+    }
+    /***
+    *   Get and set new value for each cell
+    */
+    for(c=0;c<ftabPO->ncol;c++)
+    {
+        if( (mask) && (!ftabPO->cmask[c]) ) {
+            continue;
+        }
+        for(r=0;r<ftabPO->nrow;r++)
+        {
+            if( (mask) && (!ftabPO->rmask[r]) ) {
+                continue;
+            }
+            GetTableValI(ftabPO,r,c,&fD);
+            GetTableValI(stabPO,r,c,&sD);
+            switch(mix)
+            {
+                case MATH_ADD:      vD = fD + sD;   break;
+                case MATH_SUB:      vD = fD - sD;   break;
+                case MATH_MUL:      vD = fD * sD;   break;
+                case MATH_DIV:      
+                    if(sD == 0.0)
+                    {   vD = 0.0;   }
+                    else
+                    {   vD = fD / sD;   }
+                    break;
+                case MATH_MIN:      vD = MIN_NUM(fD,sD);    break;
+                case MATH_MAX:      vD = MAX_NUM(fD,sD);    break;
+                default:
+                    printf("Bogus mix code: %d\n",mix);
+                    ERR("MixTablesI","bad mixing operation code");
+                    return(FALSE);
+            }
+            SetTableValI(ttabPO,r,c,vD);
+        }
+    }
+    return(TRUE);
 }
 /**************************************************************************
-*	Handle normalization of table
+*   Handle normalization of table
 */
 int NormTableI(TABLE *tabPO, int mask, int what)
 {
-	int nr,nc,r,c;
-	DOUB vD,avD,sdD;
+    int nr,nc,r,c;
+    DOUB vD,avD,sdD;
 
-	VALIDATE(tabPO,TABLE_ID);
-	nr = GetTableRowsI(tabPO,TRUE);
-	nc = GetTableColsI(tabPO,TRUE);
-	switch(what)
-	{
-		case TABLE_COL:
-			for(c=0;c<nc;c++)
-			{
-				if( (mask) && (!tabPO->cmask[c]) ) {
-					continue;
-				}
-				if(!TableColStatsI(tabPO,c,mask,NULL,NULL,&avD,&sdD)) {
-					avD = 0.0; 
-				}
-				if(sdD == 0.0) {
-					sdD = 1.0;
-				}
-				for(r=0;r<nr;r++)
-				{
-					if( (mask) && (!tabPO->rmask[r]) ) {
-						continue;
-					}
-					GetTableValI(tabPO,r,c,&vD);
-					vD = (vD - avD) / sdD;
-					SetTableValI(tabPO,r,c,vD);
-				}
-			}
-			break;
-		case TABLE_ROW:
-			for(r=0;r<nr;r++)
-			{
-				if( (mask) && (!tabPO->rmask[r]) ) {
+    VALIDATE(tabPO,TABLE_ID);
+    nr = GetTableRowsI(tabPO,TRUE);
+    nc = GetTableColsI(tabPO,TRUE);
+    switch(what)
+    {
+        case TABLE_COL:
+            for(c=0;c<nc;c++)
+            {
+                if( (mask) && (!tabPO->cmask[c]) ) {
+                    continue;
+                }
+                if(!TableColStatsI(tabPO,c,mask,NULL,NULL,&avD,&sdD)) {
+                    avD = 0.0; 
+                }
+                if(sdD == 0.0) {
+                    sdD = 1.0;
+                }
+                for(r=0;r<nr;r++)
+                {
+                    if( (mask) && (!tabPO->rmask[r]) ) {
+                        continue;
+                    }
+                    GetTableValI(tabPO,r,c,&vD);
+                    vD = (vD - avD) / sdD;
+                    SetTableValI(tabPO,r,c,vD);
+                }
+            }
+            break;
+        case TABLE_ROW:
+            for(r=0;r<nr;r++)
+            {
+                if( (mask) && (!tabPO->rmask[r]) ) {
                      continue;
-				}
-				if(!TableRowStatsI(tabPO,r,mask,NULL,NULL,&avD,&sdD)) {
-					avD = 0.0; 
-				}
-				if(sdD == 0.0) {
-					sdD = 1.0;
-				}
-				for(c=0;c<nc;c++) {
-					if( (mask) && (!tabPO->cmask[c]) ) {
-						continue;
-					}
-					GetTableValI(tabPO,r,c,&vD);
-					vD = (vD - avD) / sdD;
-					SetTableValI(tabPO,r,c,vD);
-				}
-			}
-			break;
-		case TABLE_FULL:
-			if(!TableStatsI(tabPO,-1,-1,-1,-1,mask,NULL,NULL,&avD,&sdD)) {
-				avD = 0.0; 
-			}
-			if(sdD == 0.0) {
-				sdD = 1.0;
-			}
-			for(r=0;r<nr;r++) {
-				if( (mask) && (!tabPO->rmask[r]) ) {
-					continue;
-				}
-				for(c=0;c<nc;c++) {
-					if( (mask) && (!tabPO->cmask[c]) ) {
-						continue;
-					}
-					GetTableValI(tabPO,r,c,&vD);
-					vD = (vD - avD) / sdD;
-					SetTableValI(tabPO,r,c,vD);
-				}
-			}
-			break;
-		default:
-			printf("Bogus table code: %d\n",what);
-			ERR("NormTableI","Bad table code");
-	}
-	return(TRUE);
+                }
+                if(!TableRowStatsI(tabPO,r,mask,NULL,NULL,&avD,&sdD)) {
+                    avD = 0.0; 
+                }
+                if(sdD == 0.0) {
+                    sdD = 1.0;
+                }
+                for(c=0;c<nc;c++) {
+                    if( (mask) && (!tabPO->cmask[c]) ) {
+                        continue;
+                    }
+                    GetTableValI(tabPO,r,c,&vD);
+                    vD = (vD - avD) / sdD;
+                    SetTableValI(tabPO,r,c,vD);
+                }
+            }
+            break;
+        case TABLE_FULL:
+            if(!TableStatsI(tabPO,-1,-1,-1,-1,mask,NULL,NULL,&avD,&sdD)) {
+                avD = 0.0; 
+            }
+            if(sdD == 0.0) {
+                sdD = 1.0;
+            }
+            for(r=0;r<nr;r++) {
+                if( (mask) && (!tabPO->rmask[r]) ) {
+                    continue;
+                }
+                for(c=0;c<nc;c++) {
+                    if( (mask) && (!tabPO->cmask[c]) ) {
+                        continue;
+                    }
+                    GetTableValI(tabPO,r,c,&vD);
+                    vD = (vD - avD) / sdD;
+                    SetTableValI(tabPO,r,c,vD);
+                }
+            }
+            break;
+        default:
+            printf("Bogus table code: %d\n",what);
+            ERR("NormTableI","Bad table code");
+    }
+    return(TRUE);
 }
 /**************************************************************************
-*	Handle normalization of table
+*   Handle normalization of table
 */
 int SmoothTableI(TABLE *tabPO, int what, int win, int mask)
 {
-	int i, n, nr, nc;
+    int i, n, nr, nc;
     NUMLIST *n1PO, *n2PO;
 
-	VALIDATE(tabPO,TABLE_ID);
+    VALIDATE(tabPO,TABLE_ID);
     nr = GetTableRowsI(tabPO,FALSE);
     nc = GetTableColsI(tabPO,FALSE);
     /***
@@ -184,7 +184,7 @@ int SmoothTableI(TABLE *tabPO, int what, int win, int mask)
     n2PO = CreateNumlistPO(IS_DOUB, NULL, 0);
     if( (!n1PO) || (!n2PO) ) {
         printf("Failed to allocate temp arrays\n");
-		ERR("SmoothTableI","Alloc failed");
+        ERR("SmoothTableI","Alloc failed");
         CHECK_NUMLIST(n1PO);
         CHECK_NUMLIST(n2PO);
         return(FALSE);
@@ -192,29 +192,29 @@ int SmoothTableI(TABLE *tabPO, int what, int win, int mask)
     /***
     *   Each row or col   
     */
-	switch(what)
+    switch(what)
     {
-		case TABLE_COL:
+        case TABLE_COL:
             for(i=0;i<nc;i++) {
                 n = GetTableColValsI(tabPO,i,n1PO,mask);
                 SmoothNumlistI(n1PO, n2PO, win);
                 SetTableColValsI(tabPO,i,n2PO,n,mask);
             }
             break;
-		case TABLE_ROW:
+        case TABLE_ROW:
             for(i=0;i<nr;i++) {
                 n = GetTableRowValsI(tabPO,i,n1PO,mask);
                 SmoothNumlistI(n1PO, n2PO, win);
                 SetTableRowValsI(tabPO,i,n2PO,n,mask);
             }
             break;
-	}
+    }
     CHECK_NUMLIST(n1PO);
     CHECK_NUMLIST(n2PO);
-	return(TRUE);
+    return(TRUE);
 }
 /**************************************************************************
-*	Quantil-ize table columns
+*   Quantil-ize table columns
 */
 int QuantileTableColsI(TABLE *tabPO, int parts, int mask, int verbose)
 {
@@ -223,9 +223,9 @@ int QuantileTableColsI(TABLE *tabPO, int parts, int mask, int verbose)
     SCOREC *cvalsPO;
     char cnameS[NSIZE],vformS[DEF_BS];
 
-	VALIDATE(tabPO,TABLE_ID);
-	nr = GetTableRowsI(tabPO,mask);
-	nc = GetTableColsI(tabPO,mask);
+    VALIDATE(tabPO,TABLE_ID);
+    nr = GetTableRowsI(tabPO,mask);
+    nc = GetTableColsI(tabPO,mask);
     GetTablePrintformI(tabPO,vformS,NULL,NULL,NULL,NULL);
     /***
     *   Cannot split into more parts than rows
@@ -252,17 +252,17 @@ int QuantileTableColsI(TABLE *tabPO, int parts, int mask, int verbose)
     *   Each column
     */
     for(c=0;c<nc;c++)
-	{
-		if( (mask) && (!tabPO->cmask[c]) ) {
-			continue;
-		}
+    {
+        if( (mask) && (!tabPO->cmask[c]) ) {
+            continue;
+        }
         GetTableColLabI(tabPO,c,cnameS,-1);
         /*** 
         *   Copy values into structure then sort
         */
         for(r=0;r<nr;r++)
         {
-			GetTableValI(tabPO,r,c,&vD);
+            GetTableValI(tabPO,r,c,&vD);
             cvalsPO[r].sc = vD;
         }
         SortScorecVals(cvalsPO,nr,1);
@@ -306,12 +306,12 @@ printf("quant=%d r=%d bval=%f qi=%d qval=%f\n",quant,r,bvalD,qi,qvalD);
                     printf("\n");
                 }
             }
-			GetTableValI(tabPO,cvalsPO[r].id,c,&vD);
+            GetTableValI(tabPO,cvalsPO[r].id,c,&vD);
             vD = DNUM(quant);
 /*
-			SetTableValI(tabPO,cvalsPO[r].id,c,qvalD);
+            SetTableValI(tabPO,cvalsPO[r].id,c,qvalD);
 */
-			SetTableValI(tabPO,cvalsPO[r].id,c,vD);
+            SetTableValI(tabPO,cvalsPO[r].id,c,vD);
         }
     }
     CHECK_SCOREC(cvalsPO);

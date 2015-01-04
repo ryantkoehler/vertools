@@ -1,7 +1,7 @@
 /*
 * table.h
 *
-* Copyright 2014 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
+* Copyright 2015 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
 *
 * The programs and source code of the vertools collection are free software.
 * They are distributed in the hope that they will be useful,
@@ -20,48 +20,48 @@
 #include "numlist.h"
 #include "wordlist.h"
 
-#define TABLE_ID	4062
+#define TABLE_ID    4062
 typedef struct TABLE
 {
-	int ID;
-	char name[NSIZE+1];     /* Table name */
-	char fname[NSIZE+1];    /* File name */
-	char prefix[NSIZE];		/* Print line prefix string */
-	char pvform[NSIZE];		/* Print formatting string for values */
-	char pvform2[NSIZE];	/* Print formatting string for values, more precision */
-	char prlform[NSIZE];	/* Print formatting string for labels */
-	char pvsep[NSIZE];	    /* Print value separator */
-	int nrow, ncol;         /* Number of rows, cols */
-	struct NUMLIST *vals;   /* Value field (the DATA!)  */
-    struct WORDLIST *clabs; /* Column lables */
-    struct WORDLIST *rlabs; /* Row lables */
-	int rlab,clab;			/* Flags for row / col lables */
-	char corner[NSIZE];     /* Name for 'corner' between row and col labs */
-	char *cmask;			/* Col mask */
-	char *rmask;			/* Row mask */
-	int prenum;				/* Precision number of digits; e.g. 3 = 1.23400000 */
-	DOUB prefac;			/* Precision working factor */
+    int ID;
+    char name[NSIZE+1];     /* able name */
+    char fname[NSIZE+1];    /* ile name */
+    char prefix[NSIZE];     /* rint line prefix string */
+    char pvform[NSIZE];     /* rint formatting string for values */
+    char pvform2[NSIZE];    /* rint formatting string for values, more precision */
+    char prlform[NSIZE];    /* rint formatting string for labels */
+    char pvsep[NSIZE];      /* rint value separator */
+    int nrow, ncol;         /* umber of rows, cols */
+    struct NUMLIST *vals;   /* alue field (the DATA!)  */
+    struct WORDLIST *clabs; /* olumn lables */
+    struct WORDLIST *rlabs; /* ow lables */
+    int rlab,clab;          /* lags for row / col lables */
+    char corner[NSIZE];     /* ame for 'corner' between row and col labs */
+    char *cmask;            /* ol mask */
+    char *rmask;            /* ow mask */
+    int prenum;             /* recision number of digits; e.g. 3 = 1.23400000 */
+    DOUB prefac;            /* recision working factor */
 }TABLE;
 
 #define CHECK_TABLE(wf) if(wf){ DestroyTableI(wf); wf=NULL; }
 
 
 /*
-define TABBUFF_SIZE	10000	
+define TABBUFF_SIZE 10000   
 */
-#define TABBUFF_SIZE	    200000	/* Parsing buffer size */
-#define DEF_TAB_PVFORM_S    "%6.2f"	/* Default value-dump format string */
-#define DEF_TAB_PVFORM2_S   "%6.4f"	/* Default value-dump format string */
-#define DEF_TAB_PRLFORM_S	"%s"	/* Default row label format string */
-#define DEF_TAB_PVSEP_S	    " "		/* Default value-dump delimiter string */
+#define TABBUFF_SIZE        200000  /* arsing buffer size */
+#define DEF_TAB_PVFORM_S    "%6.2f" /* efault value-dump format string */
+#define DEF_TAB_PVFORM2_S   "%6.4f" /* efault value-dump format string */
+#define DEF_TAB_PRLFORM_S   "%s"    /* efault row label format string */
+#define DEF_TAB_PVSEP_S     " "     /* efault value-dump delimiter string */
 
-#define DEF_TAB_PRENUM      4		/* Default value precision (digits) */
-#define MAX_TAB_PRENUM      12		/* Max value precision */
-#define MIN_TAB_PRENUM      0		/* Min value precision */
+#define DEF_TAB_PRENUM      4       /* efault value precision (digits) */
+#define MAX_TAB_PRENUM      12      /* ax value precision */
+#define MIN_TAB_PRENUM      0       /* in value precision */
 
-#define TABLE_ROW		    333		/* Code to indicate row(s) */
-#define TABLE_COL		    334		/* Code to indicate col(s) */
-#define TABLE_FULL		    335		/* Code to indicate full table */
+#define TABLE_ROW           333     /* ode to indicate row(s) */
+#define TABLE_COL           334     /* ode to indicate col(s) */
+#define TABLE_FULL          335     /* ode to indicate full table */
 
 
 
@@ -119,7 +119,7 @@ void DumpTableDescription(TABLE *tabPO,int mask,char *preS,FILE *outPF);
 * table_ops.c
 */
 int MixTablesI(TABLE *ftabPO, TABLE *stabPO, TABLE *ttabPO, int mask, int mix,
-	int error);
+    int error);
 int NormTableI(TABLE *tabPO, int mask, int what);
 int SmoothTableI(TABLE *tabPO, int what, int win, int mask);
 int QuantileTableColsI(TABLE *tabPO, int parts, int mask, int verbose);
@@ -128,11 +128,11 @@ int QuantileTableColsI(TABLE *tabPO, int parts, int mask, int verbose);
 * table_stat.c
 */
 int TableColStatsI(TABLE *tabPO, int col, int mask, DOUB *loPD, DOUB *hiPD, 
-	DOUB *avPD, DOUB *sdPD);
+    DOUB *avPD, DOUB *sdPD);
 int TableRowStatsI(TABLE *tabPO, int row, int mask, DOUB *loPD, DOUB *hiPD, 
-	DOUB *avPD, DOUB *sdPD);
+    DOUB *avPD, DOUB *sdPD);
 int TableStatsI(TABLE *tabPO, int rs, int re, int cs, int ce, int mask,
-	DOUB *loPD, DOUB *hiPD, DOUB *avPD, DOUB *sdPD);
+    DOUB *loPD, DOUB *hiPD, DOUB *avPD, DOUB *sdPD);
 
 /****************************************************************
 * table_str.c

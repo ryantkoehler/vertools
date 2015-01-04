@@ -1,7 +1,7 @@
 /*
 * numlist.c
 *
-* Copyright 2014 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
+* Copyright 2015 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
 *
 * The programs and source code of the vertools collection are free software.
 * They are distributed in the hope that they will be useful,
@@ -20,7 +20,7 @@
 #include "prim.h"
 #include "numlist.h"
 
-#define DB_NLOW	    if(DB[30])
+#define DB_NLOW     if(DB[30])
 
 /**************************************************************************/
 NUMLIST *CreateNumlistPO(int type, char *fnameS, int n)

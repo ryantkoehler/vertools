@@ -1,7 +1,7 @@
 /*
 * fbound.c
 *
-* Copyright 2014 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
+* Copyright 2015 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
 *
 * The programs and source code of the vertools collection are free software.
 * They are distributed in the hope that they will be useful,
@@ -21,53 +21,53 @@
 #include "fbound.h"
 
 
-/*****************************************************************/	
+/*****************************************************************/ 
 double Fraction1D(double conc,double conc2,double temp, double gD)
 {   
-	double aD,bD,cD,qD,eD,xD,climD,cexcD;
-	int ns;
+    double aD,bD,cD,qD,eD,xD,climD,cexcD;
+    int ns;
 
-	if (conc>conc2)
-	{
-		climD=conc2;
-		cexcD=conc;
-	}   
-	else
-	{
-		climD=conc;
-		cexcD=conc2;
-	}
-	eD=exp( (gD* -1000.0) / (1.98722*(temp+273.15)) );
-	aD=-eD*climD;
-	bD=1.0+eD*climD+eD*cexcD;
-	cD=-eD*cexcD;
+    if (conc>conc2)
+    {
+        climD=conc2;
+        cexcD=conc;
+    }   
+    else
+    {
+        climD=conc;
+        cexcD=conc2;
+    }
+    eD=exp( (gD* -1000.0) / (1.98722*(temp+273.15)) );
+    aD=-eD*climD;
+    bD=1.0+eD*climD+eD*cexcD;
+    cD=-eD*cexcD;
 
-	ns = NUM_SIGN(bD);
-	qD=-0.5*(bD+RNUM(ns)*sqrt(pow(bD,2.0)-4.0*aD*cD));
+    ns = NUM_SIGN(bD);
+    qD=-0.5*(bD+RNUM(ns)*sqrt(pow(bD,2.0)-4.0*aD*cD));
 
-	xD=qD/aD*100.0;
-	return xD;
+    xD=qD/aD*100.0;
+    return xD;
 }
 /*****************************************************************/
 double Fraction2D(double conc,double conc2,double temp ,double gD)
-	{	
-	double aD,bD,cD,qD,eD,xD,climD,cexcD;
-	int ns;
+    {   
+    double aD,bD,cD,qD,eD,xD,climD,cexcD;
+    int ns;
 
-	if (conc>conc2)
-		{climD=conc2;
-		cexcD=conc;}   
-	else
-		{climD=conc;
-		cexcD=conc2;}
-	eD=exp(-(gD*1000.0)/(1.98722*(temp+273.15)));
-	aD=-eD*climD;
-	bD=1+eD*climD+eD*cexcD;
-	cD=-eD*cexcD;
+    if (conc>conc2)
+        {climD=conc2;
+        cexcD=conc;}   
+    else
+        {climD=conc;
+        cexcD=conc2;}
+    eD=exp(-(gD*1000.0)/(1.98722*(temp+273.15)));
+    aD=-eD*climD;
+    bD=1+eD*climD+eD*cexcD;
+    cD=-eD*cexcD;
 
-	ns = NUM_SIGN(bD);
-	qD=-0.5*(bD+RNUM(ns)*sqrt(pow(bD,2.0)-4.0*aD*cD));
+    ns = NUM_SIGN(bD);
+    qD=-0.5*(bD+RNUM(ns)*sqrt(pow(bD,2.0)-4.0*aD*cD));
 
-	xD=cD/qD*100.0;
-	return xD;
-	}
+    xD=cD/qD*100.0;
+    return xD;
+    }

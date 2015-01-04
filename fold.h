@@ -1,7 +1,7 @@
 /*
 * fold.h
 *
-* Copyright 2014 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
+* Copyright 2015 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
 *
 * The programs and source code of the vertools collection are free software.
 * They are distributed in the hope that they will be useful,
@@ -487,11 +487,11 @@ void assign_plist_from_db(plist **pl,
                           const char *struc,
                           float pr);
 
-/* finally moved the loop energy function declarations to this header...  */
-/* BUT: The functions only exist for backward compatibility reasons!      */
-/* You better include "loop_energies.h" and call the functions:           */
-/* E_Hairpin() and E_IntLoop() which are (almost) threadsafe as they get  */
-/* a pointer to the energy parameter datastructure as additional argument */
+/* inally moved the loop energy function declarations to this header...  */
+/* UT: The functions only exist for backward compatibility reasons!      */
+/* ou better include "loop_energies.h" and call the functions:           */
+/* _Hairpin() and E_IntLoop() which are (almost) threadsafe as they get  */
+/*  pointer to the energy parameter datastructure as additional argument */
 
 /**
  *  \deprecated {This function is deprecated and will be removed soon.

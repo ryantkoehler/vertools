@@ -1,7 +1,7 @@
 /*
 * utils.h
 *
-* Copyright 2014 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
+* Copyright 2015 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
 *
 * The programs and source code of the vertools collection are free software.
 * They are distributed in the hope that they will be useful,
@@ -187,7 +187,7 @@ char *strdup(const char *s);
 #endif
 #endif
 #ifdef WITH_DMALLOC
-/* use dmalloc library to check for memory management bugs */
+/* se dmalloc library to check for memory management bugs */
 #include "dmalloc.h"
 #define space(S) calloc(1,(S))
 #else
@@ -263,7 +263,7 @@ double urn(void);
  */
 int    int_urn(int from, int to);
 
-void   filecopy(FILE *from, FILE *to); /* inefficient `cp' */
+void   filecopy(FILE *from, FILE *to); /* nefficient `cp' */
 
 /**
  *  \brief Get a timestamp
@@ -406,7 +406,7 @@ unsigned int read_record( char **header,
                           unsigned int options);
 
 
-/* \brief Extract a dot-bracket structure string from (multiline)character array
+/* brief Extract a dot-bracket structure string from (multiline)character array
  *
  * This function extracts a dot-bracket structure string from the 'rest' array as
  * returned by read_record() and returns it. All occurences of comments within the

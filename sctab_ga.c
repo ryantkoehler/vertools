@@ -1,7 +1,7 @@
 /*
 * sctab_ga.c
 *
-* Copyright 2014 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
+* Copyright 2015 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
 *
 * The programs and source code of the vertools collection are free software.
 * They are distributed in the hope that they will be useful,
@@ -25,7 +25,7 @@
 
 
 /**************************************************************************
-*	Handle cross over  
+*   Handle cross over  
 */
 int HandleSctGACrossOverI(SCORETAB *stPO)
 {
@@ -104,7 +104,7 @@ int HandleSctGACrossOverI(SCORETAB *stPO)
     return(TRUE);
 }
 /**************************************************************************
-*	Handle cross over  
+*   Handle cross over  
 */
 int HandleSctGAMutationI(SCORETAB *stPO)
 {

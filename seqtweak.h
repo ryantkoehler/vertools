@@ -1,7 +1,7 @@
 /*
 * seqtweak.h
 *
-* Copyright 2014 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
+* Copyright 2015 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
 *
 * The programs and source code of the vertools collection are free software.
 * They are distributed in the hope that they will be useful,
@@ -15,44 +15,44 @@
 */
 
 
-#define VERSION_S "SeqTweak Version 0.6"
+#define VERSION_S "SeqTweak Version 0.61"
 
 #define SEQTWEAK_ID     5141 
 typedef struct SEQTWEAK
 {
     int ID;
-	FILE *in;               /*  Input file */
-    char inname[NSIZE];     /*  Input filename */
-	int iform;              /*  Input file format */
-    FILE *out;              /*  Output file */
-    char outname[NSIZE];	/*  Output filename */
-    struct SEQ *seq;        /*  Sequence object */
-    int firstb,lastb;       /*  First / last base */
-    int do_rre;             /* Flag for range releative to end (backwards) */
-	int mis;				/*	Number of missmatches */
-	int ins;				/*	Number of inserts */
-	int del;				/*	Number of deletions */
-	int ids;				/*	In/Del word size */
-	int mds;				/*	Minimum disruption separation */
-    char bname[NSIZE];		/*  Base name for tweaked guys */
-	int do_amb;				/*	Flag for All Missmatch Bases */
-	int do_smm;				/*	Flag for shotgun missmatches */
-	int do_cpm;				/*	Flag for close-packed missmatches */
-    int do_sh, do_fsh;      /*  Flag for shuffle and full shuffle */
-	int seed;				/*	Random number seed */
-    int do_nsim;            /* Flag for old style naming */
-    int do_nre;             /* Flag for naming relative to 3' end */
-    char smm_sub[10];       /* Single mismatch substitution */
-    int smm_pos;            /* Single mm postion */
+    FILE *in;               /* Input file */
+    char inname[NSIZE];     /* Input filename */
+    int iform;              /* Input file format */
+    FILE *out;              /* Output file */
+    char outname[NSIZE];    /* Output filename */
+    struct SEQ *seq;        /* Sequence object */
+    int firstb,lastb;       /* First / last base */
+    int do_rre;             /* lag for range releative to end (backwards) */
+    int mis;                /* Number of missmatches */
+    int ins;                /* Number of inserts */
+    int del;                /* Number of deletions */
+    int ids;                /* In/Del word size */
+    int mds;                /* Minimum disruption separation */
+    char bname[NSIZE];      /* Base name for tweaked guys */
+    int do_amb;             /* Flag for All Missmatch Bases */
+    int do_smm;             /* Flag for shotgun missmatches */
+    int do_cpm;             /* Flag for close-packed missmatches */
+    int do_sh, do_fsh;      /* Flag for shuffle and full shuffle */
+    int seed;               /* Random number seed */
+    int do_nsim;            /* lag for old style naming */
+    int do_nre;             /* lag for naming relative to 3' end */
+    char smm_sub[10];       /* ingle mismatch substitution */
+    int smm_pos;            /* ingle mm postion */
 }SEQTWEAK;
 
 #define CHECK_SEQTWEAK(ob) if(ob){DestroySeqtweakI(ob); ob=NULL;}
-	
+    
 
-#define MAX_TWEAKSEQ	200
-#define MAX_IDSIZE		5
-#define MAX_TWK_TRYS	10000
-#define MAX_TWK_STARTS	1000
+#define MAX_TWEAKSEQ    200
+#define MAX_IDSIZE      5
+#define MAX_TWK_TRYS    10000
+#define MAX_TWK_STARTS  1000
 
 
 /*********************** ppp ********************

@@ -1,7 +1,7 @@
 /*
 * venpipe.h
 *
-* Copyright 2014 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
+* Copyright 2015 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
 *
 * The programs and source code of the vertools collection are free software.
 * They are distributed in the hope that they will be useful,
@@ -14,91 +14,91 @@
 *
 */
 
-#define VEN_VERSION_S   "VenPipe Version 0.81"
+#define VEN_VERSION_S   "VenPipe Version 0.82"
 #define VLIB_VERSION_S  "Vienna Library: ViennaRNA-2.1.6"
 
-#define MAX_VSLEN 	10000	/*	Sequence buffer size; Max seq len */
+#define MAX_VSLEN   10000   /* Sequence buffer size; Max seq len */
 
 
 #define VENPIPE_ID      5161
 typedef struct VENPIPE
 {
-	int ID;
-	char inname[NSIZE];	/*	Input filename */
-	FILE *in;				/*	Input file */
-	int iform;				/*	Input format */
-	int cleanseq;			/*	Input sequence cleaning level */
-	char outname[NSIZE];	/*	Output log name */
-	FILE *out;				/*	Log file */
-	int ofas;				/*	Flag to output sequence */
-	int oraw;				/*	Flag to output sequence */
-	int max_problems;		/*	How many problems before bail */
-	int do_pfe;				/*	Flag to calculate partition free energy; not min */
-	int do_ss;				/*	Flag to dump seq structrure */
-	int do_dmb;				/*	Flag to dump number of matching bases */
-	int do_ksapar;			/*	Flag to keep salt adjusted parameter file */
-	int firstb,lastb;		/*	Base restrictions? */
-	int rre;				/*	Range relative to end flag */
-    int do_mask;            /* Flag to mask range with N */
-    int do_not;             /* Flag to invert mask range */
-	int dmb_f,dmb_l,mrre;	/*	Range restrictions for dmb reporting */
-    int do_mbtab;           /* Flag to dump match base table */
-	DOUB mst,men,mj;		/*	Melt temperature start, end, and jump */
-	/***
-	*	Tm_pars / Vienna stuff
-	*/
-	DOUB temp;				/*	Temperature */
-	DOUB salt;			    /*	Salt */
-	DOUB tcon,pcon;			/*	Target and probe concentrations */
-	struct VENERGY *ven;	/*	Vienna-specific settings structure */
-	char vparfile[NSIZE];	/*	Vienna parameter file name */
-	int do_saltcorrect;		/*	Flag to salt correct vienna parameters */
-	/***
-	*	per seq stuff
-	*/
-	struct SEQ *seq;		/* SEQUENCE Object */
-	char tname[NSIZE];		/* Target name string */
-	char tseq[MAX_VSLEN];	/* Sequence string buffer (after cleaned up) */
-	char tseq2[MAX_VSLEN];	/* Sequence string buffer; no masking */
-	int tlen;				/* Sequence length */
-	char tss[MAX_VSLEN];	/* Sec structure string */
-	char tss2[MAX_VSLEN];	/* Sec structure string 2 */
-	DOUB ten, ten2;         /* Structure energies */
+    int ID;
+    char inname[NSIZE]; /* Input filename */
+    FILE *in;               /* Input file */
+    int iform;              /* Input format */
+    int cleanseq;           /* Input sequence cleaning level */
+    char outname[NSIZE];    /* Output log name */
+    FILE *out;              /* Log file */
+    int ofas;               /* Flag to output sequence */
+    int oraw;               /* Flag to output sequence */
+    int max_problems;       /* How many problems before bail */
+    int do_pfe;             /* Flag to calculate partition free energy; not min */
+    int do_ss;              /* Flag to dump seq structrure */
+    int do_dmb;             /* Flag to dump number of matching bases */
+    int do_ksapar;          /* Flag to keep salt adjusted parameter file */
+    int firstb,lastb;       /* Base restrictions? */
+    int rre;                /* Range relative to end flag */
+    int do_mask;            /* lag to mask range with N */
+    int do_not;             /* lag to invert mask range */
+    int dmb_f,dmb_l,mrre;   /* Range restrictions for dmb reporting */
+    int do_mbtab;           /* lag to dump match base table */
+    DOUB mst,men,mj;        /* Melt temperature start, end, and jump */
+    /***
+    *   Tm_pars / Vienna stuff
+    */
+    DOUB temp;              /* Temperature */
+    DOUB salt;              /* Salt */
+    DOUB tcon,pcon;         /* Target and probe concentrations */
+    struct VENERGY *ven;    /* Vienna-specific settings structure */
+    char vparfile[NSIZE];   /* Vienna parameter file name */
+    int do_saltcorrect;     /* Flag to salt correct vienna parameters */
+    /***
+    *   per seq stuff
+    */
+    struct SEQ *seq;        /* EQUENCE Object */
+    char tname[NSIZE];      /* arget name string */
+    char tseq[MAX_VSLEN];   /* equence string buffer (after cleaned up) */
+    char tseq2[MAX_VSLEN];  /* equence string buffer; no masking */
+    int tlen;               /* equence length */
+    char tss[MAX_VSLEN];    /* ec structure string */
+    char tss2[MAX_VSLEN];   /* ec structure string 2 */
+    DOUB ten, ten2;         /* tructure energies */
 }VENPIPE;
 
 /*
 *   Structure to hold various vienna settings and parameters
 */
-#define VENERGY_ID      4082	
+#define VENERGY_ID      4082    
 typedef struct VENERGY
 {
-	int ID;
-	char vparfile[NSIZE];	/*	Vienna parameter file */
-	int do_saltcorrect;		/*  Flag to salt correct vienna parameters */
-	int do_saltkeep;		/*  Flag to keep salt-corrected par file */
-	DOUB temp;				/*	Temperature */
-	DOUB salt;				/*	Salt, Mg */
+    int ID;
+    char vparfile[NSIZE];   /* Vienna parameter file */
+    int do_saltcorrect;     /* Flag to salt correct vienna parameters */
+    int do_saltkeep;        /* Flag to keep salt-corrected par file */
+    DOUB temp;              /* Temperature */
+    DOUB salt;              /* Salt, Mg */
 
 /*
-	int do_backtrack;		
-	int nogu;
-	int noclosinggu;
-	int nolonelypairs;
-	int tetra_loop;
-	int energy_set;
-	int fold_constrained;
-	int dangles;
-	int logml;
+    int do_backtrack;       
+    int nogu;
+    int noclosinggu;
+    int nolonelypairs;
+    int tetra_loop;
+    int energy_set;
+    int fold_constrained;
+    int dangles;
+    int logml;
 */
 }VENERGY;
 
 
-#define CHECK_VENPIPE(t) 	if(t){DestroyVenpipeI(t); t=NULL;}
-#define CHECK_VENERGY(t) 	if(t){DestroyVenergyI(t); t=NULL;}
+#define CHECK_VENPIPE(t)    if(t){DestroyVenpipeI(t); t=NULL;}
+#define CHECK_VENERGY(t)    if(t){DestroyVenergyI(t); t=NULL;}
 
 
 /*********************************************************************
-*	Global flag vars 
+*   Global flag vars 
 */
 #ifdef __VENERGY__
 int vienna_okGI = 0;
@@ -108,18 +108,18 @@ extern int vienna_okGI;
 
 
 /***
-*	Defaults 
+*   Defaults 
 */
-#define VEN_MAX_PROBLEMS	TOO_BIG
+#define VEN_MAX_PROBLEMS    TOO_BIG
 
-#define DEF_TEMP 		    37		/*	Default temperature (C)	*/
-#define DEF_SALT		    1.00    /*	Default salt conc (M) */
+#define DEF_TEMP            37      /* Default temperature (C) */
+#define DEF_SALT            1.00    /* Default salt conc (M) */
 
-#define DEF_SALTCORRECT		TRUE	/*	Flag to salt-correct parameter file */
-#define SALTCOR_MAXFILE		20		/*	Max number for salt-correct temp file */
+#define DEF_SALTCORRECT     TRUE    /* Flag to salt-correct parameter file */
+#define SALTCOR_MAXFILE     20      /* Max number for salt-correct temp file */
 
-#define DEF_MELT_JUMP_D		2.5     /* Delta for "melting" */
-#define MIN_MELT_JUMP_D		1.0     /* Min delta for "melting" */
+#define DEF_MELT_JUMP_D     2.5     /* elta for "melting" */
+#define MIN_MELT_JUMP_D     1.0     /* in delta for "melting" */
 
 
 

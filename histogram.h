@@ -1,7 +1,7 @@
 /*
 * histogram.h
 *
-* Copyright 2014 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
+* Copyright 2015 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
 *
 * The programs and source code of the vertools collection are free software.
 * They are distributed in the hope that they will be useful,
@@ -23,19 +23,19 @@
 
 typedef struct HISTOGRAM
 {
-	int ID;
-    struct NUMLIST *bins;   /* Member names */
-    int n;                  /* Number of bins */
-    DOUB bsize;             /* Bin size */
-    DOUB lo,hi,ran;         /* Low, High values and range */
-    int nov,nun;            /* Numbers under / over */
-    struct NUMLIST *vals;   /* Values; Pointer to source only, not owned */
-    int val_n;              /* Number of source values */
-    DOUB val_hi,val_lo;     /* Hi and low source values */
-    DOUB val_ran;           /* Range of source values */
+    int ID;
+    struct NUMLIST *bins;   /* ember names */
+    int n;                  /* umber of bins */
+    DOUB bsize;             /* in size */
+    DOUB lo,hi,ran;         /* ow, High values and range */
+    int nov,nun;            /* umbers under / over */
+    struct NUMLIST *vals;   /* alues; Pointer to source only, not owned */
+    int val_n;              /* umber of source values */
+    DOUB val_hi,val_lo;     /* i and low source values */
+    DOUB val_ran;           /* ange of source values */
 } HISTOGRAM;
 
-#define CHECK_HISTOGRAM(fp) 	if(fp){DestroyHistogramI(fp);fp=NULL;}
+#define CHECK_HISTOGRAM(fp)     if(fp){DestroyHistogramI(fp);fp=NULL;}
 
 
 

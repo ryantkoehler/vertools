@@ -1,7 +1,7 @@
 /*
 * score.h
 *
-* Copyright 2014 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
+* Copyright 2015 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
 *
 * The programs and source code of the vertools collection are free software.
 * They are distributed in the hope that they will be useful,
@@ -18,42 +18,42 @@
 #ifndef __SCOREH__
 #define __SCOREH__
 
-#define MAX_SC_VALS	100		/*	Max elements in score field array */
+#define MAX_SC_VALS 100     /* Max elements in score field array */
 
 typedef struct SCOREC
 {
-    int id;     /*	Index */
-    DOUB sc;    /*	Value */
+    int id;     /* Index */
+    DOUB sc;    /* Value */
 }SCOREC;
 
-#define SCFIELD_ID	4042
+#define SCFIELD_ID  4042
 typedef struct SCFIELD
 {
     int ID;
-    char name[NSIZE+1];      /*	Score field name */
-    int n;                  /*	Number of elements in value array */
-    DOUB min,max;           /*  Minimum / max elements in value array */
-    DOUB step;              /*	Step increment in value array */
-    DOUB *yval;             /*	Y value array */
-    int ngiven;             /*  Given value count */
-    DOUB *gxv;              /*	Given X values */
-    DOUB *gyv;              /*	Given Y values */
+    char name[NSIZE+1];      /* core field name */
+    int n;                  /* Number of elements in value array */
+    DOUB min,max;           /* Minimum / max elements in value array */
+    DOUB step;              /* Step increment in value array */
+    DOUB *yval;             /* Y value array */
+    int ngiven;             /* Given value count */
+    DOUB *gxv;              /* Given X values */
+    DOUB *gyv;              /* Given Y values */
 }SCFIELD;
 
-#define CHECK_SCOREC(sc) 	if(sc){DestroyScorecsI(sc); sc=NULL;}
-#define CHECK_SCFIELD(ob) 	if(ob){DestroyScfieldI(ob); ob=NULL;}
+#define CHECK_SCOREC(sc)    if(sc){DestroyScorecsI(sc); sc=NULL;}
+#define CHECK_SCFIELD(ob)   if(ob){DestroyScfieldI(ob); ob=NULL;}
 
-#define MIN_SCF_STEP	0.00001
+#define MIN_SCF_STEP    0.00001
 
 
 /***
-*	IO stuff
+*   IO stuff
 */
 #define SCFIELD_START_S "SCFIELD_START"
 #define SCFIELD_END_S   "SCFIELD_END"
 
-#define	SCORE_OUT_NICE	666	
-#define SCORES_PER_LINE	5
+#define SCORE_OUT_NICE  666 
+#define SCORES_PER_LINE 5
 
 
 /*********************** ppp ********************

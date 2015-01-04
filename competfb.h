@@ -1,7 +1,7 @@
 /*
 * competfb.h
 *
-* Copyright 2014 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
+* Copyright 2015 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
 *
 * The programs and source code of the vertools collection are free software.
 * They are distributed in the hope that they will be useful,
@@ -25,5 +25,5 @@
 * competfb.c
 */
 int CalcCompEqI(DOUB C0A, DOUB C0B1, DOUB C0B2, DOUB DGAB1T, DOUB DGAB2T,
-	DOUB T, DOUB *f1PD, DOUB *f2PD);
+    DOUB T, DOUB *f1PD, DOUB *f2PD);
 

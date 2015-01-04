@@ -1,7 +1,7 @@
 /*
 * tm_pars.h
 *
-* Copyright 2014 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
+* Copyright 2015 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
 *
 * The programs and source code of the vertools collection are free software.
 * They are distributed in the hope that they will be useful,
@@ -35,19 +35,19 @@
 typedef struct TM_PARS
 {
     int ID;
-    int algo;           /* Flag indicating what algorithm to use */
-    int csym;           /* Check symmetry (to correct concentration term) */
-    int dir;            /* Flag to indicate strand direction */
-    int ambig_ok;       /* Flag to not complain about ambiguous bases */
-    char source[NSIZE]; /* Name of file of parameters */
-    double conc,conc2,conc3;    /* DNA concentrations (M) */
-    double salt;        /*  Salt concentration (M) */
-    double mg;          /*  Mg concentration (M) */
-    double tp;          /*  Temperature */
-    struct TABLE *htab; /*  Table of enthalpies; Rows = NN; Cols = position */ 
-    int ht_col, ht_d;   /*  htab number of columns, default column */
-    struct TABLE *stab; /*  Table of entropies; Rows = NN; Cols = position */
-    int st_col, st_d;   /*  stab number of columns, default column */
+    int algo;           /* lag indicating what algorithm to use */
+    int csym;           /* heck symmetry (to correct concentration term) */
+    int dir;            /* lag to indicate strand direction */
+    int ambig_ok;       /* lag to not complain about ambiguous bases */
+    char source[NSIZE]; /* ame of file of parameters */
+    double conc,conc2,conc3;    /* NA concentrations (M) */
+    double salt;        /* Salt concentration (M) */
+    double mg;          /* Mg concentration (M) */
+    double tp;          /* Temperature */
+    struct TABLE *htab; /* Table of enthalpies; Rows = NN; Cols = position */ 
+    int ht_col, ht_d;   /* htab number of columns, default column */
+    struct TABLE *stab; /* Table of entropies; Rows = NN; Cols = position */
+    int st_col, st_d;   /* stab number of columns, default column */
     double Gterm[5][5][5][5];
     double Hterm[5][5][5][5];
     double Gprop[4][4][4][4];
@@ -76,28 +76,28 @@ typedef struct TM_PARS
 /***
 *    Defaults and limits
 */
-#define DEF_TM_ALGO     ALGO_SANTA  /*  Default nearest neighbors algorithm */
+#define DEF_TM_ALGO     ALGO_SANTA  /* Default nearest neighbors algorithm */
 
-#define DEF_NN_CONC     1e-10       /*  Default nearest neighbors conc. */
-#define MIN_NN_CONC     1e-20       /*  Min nearest neighbors conc. */
-#define MAX_NN_CONC     1.0         /*  Max nearest neighbors conc. */
+#define DEF_NN_CONC     1e-10       /* Default nearest neighbors conc. */
+#define MIN_NN_CONC     1e-20       /* Min nearest neighbors conc. */
+#define MAX_NN_CONC     1.0         /* Max nearest neighbors conc. */
 
-#define DEF_NN_SALT     1.0         /*  Default nearest neighbors salt */
-#define MIN_NN_SALT     0.0         /*  Min nearest neighbors salt */
-#define MAX_NN_SALT     4.0         /*  Max nearest neighbors salt */
+#define DEF_NN_SALT     1.0         /* Default nearest neighbors salt */
+#define MIN_NN_SALT     0.0         /* Min nearest neighbors salt */
+#define MAX_NN_SALT     4.0         /* Max nearest neighbors salt */
 
-#define DEF_NN_MG       0.0         /*  Default nearest neighbors Mg++ */
-#define MIN_NN_MG       0.0         /*  Min nearest neighbors Mg++ */
-#define MAX_NN_MG       1.0         /*  Max nearest neighbors Mg++ */
+#define DEF_NN_MG       0.0         /* Default nearest neighbors Mg++ */
+#define MIN_NN_MG       0.0         /* Min nearest neighbors Mg++ */
+#define MAX_NN_MG       1.0         /* Max nearest neighbors Mg++ */
 
-#define DEF_NN_TEMP     37.0        /*  Default temp C */
-#define MIN_NN_TEMP     0.0         /*  Minimum allowed temp C */
-#define MAX_NN_TEMP     100.0       /*  Maximum allowed temp C */
+#define DEF_NN_TEMP     37.0        /* Default temp C */
+#define MIN_NN_TEMP     0.0         /* Minimum allowed temp C */
+#define MAX_NN_TEMP     100.0       /* Maximum allowed temp C */
 
-#define DEF_AMBIG_OK    FALSE       /*  Flag to allow ambig bases */
+#define DEF_AMBIG_OK    FALSE       /* Flag to allow ambig bases */
 
-#define MIN_TM_LEN      5           /*  Minimum Tm length */
-#define MAX_TM_LEN      255         /*  Maximum Tm length allowed */
+#define MIN_TM_LEN      5           /* Minimum Tm length */
+#define MAX_TM_LEN      255         /* Maximum Tm length allowed */
 
 /*********
 *    PNA "Correction" factors
@@ -117,7 +117,7 @@ typedef struct TM_PARS
 * dna_tm.c
 */
 int SeqTmThermI(TM_PARS *tmPO, char *seqS, int len, DOUB *tPR, DOUB *gPR,
-	DOUB *hPR, DOUB *sPR);
+    DOUB *hPR, DOUB *sPR);
 DOUB TmFromGCContD(TM_PARS *tmPO,char *seqS,int len);
 int SetSeqTmInitTermsI(TM_PARS *tmPO,char *seqS,int len,DOUB *hPD,DOUB *sPD);
 int GetThermoTabTermsI(TM_PARS *tmPO, int term, int pos, int len, DOUB *hPD, DOUB *sPD);
@@ -125,14 +125,14 @@ int SeqEndInitIndex(char c);
 int TallySeqTmNNTermsI(TM_PARS *tmPO,char *seqS,int len,DOUB *hPD, DOUB *sPD);
 DOUB TmFromThermoSumsD(TM_PARS *tmPO,DOUB hD,DOUB sD,int len);
 int SeqLenForThermI(TM_PARS *tmPO, char *seqS, int len, DOUB targD, int dir,
-	DOUB *ltmPD, DOUB *htmPD, int do_fds);
+    DOUB *ltmPD, DOUB *htmPD, int do_fds);
 DOUB CalcPNATmI(TM_PARS *tmPO,char *seqS,int len);
 
 /****************************************************************
 * dset_tm.c
 */
 int SeqDsetEnergyI(TM_PARS *tmPO,char *seqtopPC,char *seqbotPC,int verboseI,
-	int modeI, DOUB *tPD, DOUB *gPD, DOUB *hPD, DOUB *sPD, DOUB *xPD);
+    int modeI, DOUB *tPD, DOUB *gPD, DOUB *hPD, DOUB *sPD, DOUB *xPD);
 int ValidDsetModeI(char *seqtopPC,char *seqbotPC,int modeI);
 int DsetNumValsI(int modeI);
 int LoadTmCompleteParsI(TM_PARS *tmPO,FILE *fPF);

@@ -1,7 +1,7 @@
 /*
 * dna.h
 *
-* Copyright 2014 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
+* Copyright 2015 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
 *
 * The programs and source code of the vertools collection are free software.
 * They are distributed in the hope that they will be useful,
@@ -19,153 +19,153 @@
 #define __DNAH__
 
 
-#define MAX_PSLEN		500	/*	Max probset amplicon seq length */
-#define MAX_IPS			5	/*	Max probset internal priming sites */
+#define MAX_PSLEN       500 /* Max probset amplicon seq length */
+#define MAX_IPS         5   /* Max probset internal priming sites */
 
-#define SEQ_ID 			4052
-#define SEQSET_ID 		4054
-#define SEQCOMP_ID 		4056
+#define SEQ_ID          4052
+#define SEQSET_ID       4054
+#define SEQCOMP_ID      4056
 
-#define SSIZE_MIN		100     /*	String size (allocated) min size */
-#define SSN_BLOCK		100     /*	SEQSET nsize (allocated) block increment */
-#define SEQ_BLOCK		1000 	/*	SEQ allocate block increment */
+#define SSIZE_MIN       100     /* String size (allocated) min size */
+#define SSN_BLOCK       100     /* SEQSET nsize (allocated) block increment */
+#define SEQ_BLOCK       1000    /* SEQ allocate block increment */
 
-typedef struct SEQ		/*	Sequence datatype */
+typedef struct SEQ      /* Sequence datatype */
 {
-	int ID;
-	int ind;			/*	Index if in set */
-	struct SEQSET *par;	/*	Possible parent sequence set */
-	char name[NSIZE];	/*	Name string */
-	char *seq;			/*	Sequence string */
-	int ssize;			/*	Allocated sequence string length */
-	int len;			/*	Sequence length */
-	int nsnp;			/*	Number of SNP records */
-	int flag;			/*	Sequence bitfield */
+    int ID;
+    int ind;            /* Index if in set */
+    struct SEQSET *par; /* Possible parent sequence set */
+    char name[NSIZE];   /* Name string */
+    char *seq;          /* Sequence string */
+    int ssize;          /* Allocated sequence string length */
+    int len;            /* Sequence length */
+    int nsnp;           /* Number of SNP records */
+    int flag;           /* Sequence bitfield */
 }SEQ;
 
-typedef struct SEQSET	/*	Sequence set datatype */
+typedef struct SEQSET   /* Sequence set datatype */
 {
-	int ID;
-	int type;			/*	Type flag */
-	int ambigs;			/*	Flag for inclusion of any ambiguous bases */
-	char name[NSIZE];	/*	Name of whole set */
-	char source[NSIZE];	/*	Filename */
-	int n,nsize;		/*	Number of seqs, Allocated array length */
-	struct SEQ **seqs;	/*	Array of SEQ structures */
-	char *mask;			/*	Sequence masking field [n] */
+    int ID;
+    int type;           /* Type flag */
+    int ambigs;         /* Flag for inclusion of any ambiguous bases */
+    char name[NSIZE];   /* Name of whole set */
+    char source[NSIZE]; /* Filename */
+    int n,nsize;        /* Number of seqs, Allocated array length */
+    struct SEQ **seqs;  /* Array of SEQ structures */
+    char *mask;         /* Sequence masking field [n] */
 }SEQSET;
 
 typedef struct SEQCOMP
 {
-	int ID;
-	int slen,nbase;			/*	Seq length, number of non-ambig bases */
-	int ra,rc,rg,rt;		/*	Maximum base rows */
-	int rs,rw,rr,ry,rk,rm;	/*	Max degenerate base rows */
-	int na,nc,ng,nt;		/*	Number of bases */
-    int dinuc[16];          /* Dinucleotide numbers */
-    int n_dinuc;            /* Number of dinucleotides */
-	REAL fa,fc,fg,ft;		/* Fraction of bases */
+    int ID;
+    int slen,nbase;         /* Seq length, number of non-ambig bases */
+    int ra,rc,rg,rt;        /* Maximum base rows */
+    int rs,rw,rr,ry,rk,rm;  /* Max degenerate base rows */
+    int na,nc,ng,nt;        /* Number of bases */
+    int dinuc[16];          /* inucleotide numbers */
+    int n_dinuc;            /* umber of dinucleotides */
+    REAL fa,fc,fg,ft;       /* raction of bases */
 }SEQCOMP;
 
-#define CHECK_SEQ(ob) 		if(ob){DestroySeqI(ob);ob=NULL;}
-#define CHECK_SEQSET(ob) 	if(ob){DestroySeqsetI(ob);ob=NULL;}
+#define CHECK_SEQ(ob)       if(ob){DestroySeqI(ob);ob=NULL;}
+#define CHECK_SEQSET(ob)    if(ob){DestroySeqsetI(ob);ob=NULL;}
 #define CHECK_SEQCOMP(ps) if(ps){DestroySeqcompI(ps);ps=NULL;} 
 
 /***
-*	Bit field flags for seqs
+*   Bit field flags for seqs
 */
-#define SEQ_SNP	(1<<1)		/* 	Seq has explicit SNP(s) */
-#define SEQ_AMB	(1<<2)		/*	Seq has ambiguous bases; N */
-#define SEQ_DEG	(1<<3)		/*	Seq has degenerate bases; SW,RY... */
-#define SEQ_LC	(1<<4)		/*	Seq has lower case */
-#define SEQ_NS	(1<<5)		/*	Seq has non-standard bases; X,L... */
-#define SEQ_INS (1<<6)		/*	Seq has insertion (-) indicated */
-#define SEQ_DEL (1<<7)		/*	Seq has deletion (*) indicated */
-#define SEQ_COAX (1<<8)		/*	Seq has coaxial break (/) indicated */
-#define SEQ_HASU (1<<9)		/*	Seq has U (i.e. not T) */
+#define SEQ_SNP (1<<1)      /* Seq has explicit SNP(s) */
+#define SEQ_AMB (1<<2)      /* Seq has ambiguous bases; N */
+#define SEQ_DEG (1<<3)      /* Seq has degenerate bases; SW,RY... */
+#define SEQ_LC  (1<<4)      /* Seq has lower case */
+#define SEQ_NS  (1<<5)      /* Seq has non-standard bases; X,L... */
+#define SEQ_INS (1<<6)      /* Seq has insertion (-) indicated */
+#define SEQ_DEL (1<<7)      /* Seq has deletion (*) indicated */
+#define SEQ_COAX (1<<8)     /* Seq has coaxial break (/) indicated */
+#define SEQ_HASU (1<<9)     /* Seq has U (i.e. not T) */
 
-#define IS_SEQ_SNP(v)	((v) & SEQ_SNP)
-#define IS_SEQ_AMB(v)	((v) & SEQ_AMB)
-#define IS_SEQ_DEG(v)	((v) & SEQ_DEG)
-#define IS_SEQ_LC(v)	((v) & SEQ_LC)
-#define IS_SEQ_NS(v)	((v) & SEQ_NS)
-#define IS_SEQ_INS(v)	((v) & SEQ_INS)
-#define IS_SEQ_DEL(v)	((v) & SEQ_DEL)
-#define IS_SEQ_COAX(v)	((v) & SEQ_COAX)
-#define IS_SEQ_HASU(v)	((v) & SEQ_HASU)
+#define IS_SEQ_SNP(v)   ((v) & SEQ_SNP)
+#define IS_SEQ_AMB(v)   ((v) & SEQ_AMB)
+#define IS_SEQ_DEG(v)   ((v) & SEQ_DEG)
+#define IS_SEQ_LC(v)    ((v) & SEQ_LC)
+#define IS_SEQ_NS(v)    ((v) & SEQ_NS)
+#define IS_SEQ_INS(v)   ((v) & SEQ_INS)
+#define IS_SEQ_DEL(v)   ((v) & SEQ_DEL)
+#define IS_SEQ_COAX(v)  ((v) & SEQ_COAX)
+#define IS_SEQ_HASU(v)  ((v) & SEQ_HASU)
 
-#define SET_SEQ_SNP(v)	((v) |= SEQ_SNP)
-#define SET_SEQ_AMB(v)	((v) |= SEQ_AMB)
-#define SET_SEQ_DEG(v)	((v) |= SEQ_DEG)
-#define SET_SEQ_LC(v)	((v) |= SEQ_LC)
-#define SET_SEQ_NS(v)	((v) |= SEQ_NS)
-#define SET_SEQ_INS(v)	((v) |= SEQ_INS)
-#define SET_SEQ_DEL(v)	((v) |= SEQ_DEL)
-#define SET_SEQ_COAX(v)	((v) |= SEQ_COAX)
-#define SET_SEQ_HASU(v)	((v) |= SEQ_HASU)
+#define SET_SEQ_SNP(v)  ((v) |= SEQ_SNP)
+#define SET_SEQ_AMB(v)  ((v) |= SEQ_AMB)
+#define SET_SEQ_DEG(v)  ((v) |= SEQ_DEG)
+#define SET_SEQ_LC(v)   ((v) |= SEQ_LC)
+#define SET_SEQ_NS(v)   ((v) |= SEQ_NS)
+#define SET_SEQ_INS(v)  ((v) |= SEQ_INS)
+#define SET_SEQ_DEL(v)  ((v) |= SEQ_DEL)
+#define SET_SEQ_COAX(v) ((v) |= SEQ_COAX)
+#define SET_SEQ_HASU(v) ((v) |= SEQ_HASU)
 
-#define OFF_SEQ_SNP(v)	((v) &= ~SEQ_SNP)
-#define OFF_SEQ_AMB(v)	((v) &= ~SEQ_AMB)
-#define OFF_SEQ_DEG(v)	((v) &= ~SEQ_DEG)
-#define OFF_SEQ_LC(v)	((v) &= ~SEQ_LC)
-#define OFF_SEQ_NS(v)	((v) &= ~SEQ_NS)
-#define OFF_SEQ_INS(v)	((v) &= ~SEQ_INS)
-#define OFF_SEQ_DEL(v)	((v) &= ~SEQ_DEL)
-#define OFF_SEQ_COAX(v)	((v) &= ~SEQ_COAX)
-#define OFF_SEQ_HASU(v)	((v) &= ~SEQ_HASU)
+#define OFF_SEQ_SNP(v)  ((v) &= ~SEQ_SNP)
+#define OFF_SEQ_AMB(v)  ((v) &= ~SEQ_AMB)
+#define OFF_SEQ_DEG(v)  ((v) &= ~SEQ_DEG)
+#define OFF_SEQ_LC(v)   ((v) &= ~SEQ_LC)
+#define OFF_SEQ_NS(v)   ((v) &= ~SEQ_NS)
+#define OFF_SEQ_INS(v)  ((v) &= ~SEQ_INS)
+#define OFF_SEQ_DEL(v)  ((v) &= ~SEQ_DEL)
+#define OFF_SEQ_COAX(v) ((v) &= ~SEQ_COAX)
+#define OFF_SEQ_HASU(v) ((v) &= ~SEQ_HASU)
 
 /***
-*	Direction / join codes
+*   Direction / join codes
 */
 #define FORWARD 1
 #define REVERSE -1
-#define APPEND 	1
+#define APPEND  1
 #define PREPEND -1
 
 /***
-*	Alphabet to number mapping
+*   Alphabet to number mapping
 */
-#define DNA_A	0
-#define DNA_C	1
-#define DNA_G	2
-#define DNA_T	3
-#define DNA_N	4	/*	Ambigous */
-#define DNA_O	5	/*	Other */
-#define DNA_NUM	6
+#define DNA_A   0
+#define DNA_C   1
+#define DNA_G   2
+#define DNA_T   3
+#define DNA_N   4   /* Ambigous */
+#define DNA_O   5   /* Other */
+#define DNA_NUM 6
 
 /***
-*	File format codes
+*   File format codes
 */
-#define SEQFM_RAW		81	/*	Raw format; <name> <seq> on one line */
-#define SEQFM_REX		82	/*	Raw with extras; <name> <seq> <???>... */
-#define SEQFM_FASTA		85	/*	Fasta format; > on one line, followed by seq */
-#define SEQFM_NFAS		86	/*	"nice" Fasta format (seq wrapped) */
-#define SEQFM_SEQ		88	/*	Sort of like gen-bank? */
+#define SEQFM_RAW       81  /* Raw format; <name> <seq> on one line */
+#define SEQFM_REX       82  /* Raw with extras; <name> <seq> <???>... */
+#define SEQFM_FASTA     85  /* Fasta format; > on one line, followed by seq */
+#define SEQFM_NFAS      86  /* "nice" Fasta format (seq wrapped) */
+#define SEQFM_SEQ       88  /* Sort of like gen-bank? */
 
 /***
-*	Formating stuff
+*   Formating stuff
 */
-#define COMP_S 			"_CP" 	/* appended name for compliment seqs */
-#define NICE_BLEN		10		/*	number of chars / block in "nice" output */
-#define NICE_LLEN		50		/*	number of chars / line in "nice" output */
-#define RAW_PFORM_S		"%-15s\t%s\n"	/*	raw file output format string */
+#define COMP_S          "_CP"   /* ppended name for compliment seqs */
+#define NICE_BLEN       10      /* number of chars / block in "nice" output */
+#define NICE_LLEN       50      /* number of chars / line in "nice" output */
+#define RAW_PFORM_S     "%-15s\t%s\n"   /* raw file output format string */
 
 #define DEF_SEQ_NAME_S  "No-Name"
 
 /***
-*	Sequence "cleaning" levels; should be low < mid < hi
+*   Sequence "cleaning" levels; should be low < mid < hi
 */
-#define SCLEAN_LOW		90	/*	Sequence cleaning to any letter */
-#define SCLEAN_MID		91	/*	Sequence cleaning to ACGTN + IUPAC degens */
-#define SCLEAN_HI		92	/*	Sequence cleaning to ACGTN */
+#define SCLEAN_LOW      90  /* Sequence cleaning to any letter */
+#define SCLEAN_MID      91  /* Sequence cleaning to ACGTN + IUPAC degens */
+#define SCLEAN_HI       92  /* Sequence cleaning to ACGTN */
 
 /***
-*	Sequence error codes
+*   Sequence error codes
 */
-#define EC_SEQ_LEN		230     /* Seq length */
-#define EC_SEQ_BCHAR	231     /* Seq bad character */
-#define EC_SEQ_WS 		232     /* Seq with space */
-#define EC_SEQ_BSNP 	235     /* SNP problem */
+#define EC_SEQ_LEN      230     /* eq length */
+#define EC_SEQ_BCHAR    231     /* eq bad character */
+#define EC_SEQ_WS       232     /* eq with space */
+#define EC_SEQ_BSNP     235     /* NP problem */
 
 
 
@@ -188,7 +188,7 @@ int DestroySeqsetI(SEQSET *ssPO);
 int AdjustSeqsetSizeI(SEQSET *ssPO,int size);
 void DumpSeqset(SEQSET *ssPO,int all,FILE *outPF);
 int AddNamedSequenceToSeqsetI(char *seqS, char *nameS, SEQSET *ssPO,
-	int *indPI);
+    int *indPI);
 int AddSeqToSeqsetI(SEQ *seqPO,SEQSET *ssPO);
 void InitSeqset(SEQSET *ssPO);
 void SeqsetUnmaskDims(SEQSET *ssPO,int *nPI,int *sPI,int *mPI, int *snPI);
@@ -275,7 +275,7 @@ int FillSeqsetNameStringI(SEQSET *ssPO,char *nameS,int max);
 void SetSeqsetSource(SEQSET *ssPO,char *nameS);
 int FillSeqsetSourceStringI(SEQSET *ssPO,char *nameS,int max);
 int FindNamedSeqInSeqsetI(SEQSET *ssPO, char *nameS, int kc, char *tPC,
-	SEQ **seqPPO);
+    SEQ **seqPPO);
 int SetSeqSequenceI(SEQ *seqPO,char *seqS,int len);
 int AppendSeqSequenceI(SEQ *seqPO,char *seqS,int len);
 int AppendSeqCharI(SEQ *seqPO, char c, int error);
@@ -295,11 +295,11 @@ int ReverseCompSeqsetSeqsI(SEQSET *ssPO);
 * dna_snp.c
 */
 int ExpandSeqSnpI(SEQ *seqPO, int snp, int al, char *seqS, int up, int max,
-	int *startPI, int *targPI, char *alS, int *asizePI);
+    int *startPI, int *targPI, char *alS, int *asizePI);
 int GetSeqsetSnpWindowI(SEQSET *seqsPO, int ind, int snp, int up, int down, 
-	int max, char *seqS, int *sposPI);
+    int max, char *seqS, int *sposPI);
 int GetSeqSnpWindowI(SEQ *seqPO, int snp, int up, int down, int max, 
-	char *seqS, int *sposPI);
+    char *seqS, int *sposPI);
 int GetSeqSnpBlockI(SEQ *seqPO, int snp, char *seqS, int max);
 int GetSeqSnpAlleleI(SEQ *seqPO, int snp, int al, char *seqS, int max);
 int CleanUpSnpseqLineI(SEQ *seqPO);
@@ -310,7 +310,7 @@ int ExpandSeqSingBaseSNPsI(SEQ *seqPO);
 * dna_splc.c
 */
 int SpliceTwoSeqsI(char *firS, char *secS, char *upS, int dir, 
-	int over, int ext, char *inS, char *newS);
+    int over, int ext, char *inS, char *newS);
 int NeedExtensionI(char *seqS,int ov, char *upS, int dir, int ext);
 int GetExtensionSeqI(char *upS,int dir,int ext,char *inS);
 int ProbeTargOverlapI(char *probS,int plen,char *targS,int tlen,int dir);

@@ -1,7 +1,7 @@
 /*
 * sctab_mix.c
 *
-* Copyright 2014 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
+* Copyright 2015 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
 *
 * The programs and source code of the vertools collection are free software.
 * They are distributed in the hope that they will be useful,
@@ -27,14 +27,14 @@
 
 
 /*******************************************************************************
-*	Handle merging options
+*   Handle merging options
 */
 int HandleSctTableMergingI(SCORETAB *stPO)
 {
-	int ok;
-	char bufS[DEF_BS],tabS[DEF_BS];
-	FILE *fPF;
-	TABLE *tabPO;
+    int ok;
+    char bufS[DEF_BS],tabS[DEF_BS];
+    FILE *fPF;
+    TABLE *tabPO;
 
     /***
     *   GS cross over?
@@ -45,58 +45,58 @@ int HandleSctTableMergingI(SCORETAB *stPO)
     /***
     *   Table merging
     */
-	ok = TRUE;
-	tabPO = NULL;
-	if(stPO->do_mlis) {
-		if(!(fPF= OpenUFilePF(stPO->mergname,"r",NULL))) {
-			return(FALSE);
-		}
-		while((fgets(bufS,LINEGRAB,fPF)) != NULL) {
-			if(COM_LINE(bufS)) {
-				continue;
-			}
-			INIT_S(tabS);
-			sscanf(bufS,"%s",tabS);
-			if(NO_S(tabS)) {
-				continue;
-			}
-			CHECK_TABLE(tabPO);
-			if(!GetTableI(tabS,stPO->rlab,stPO->clab,stPO->corn,stPO->do_skp,&tabPO)) {
-				printf("Problem loading table: %s\n",tabS);
-				ok = FALSE;
-				break;
-			}
-			if(!HandleTableMergeI(stPO,tabPO,tabS)) {
-				ok = FALSE;
-				break;
-			}	
-		}
-		CHECK_FILE(fPF);
-	}
-	else {
-		if(!GetTableI(stPO->mergname,stPO->rlab,stPO->clab,stPO->corn,stPO->do_skp,&tabPO)) {
-			printf("Problem loading table: %s\n",stPO->mergname);
-			ok = FALSE;
-		}
-		else {
-			if(!HandleTableMergeI(stPO,tabPO,stPO->mergname)) {
-				ok = FALSE;
-			}	
-		}
-	}
-	CHECK_TABLE(tabPO);
-	return(ok);
+    ok = TRUE;
+    tabPO = NULL;
+    if(stPO->do_mlis) {
+        if(!(fPF= OpenUFilePF(stPO->mergname,"r",NULL))) {
+            return(FALSE);
+        }
+        while((fgets(bufS,LINEGRAB,fPF)) != NULL) {
+            if(COM_LINE(bufS)) {
+                continue;
+            }
+            INIT_S(tabS);
+            sscanf(bufS,"%s",tabS);
+            if(NO_S(tabS)) {
+                continue;
+            }
+            CHECK_TABLE(tabPO);
+            if(!GetTableI(tabS,stPO->rlab,stPO->clab,stPO->corn,stPO->do_skp,&tabPO)) {
+                printf("Problem loading table: %s\n",tabS);
+                ok = FALSE;
+                break;
+            }
+            if(!HandleTableMergeI(stPO,tabPO,tabS)) {
+                ok = FALSE;
+                break;
+            }   
+        }
+        CHECK_FILE(fPF);
+    }
+    else {
+        if(!GetTableI(stPO->mergname,stPO->rlab,stPO->clab,stPO->corn,stPO->do_skp,&tabPO)) {
+            printf("Problem loading table: %s\n",stPO->mergname);
+            ok = FALSE;
+        }
+        else {
+            if(!HandleTableMergeI(stPO,tabPO,stPO->mergname)) {
+                ok = FALSE;
+            }   
+        }
+    }
+    CHECK_TABLE(tabPO);
+    return(ok);
 }
 /*****************************************************************************
 *
 */
 int HandleTableMergeI(SCORETAB *stPO, TABLE *tabPO, char *tabS)
 {
-	int mix, rowmatch;
-	char mixS[DEF_BS];
+    int mix, rowmatch;
+    char mixS[DEF_BS];
     TABLE *newPO;
 
-    /*  check row names match */
+    /* check row names match */
     rowmatch = TRUE;
     /***    
     *   Append?
@@ -111,7 +111,7 @@ int HandleTableMergeI(SCORETAB *stPO, TABLE *tabPO, char *tabS)
             printf("Problem appending tables together\n");
             return(FALSE);
         }
-        /*  Replace current table with new one */
+        /* Replace current table with new one */
         CHECK_TABLE(stPO->tab);
         stPO->tab = newPO;
         SetUpSctTableSpaceI(stPO);
@@ -120,15 +120,15 @@ int HandleTableMergeI(SCORETAB *stPO, TABLE *tabPO, char *tabS)
     *   Simply mix values
     */
     else {
-	    mix = FigureMergeMixI(stPO, mixS);
-	    if(!MixTablesI(stPO->tab,tabPO,stPO->tab,TRUE,mix,TRUE)) {
-		    return(FALSE);
-	    }
-	    if(!stPO->quiet) {
-		    printf("# Table %s %s input table\n",tabS,mixS);
+        mix = FigureMergeMixI(stPO, mixS);
+        if(!MixTablesI(stPO->tab,tabPO,stPO->tab,TRUE,mix,TRUE)) {
+            return(FALSE);
         }
-	}
-	return(TRUE);
+        if(!stPO->quiet) {
+            printf("# Table %s %s input table\n",tabS,mixS);
+        }
+    }
+    return(TRUE);
 }
 /****************************************************************************
 *
@@ -168,62 +168,62 @@ int HandleTableClabPreSufI(TABLE *tabPO, char *preS, char *sufS)
     return(TRUE);
 }
 /*****************************************************************************
-*	Decide what merging option is appropriate and tell story if given string
+*   Decide what merging option is appropriate and tell story if given string
 */
 int FigureMergeMixI(SCORETAB *stPO, char *whatS)
 {
-	int mix;
+    int mix;
 
-	mix = MATH_ADD;
-	if(whatS)
-		sprintf(whatS,"added");
-	if(stPO->do_msub) {
-		if(whatS)
-			sprintf(whatS,"subtracted");
-		mix = MATH_SUB;
-	}
-	else if(stPO->do_mmul) {
-		if(whatS)
-			sprintf(whatS,"multipled");
-		mix = MATH_MUL;
-	}
-	else if(stPO->do_mdiv) {
-		if(whatS)
-			sprintf(whatS,"divided");
-		mix = MATH_DIV;
-	}
-	else if(stPO->do_mmin) {
-		if(whatS)
-			sprintf(whatS,"Min values");
-		mix = MATH_MIN;
-	}
-	else if(stPO->do_mmax) {
-		if(whatS)
-			sprintf(whatS,"Max values");
-		mix = MATH_MAX;
-	}
-	return(mix);
+    mix = MATH_ADD;
+    if(whatS)
+        sprintf(whatS,"added");
+    if(stPO->do_msub) {
+        if(whatS)
+            sprintf(whatS,"subtracted");
+        mix = MATH_SUB;
+    }
+    else if(stPO->do_mmul) {
+        if(whatS)
+            sprintf(whatS,"multipled");
+        mix = MATH_MUL;
+    }
+    else if(stPO->do_mdiv) {
+        if(whatS)
+            sprintf(whatS,"divided");
+        mix = MATH_DIV;
+    }
+    else if(stPO->do_mmin) {
+        if(whatS)
+            sprintf(whatS,"Min values");
+        mix = MATH_MIN;
+    }
+    else if(stPO->do_mmax) {
+        if(whatS)
+            sprintf(whatS,"Max values");
+        mix = MATH_MAX;
+    }
+    return(mix);
 }
 /*************************************************************************
-*	Copy to new transposed one and kill original
+*   Copy to new transposed one and kill original
 */
 int HandleTransposeI(TABLE *tabPO, TABLE **tranPPO)
 {
-	int ok;
+    int ok;
 
-	/***
-	*	Copy with masking = TRUE, transpose = TRUE
-	*/
-	ok = CopyTableI(tabPO,TRUE,TRUE,tranPPO);
-	CHECK_TABLE(tabPO);
-	return(ok);
+    /***
+    *   Copy with masking = TRUE, transpose = TRUE
+    */
+    ok = CopyTableI(tabPO,TRUE,TRUE,tranPPO);
+    CHECK_TABLE(tabPO);
+    return(ok);
 }
 /*************************************************************************
-*	Sort row values in table; Same row lable, just columns permuted
+*   Sort row values in table; Same row lable, just columns permuted
 */
 int HandleRowSortI(TABLE *tabPO, int sdir, int mask)
 {
-	int r,nc,nr;
+    int r,nc,nr;
     NUMLIST *nlPO;
     DOUB *valsPD;
 
@@ -256,5 +256,5 @@ int HandleRowSortI(TABLE *tabPO, int sdir, int mask)
         SetTableRowValsI(tabPO, r, nlPO, nc, mask);
     }
     CHECK_NUMLIST(nlPO);
-	return(nc);
+    return(nc);
 }

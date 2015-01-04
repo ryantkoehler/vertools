@@ -1,7 +1,7 @@
 /*
 * filter.h
 *
-* Copyright 2014 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
+* Copyright 2015 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
 *
 * The programs and source code of the vertools collection are free software.
 * They are distributed in the hope that they will be useful,
@@ -14,7 +14,7 @@
 *
 */
 
-#define VERSION_S		"Filter version 1.01"
+#define VERSION_S       "Filter version 1.02"
 
 #define FILTBUF_SIZE    50000
 
@@ -25,36 +25,36 @@
 #define FILTER_ID       5071
 typedef struct FILTER
 {
-	int ID;
-	char inname[NSIZE];		/* Input file name */
-	FILE *in;				/* Input file */
-    char *mask;             /* Input file mask */
-    int n_mask;             /* Mask length */
-	char outname[NSIZE];	/* Output file name */
-	FILE *out;				/* Outpuf file */
-    char wlisname[NSIZE];   /* Token list filename */
-	struct WORDLIST *wlis;  /* Token list structure */
-    int num;                /* Working number of lines */
-    int nok;                /* Working number of qualified lines */
-    int col;                /* Column to filter on */
-    DOUB min, max;          /* Min / max values */
-    int firstl,lastl;       /* First and last lines */
-    int rann;               /* Random number to pick */
-    int seed;               /* Random seed */
-    DOUB ranf, ranp;        /* Random fraction / probability to pick */
-    int ranm;               /* Explicit random mask dimension */
-	int do_not;             /* Flag to invert record qualifcations */
-    int skipc;              /* Number of chars to skip in input lines */
-	int do_stat;            /* Flag to do stats */
-    int do_kc;              /* Flag to keep case for token compare */
-    int do_wst;             /* Flag to compare starte for token compare */
-    int do_wsub;            /* Flag to check substring for token compare */
-	int do_flag;            /* Flag to prepend output lines 1/0 */
-	int do_pln;             /* Flag to prepend output lines with line number */
-	int do_icbn;            /* Flag to ignore chars before numbers */
+    int ID;
+    char inname[NSIZE];     /* nput file name */
+    FILE *in;               /* nput file */
+    char *mask;             /* nput file mask */
+    int n_mask;             /* ask length */
+    char outname[NSIZE];    /* utput file name */
+    FILE *out;              /* utpuf file */
+    char wlisname[NSIZE];   /* oken list filename */
+    struct WORDLIST *wlis;  /* oken list structure */
+    int num;                /* orking number of lines */
+    int nok;                /* orking number of qualified lines */
+    int col;                /* olumn to filter on */
+    DOUB min, max;          /* in / max values */
+    int firstl,lastl;       /* irst and last lines */
+    int rann;               /* andom number to pick */
+    int seed;               /* andom seed */
+    DOUB ranf, ranp;        /* andom fraction / probability to pick */
+    int ranm;               /* xplicit random mask dimension */
+    int do_not;             /* lag to invert record qualifcations */
+    int skipc;              /* umber of chars to skip in input lines */
+    int do_stat;            /* lag to do stats */
+    int do_kc;              /* lag to keep case for token compare */
+    int do_wst;             /* lag to compare starte for token compare */
+    int do_wsub;            /* lag to check substring for token compare */
+    int do_flag;            /* lag to prepend output lines 1/0 */
+    int do_pln;             /* lag to prepend output lines with line number */
+    int do_icbn;            /* lag to ignore chars before numbers */
 }FILTER;
 
-#define CHECK_FILTER(fp) 	if(fp){DestroyFilterI(fp);fp=NULL;}
+#define CHECK_FILTER(fp)    if(fp){DestroyFilterI(fp);fp=NULL;}
 
 
 /*********************** ppp ********************

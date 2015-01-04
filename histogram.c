@@ -1,7 +1,7 @@
 /*
 * histogram.c
 *
-* Copyright 2014 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
+* Copyright 2015 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
 *
 * The programs and source code of the vertools collection are free software.
 * They are distributed in the hope that they will be useful,
@@ -22,8 +22,8 @@
 #include "stat.h"
 #include "histogram.h"
 
-#define DB_HHI	    if(DB[35])
-#define DB_HLOW	    if(DB[36])
+#define DB_HHI      if(DB[35])
+#define DB_HLOW     if(DB[36])
 
 /**************************************************************************/
 HISTOGRAM *CreateHistogramPO(NUMLIST *valsPO)

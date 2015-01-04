@@ -1,7 +1,7 @@
 /*
 * sutil.c
 *
-* Copyright 2014 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
+* Copyright 2015 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
 *
 * The programs and source code of the vertools collection are free software.
 * They are distributed in the hope that they will be useful,
@@ -22,190 +22,190 @@
 #include "prim.h"
 
 /***
-*	Dos = \
-*	unix = /
+*   Dos = \
+*   unix = /
 */
 #define DIR_SEP_CHAR '/'
 
-#define DB_STRNG	if(DB[10])
-#define DB_FNAME	if(DB[11])
+#define DB_STRNG    if(DB[10])
+#define DB_FNAME    if(DB[11])
 
 /******************************************************************** sss
-*	Writes the date into the passed string
+*   Writes the date into the passed string
 */
 void FillDateString(char *dateS)
 {
-	int i;
+    int i;
     time_t tt;
 
     (void) time(&tt);
     sprintf(dateS,"%s",asctime (localtime (&tt)));
-	/***
-	*	Sham to kill \n at end of date
-	*/
-	i = 0;
-	while(ISLINE(dateS[i]))
-	{	
-		if(dateS[i] == '\n') {
-			break;
+    /***
+    *   Sham to kill \n at end of date
+    */
+    i = 0;
+    while(ISLINE(dateS[i]))
+    {   
+        if(dateS[i] == '\n') {
+            break;
         }
-		i++;	
-	}
-	dateS[i] = '\0';
+        i++;    
+    }
+    dateS[i] = '\0';
     return;
 }
 /******************************************************************** sss
-*	Writes the number-format date into the passed string
+*   Writes the number-format date into the passed string
 */
 void FillNumDateString(char *dateS)
 {
-	int y,m,d;
-	char tmpS[DEF_BS],wS[DEF_BS];
+    int y,m,d;
+    char tmpS[DEF_BS],wS[DEF_BS];
 
-	FillDateString(tmpS);
-	y = m = d = 0;
-	/***
-	*	Format assumed as:
-	*	Tue Oct 21 11:25:59 2003
-	*/
-	sscanf(tmpS,"%*s %s %d %*s %d",wS,&d,&y);
-	switch(UPPER(wS[0]))
-	{
-		case 'J':
-			if(UPPER(wS[1])=='A')
-				m = 1;
-			else if(UPPER(wS[2])=='N')
-				m = 6;
-			else if(UPPER(wS[2])=='L')
-				m = 7;
-			break;
-		case 'F':	m = 2;	break;
-		case 'M':	
-			switch(UPPER(wS[2]))
-			{
-				case 'R':	m = 3; 	break;
-				case 'Y':	m = 5; 	break;
-			}
-			break;
-		case 'A':	
-			switch(UPPER(wS[1]))
-			{
-				case 'P':	m = 4; 	break;
-				case 'U':	m = 8; 	break;
-			}
-			break;	/*	XXX was a bug! */
-		case 'S':	m = 9;	break;
-		case 'O':	m = 10;	break;
-		case 'N':	m = 11;	break;
-		case 'D':	m = 12;	break;
-	}
-	sscanf(tmpS,"%*s %*s %*s %s",wS);
-	sprintf(dateS,"%d-%02d-%02dT%s",y,m,d,wS);
+    FillDateString(tmpS);
+    y = m = d = 0;
+    /***
+    *   Format assumed as:
+    *   Tue Oct 21 11:25:59 2003
+    */
+    sscanf(tmpS,"%*s %s %d %*s %d",wS,&d,&y);
+    switch(UPPER(wS[0]))
+    {
+        case 'J':
+            if(UPPER(wS[1])=='A')
+                m = 1;
+            else if(UPPER(wS[2])=='N')
+                m = 6;
+            else if(UPPER(wS[2])=='L')
+                m = 7;
+            break;
+        case 'F':   m = 2;  break;
+        case 'M':   
+            switch(UPPER(wS[2]))
+            {
+                case 'R':   m = 3;  break;
+                case 'Y':   m = 5;  break;
+            }
+            break;
+        case 'A':   
+            switch(UPPER(wS[1]))
+            {
+                case 'P':   m = 4;  break;
+                case 'U':   m = 8;  break;
+            }
+            break;  /* XXX was a bug! */
+        case 'S':   m = 9;  break;
+        case 'O':   m = 10; break;
+        case 'N':   m = 11; break;
+        case 'D':   m = 12; break;
+    }
+    sscanf(tmpS,"%*s %*s %*s %s",wS);
+    sprintf(dateS,"%d-%02d-%02dT%s",y,m,d,wS);
     return;
 }
 /*************************************************************************
-*	Print time from start to end; Time strings expected as from 
-*		FillDateString() 
+*   Print time from start to end; Time strings expected as from 
+*       FillDateString() 
 */
 int PrintTimeStoryI(char *stimeS,char *etimeS,int ve, char *preS)
 {
-	int stime,etime,dtime,d,h,m,s;
-	char prS[DEF_BS];
+    int stime,etime,dtime,d,h,m,s;
+    char prS[DEF_BS];
 
-	INIT_S(prS);
-	if(preS) { 	
-        sprintf(prS,"%s",preS);	
+    INIT_S(prS);
+    if(preS) {  
+        sprintf(prS,"%s",preS); 
     }
-	stime = GetDateI(stimeS);
-	etime = GetDateI(etimeS);
-	if( IS_BOG(stime) || IS_BOG(etime) ) {
-		return(FALSE);
-	}
-	dtime = etime - stime;
-	d = DaysI(dtime);
-	h = HoursI(dtime);
-	m = MinutesI(dtime);
-	s = SecondsI(dtime);
-	if(ve) {
-		printf("\n");
-		printf("%sRun time report\n",prS);
-		printf("%s  Start: %s\n",prS,stimeS);
-		printf("%s  End:   %s\n",prS,etimeS);
-	}
-	printf("%sDelta time: %d dy, %02d:%02d:%02d\n",prS,d,h,m,s); 
-	if(ve) {
-		printf("\n");
-	}
-	return(TRUE);
+    stime = GetDateI(stimeS);
+    etime = GetDateI(etimeS);
+    if( IS_BOG(stime) || IS_BOG(etime) ) {
+        return(FALSE);
+    }
+    dtime = etime - stime;
+    d = DaysI(dtime);
+    h = HoursI(dtime);
+    m = MinutesI(dtime);
+    s = SecondsI(dtime);
+    if(ve) {
+        printf("\n");
+        printf("%sRun time report\n",prS);
+        printf("%s  Start: %s\n",prS,stimeS);
+        printf("%s  End:   %s\n",prS,etimeS);
+    }
+    printf("%sDelta time: %d dy, %02d:%02d:%02d\n",prS,d,h,m,s); 
+    if(ve) {
+        printf("\n");
+    }
+    return(TRUE);
 }
 /*************************************************************************/
 int GetDateI(char *bufS)
 {
-	int d,h,m,s;
+    int d,h,m,s;
 
-	h = m = s = -1;
-	sscanf(bufS,"%*s %*s %d %d:%d:%d",&d,&h,&m,&s);
-	if ( (d < 0) || (h < 0) || (m < 0) || (s < 0) ) {
-		return(-1);
-	}
-	return(d*86400 + h*3600 + m*60 + s);
+    h = m = s = -1;
+    sscanf(bufS,"%*s %*s %d %d:%d:%d",&d,&h,&m,&s);
+    if ( (d < 0) || (h < 0) || (m < 0) || (s < 0) ) {
+        return(-1);
+    }
+    return(d*86400 + h*3600 + m*60 + s);
 }
 /*************************************************************************/
 int DaysI(int sec)
 {
-	return(sec/86400);
+    return(sec/86400);
 }
 /*************************************************************************/
 int HoursI(int sec)
 {
-	return((sec%86400) / 3600);
+    return((sec%86400) / 3600);
 }
 /*************************************************************************/
 int MinutesI(int sec)
 {
-	return((sec%3600) / 60);
+    return((sec%3600) / 60);
 }
 /*************************************************************************/
 int SecondsI(int sec)
 {
-	return(sec%60);
+    return(sec%60);
 }
 /*************************************************************************
-*	Fills passed string with '\0' characters to the passed length 
+*   Fills passed string with '\0' characters to the passed length 
 */
 void CleanString(char *stringS,int num)
-{	
-	int i;
+{   
+    int i;
 
-	for(i=0; i<num; i++)
-	{	stringS[i] = '\0';	}
+    for(i=0; i<num; i++)
+    {   stringS[i] = '\0';  }
     return;
 }
 /***********************************************************************
-*	True if no "graph" chars on a line; it's blank
+*   True if no "graph" chars on a line; it's blank
 */
 int BlankStringI(char *lS)
 {
-	while(ISLINE(*lS))
-	{
-		if(isgraph(INT(*lS))) {
-			return(FALSE);
-		}
-		lS++;	
-	}
-	return(TRUE);
+    while(ISLINE(*lS))
+    {
+        if(isgraph(INT(*lS))) {
+            return(FALSE);
+        }
+        lS++;   
+    }
+    return(TRUE);
 }
 /***********************************************************************
-*	Replaces occurances of sC (in sS) with rC (in rS)
+*   Replaces occurances of sC (in sS) with rC (in rS)
 */
 void ReplaceChars(char sC, char *sS, char rC, char *rS)
 { 
-	ReplaceSomeChars(sC,sS,rC,rS,strlen(sS)); 
-	rS[strlen(sS)] = '\0'; 
+    ReplaceSomeChars(sC,sS,rC,rS,strlen(sS)); 
+    rS[strlen(sS)] = '\0'; 
     return;
 }
 /***********************************************************************
-*	Replace chars only up to limit
+*   Replace chars only up to limit
 */
 void ReplaceSomeChars(char sC, char *sS, char rC, char *rS, int lim)
 {
@@ -225,8 +225,8 @@ void ReplaceSomeChars(char sC, char *sS, char rC, char *rS, int lim)
     return;
 }
 /****************************************************************************
-*	removes occurance of all listed chars in listS from source string sS
-*	and places the result in rS
+*   removes occurance of all listed chars in listS from source string sS
+*   and places the result in rS
 */
 void RemoveChars(char *listS, char *sS, char *rS)
 {
@@ -235,26 +235,26 @@ void RemoveChars(char *listS, char *sS, char *rS)
     */
     RemoveThisCharI(*listS,sS,rS);
     listS++;
-	while(*listS != '\0')
-	{
-		RemoveThisCharI(*listS,rS,rS);
-		listS++;
-	}
+    while(*listS != '\0')
+    {
+        RemoveThisCharI(*listS,rS,rS);
+        listS++;
+    }
     return;
 }
 /***********************************************************************
-*	Removes occurances of sC in source string sS into replacment string rS
+*   Removes occurances of sC in source string sS into replacment string rS
 */
 int RemoveThisCharI(char sC, char *sS, char *rS)
-{ 	
-	int j;
+{   
+    int j;
 
-	j = RemoveSomeCharsI(sC,sS,rS,strlen(sS)); 
-	rS[j] = '\0';
-	return(j);
+    j = RemoveSomeCharsI(sC,sS,rS,strlen(sS)); 
+    rS[j] = '\0';
+    return(j);
 }
 /****************************************************************************
-*	Remove chars (i.e. don't copy them) only up to limit
+*   Remove chars (i.e. don't copy them) only up to limit
 */
 int RemoveSomeCharsI(char sC, char *sS, char *rS, int lim)
 {
@@ -265,67 +265,67 @@ int RemoveSomeCharsI(char sC, char *sS, char *rS, int lim)
     {
         if(sS[i] != sC) {
             rS[j] = sS[i];
-			j++;
-		}
-		i++;
-	}
-	return(j);
+            j++;
+        }
+        i++;
+    }
+    return(j);
 }
 /************************************************************************
-*	Pads non-graph/print characters in a string up to len 
-*	DOES NOT CAP THE STRING WITH \0 at the end
+*   Pads non-graph/print characters in a string up to len 
+*   DOES NOT CAP THE STRING WITH \0 at the end
 */
 void PadString(char *sS,char pC,int len)
 {
-	int i,all;
+    int i,all;
 
-	all = FALSE;
-	for(i=0; i<len; i++)
-	{
-		if(!ISLINE(sS[i])) {
-			all++;
+    all = FALSE;
+    for(i=0; i<len; i++)
+    {
+        if(!ISLINE(sS[i])) {
+            all++;
         }
-		if((!isgraph(INT(sS[i])))||(all)) {
-			sS[i] = pC;
-		}
-	}
-    return;
-}
-/*************************************************************************
-*	Truncates passed string on char
-*/
-int TruncateStringI(char *bufS, char tC, char *newS)
-{
-	int j;
-
-	j = 0;
-	while(ISLINE(bufS[j]))
-	{
-		if(bufS[j] == tC) {
-			break;
-		}
-		newS[j] = bufS[j];
-		j++;
-	}
-	newS[j] = '\0';
-	return(j);
-}
-/*************************************************************************
-*	Print sourceS up to len to output file outPF
-*/
-void PrintString(char *sourceS, int len, FILE *outPF)
-{
-	int i;
-
-	HAND_NFILE(outPF);
-	for(i=0;i<len;i++)
-	{ 	
-        fputc(sourceS[i],outPF);	
+        if((!isgraph(INT(sS[i])))||(all)) {
+            sS[i] = pC;
+        }
     }
     return;
 }
 /*************************************************************************
-*	Changes all characters in passed string to uppercase
+*   Truncates passed string on char
+*/
+int TruncateStringI(char *bufS, char tC, char *newS)
+{
+    int j;
+
+    j = 0;
+    while(ISLINE(bufS[j]))
+    {
+        if(bufS[j] == tC) {
+            break;
+        }
+        newS[j] = bufS[j];
+        j++;
+    }
+    newS[j] = '\0';
+    return(j);
+}
+/*************************************************************************
+*   Print sourceS up to len to output file outPF
+*/
+void PrintString(char *sourceS, int len, FILE *outPF)
+{
+    int i;
+
+    HAND_NFILE(outPF);
+    for(i=0;i<len;i++)
+    {   
+        fputc(sourceS[i],outPF);    
+    }
+    return;
+}
+/*************************************************************************
+*   Changes all characters in passed string to uppercase
 */
 void Upperize(char *stringS)
 {
@@ -338,11 +338,11 @@ void UpperizeToLen(char *stringS, int n)
     int i;
 
     for(i=0;i<n;i++) {
-	    stringS[i] = toupper(INT(stringS[i]));	
+        stringS[i] = toupper(INT(stringS[i]));  
     }
 }
 /*************************************************************************
-*	Changes all characters in passed string to lowercase
+*   Changes all characters in passed string to lowercase
 */
 void Lowerize(char *stringS)
 {
@@ -354,42 +354,42 @@ void LowerizeToLen(char *stringS, int n)
     int i;
 
     for(i=0;i<n;i++) {
-	    stringS[i] = tolower(INT(stringS[i]));	
+        stringS[i] = tolower(INT(stringS[i]));  
     }
 }
 /*************************************************************************
-*	Count upper / lowercase chars in string
-*	Count's upper and lower cases in passed string
-*	Returns the number of chars not either
+*   Count upper / lowercase chars in string
+*   Count's upper and lower cases in passed string
+*   Returns the number of chars not either
 */
 int CountStringCaseI(char *sS, int len, int *lowPI, int *upPI)
 {
-	int i,nl,nu,nn;
+    int i,nl,nu,nn;
 
-	nl = nu = nn = 0;
-	for(i=0;i<len;i++)
-	{
-		if(isupper(INT(sS[i])))
-		{ 	nu++; }
-		else if(islower(INT(sS[i])))
-		{ 	nl++; }
-		else
-		{	nn++; }
-	}
-	if(lowPI) {
-		*lowPI = nl;
-	}
-	if(upPI) {
-		*upPI = nu;
-	}
-	return(nn);
+    nl = nu = nn = 0;
+    for(i=0;i<len;i++)
+    {
+        if(isupper(INT(sS[i])))
+        {   nu++; }
+        else if(islower(INT(sS[i])))
+        {   nl++; }
+        else
+        {   nn++; }
+    }
+    if(lowPI) {
+        *lowPI = nl;
+    }
+    if(upPI) {
+        *upPI = nu;
+    }
+    return(nn);
 }
 /*************************************************************************
-*	Kills trailing blanks in passed string
+*   Kills trailing blanks in passed string
 */
 void KillTrailStringBlanks(char *sS)
 {
-	int i;
+    int i;
 
     if(!sS) {
         return;
@@ -398,16 +398,16 @@ void KillTrailStringBlanks(char *sS)
     if(i==0) {
         return;
     }
-	while( (i>=0) && (!isgraph(INT(sS[i]))) ) {
+    while( (i>=0) && (!isgraph(INT(sS[i]))) ) {
         i--;
     }
-	sS[i+1] = '\0';
+    sS[i+1] = '\0';
     return;
 }
 /*************************************************************************/
 void Chomp(char *sS)
 {
-	int i;
+    int i;
 
     if(!sS) {
         return;
@@ -416,7 +416,7 @@ void Chomp(char *sS)
     if(i==0) {
         return;
     }
-	while(i>=0) {
+    while(i>=0) {
         if(sS[i] == '\n') {
             sS[i] = '\0';
             break;
@@ -426,321 +426,321 @@ void Chomp(char *sS)
     return;
 }
 /**************************************************************************
-*	Removes path from file name; walks on passed string
+*   Removes path from file name; walks on passed string
 */
 void StripFilePath(char *fnameS)
 {
-	char *cPC = NULL;
-	int i;
+    char *cPC = NULL;
+    int i;
 
-	i = strlen(fnameS);
-	while(i > 0)
-	{
-		if(fnameS[i] == '/') {
-			cPC = &fnameS[i+1];
-			break;
-		}
-		i--;
-	}
-	if(i > 0) {
-		sprintf(fnameS,"%s",cPC);
+    i = strlen(fnameS);
+    while(i > 0)
+    {
+        if(fnameS[i] == '/') {
+            cPC = &fnameS[i+1];
+            break;
+        }
+        i--;
     }
-	return;
+    if(i > 0) {
+        sprintf(fnameS,"%s",cPC);
+    }
+    return;
 }
 /**************************************************************************
-*	Gets components from passed filename: path, base, extension; any of which
-*	may be NULL
+*   Gets components from passed filename: path, base, extension; any of which
+*   may be NULL
 */
 int GetFilePartsI(char *fnameS, char *pathS, char *baseS, char *extS)
 {
-	int i,n,nb,ne,b,e,len,plen,blen,elen;
+    int i,n,nb,ne,b,e,len,plen,blen,elen;
 
-	DB_FNAME DB_PrI(">> GetFilePartsI |%s| %p %p %p\n",fnameS,pathS,baseS,extS);
-	if(extS) {
-		INIT_S(extS);
-	}
- 	if(pathS) {
-		INIT_S(pathS);
-	}
-	if(baseS) {
-		INIT_S(baseS);
-	}
-	/***
-	*	look for last . and separator 
-	*/
-	len = i = b = e = nb = ne = 0;
-	while(ISLINE(fnameS[i]))
-	{
-		if(fnameS[i]=='.') {
-			ne++;
-			e = i;
-		}
-		if(fnameS[i]==DIR_SEP_CHAR) {
-			nb++;
-			b = i;
-		}
-		i++;
-		len++;
-	}
-	DB_FNAME DB_PrI("+ len=%d, ne=%d e=%d, nb=%d b=%d\n",len,ne,e,nb,b);
-	/***
-	*	Special case limits 
-	*/
-	if(nb==0) {
-		b = -1;
-		DB_FNAME DB_PrI("+ no path\n");
-	}
-	if(ne==0) {
-		e = -1;
-		DB_FNAME DB_PrI("+ no exten\n");
-	}
-	if( b==(len-1) ) {
-		b = len;
-		DB_FNAME DB_PrI("+ sss/ case (slash at end of path)\n");
-	}
-	if( e==(len-1) ) {
-		e = len;
-		DB_FNAME DB_PrI("+ sss. case (dot at end of base)\n");
-	}
-	if( (e<b) && (ne>0) ) {
-		b = len;
-		DB_FNAME DB_PrI("+ ./ case (only path)\n");
-	}
-	if( (b==0) && (nb>0) ) {
-		b = len;
-		DB_FNAME DB_PrI("+ /sss case (only path)\n");
-	}
-	DB_FNAME DB_PrI("+ After checks e=%d b=%d\n",e,b);
-	/***
-	*	Now forward, filling the whip
-	*/
-	i = len = plen = blen = elen = 0;
-	while(ISLINE(fnameS[i]))
-	{
-		if( (i<b) && (nb>0) ) {
-			if(pathS) {
-				pathS[plen++] = fnameS[i];
-			}
-		}
-		else if( (i>e) && (ne>0) ) {
-			if(extS) {
-				extS[elen++] = fnameS[i];
-			}
-		}
-		else if( (i!=e) && (i!=b) ) {
-			if( baseS ) {
-				baseS[blen++] = fnameS[i];
-			}
-		}
-		i++;
-		len++;
-	}
-	DB_FNAME DB_PrI("+ lens: %d, p=%d b=%d e=%d\n",len,plen,blen,elen);
-	/***
-	*	Count fields and null-terminate / clean up substrings
-	*/
-	n = 0;
-	if(elen>0) {
-		if(extS) {
-			extS[elen] = '\0';
-		}
-		n++;
-	}
-	if(plen>0) {
- 		if(pathS) {
-			pathS[plen] = '\0';
-		}
-		n++;
-	}
-	if(blen>0) {
- 		if(baseS) {
-			baseS[blen] = '\0';
-		}
-		n++;
-	}
-	DB_FNAME DB_PrI("<< GetFilePartsI %d\n",n);
-	return(n);
+    DB_FNAME DB_PrI(">> GetFilePartsI |%s| %p %p %p\n",fnameS,pathS,baseS,extS);
+    if(extS) {
+        INIT_S(extS);
+    }
+    if(pathS) {
+        INIT_S(pathS);
+    }
+    if(baseS) {
+        INIT_S(baseS);
+    }
+    /***
+    *   look for last . and separator 
+    */
+    len = i = b = e = nb = ne = 0;
+    while(ISLINE(fnameS[i]))
+    {
+        if(fnameS[i]=='.') {
+            ne++;
+            e = i;
+        }
+        if(fnameS[i]==DIR_SEP_CHAR) {
+            nb++;
+            b = i;
+        }
+        i++;
+        len++;
+    }
+    DB_FNAME DB_PrI("+ len=%d, ne=%d e=%d, nb=%d b=%d\n",len,ne,e,nb,b);
+    /***
+    *   Special case limits 
+    */
+    if(nb==0) {
+        b = -1;
+        DB_FNAME DB_PrI("+ no path\n");
+    }
+    if(ne==0) {
+        e = -1;
+        DB_FNAME DB_PrI("+ no exten\n");
+    }
+    if( b==(len-1) ) {
+        b = len;
+        DB_FNAME DB_PrI("+ sss/ case (slash at end of path)\n");
+    }
+    if( e==(len-1) ) {
+        e = len;
+        DB_FNAME DB_PrI("+ sss. case (dot at end of base)\n");
+    }
+    if( (e<b) && (ne>0) ) {
+        b = len;
+        DB_FNAME DB_PrI("+ ./ case (only path)\n");
+    }
+    if( (b==0) && (nb>0) ) {
+        b = len;
+        DB_FNAME DB_PrI("+ /sss case (only path)\n");
+    }
+    DB_FNAME DB_PrI("+ After checks e=%d b=%d\n",e,b);
+    /***
+    *   Now forward, filling the whip
+    */
+    i = len = plen = blen = elen = 0;
+    while(ISLINE(fnameS[i]))
+    {
+        if( (i<b) && (nb>0) ) {
+            if(pathS) {
+                pathS[plen++] = fnameS[i];
+            }
+        }
+        else if( (i>e) && (ne>0) ) {
+            if(extS) {
+                extS[elen++] = fnameS[i];
+            }
+        }
+        else if( (i!=e) && (i!=b) ) {
+            if( baseS ) {
+                baseS[blen++] = fnameS[i];
+            }
+        }
+        i++;
+        len++;
+    }
+    DB_FNAME DB_PrI("+ lens: %d, p=%d b=%d e=%d\n",len,plen,blen,elen);
+    /***
+    *   Count fields and null-terminate / clean up substrings
+    */
+    n = 0;
+    if(elen>0) {
+        if(extS) {
+            extS[elen] = '\0';
+        }
+        n++;
+    }
+    if(plen>0) {
+        if(pathS) {
+            pathS[plen] = '\0';
+        }
+        n++;
+    }
+    if(blen>0) {
+        if(baseS) {
+            baseS[blen] = '\0';
+        }
+        n++;
+    }
+    DB_FNAME DB_PrI("<< GetFilePartsI %d\n",n);
+    return(n);
 }
 /***************************************************************************/
 int FnameFromPartsI(char *pathS, char *baseS, char *extS, char *fnameS)
 {
-	int ok;
+    int ok;
 
-	INIT_S(fnameS);
-	ok = FALSE;
-	if(pathS != NULL) {
-		if(isgraph(INT(*pathS))) {
-			strcat(fnameS,pathS);
-			strcat(fnameS,"/");
-		}
-	}
-	if(baseS != NULL) {
-		if(isgraph(INT(*baseS))) {
-			strcat(fnameS,baseS);
-			ok++;
-		}
-	}
-	if(extS != NULL) {
-		if(isgraph(INT(extS[0]))) {
-			strcat(fnameS,".");
-			strcat(fnameS,extS);
-		}
-	}
-	if( (NO_S(fnameS)) || (!ok) )
-	{	return(FALSE);	}
-	return(TRUE);
+    INIT_S(fnameS);
+    ok = FALSE;
+    if(pathS != NULL) {
+        if(isgraph(INT(*pathS))) {
+            strcat(fnameS,pathS);
+            strcat(fnameS,"/");
+        }
+    }
+    if(baseS != NULL) {
+        if(isgraph(INT(*baseS))) {
+            strcat(fnameS,baseS);
+            ok++;
+        }
+    }
+    if(extS != NULL) {
+        if(isgraph(INT(extS[0]))) {
+            strcat(fnameS,".");
+            strcat(fnameS,extS);
+        }
+    }
+    if( (NO_S(fnameS)) || (!ok) )
+    {   return(FALSE);  }
+    return(TRUE);
 }
 /***************************************************************************
-*	Deliminates a substring bounded by start and end characters sC and eC
-*	If subS is not NULL, the delimited part is copied to subS.
-*	Substring length is returned 
+*   Deliminates a substring bounded by start and end characters sC and eC
+*   If subS is not NULL, the delimited part is copied to subS.
+*   Substring length is returned 
 */
 int DelimSubStringI(char *inS, char sC, char eC, char *subS)
 {
     int i,j,lev;
 
-	DB_STRNG DB_PrI(">> DelimSubstringI '%c' '%c' %x input:\n|%s|\n", sC,eC,subS,inS);
+    DB_STRNG DB_PrI(">> DelimSubstringI '%c' '%c' %x input:\n|%s|\n", sC,eC,subS,inS);
     lev = i = j = 0;
     while(ISLINE(inS[i]))
     {
-		DB_STRNG DB_PrI("+ %4d |%c| ",i,inS[i]);
+        DB_STRNG DB_PrI("+ %4d |%c| ",i,inS[i]);
         if(inS[i] == sC) {
             lev++;
-			if(lev == 1) {
-				DB_STRNG DB_PrI("\n");
-				i++;	continue;
-			}
+            if(lev == 1) {
+                DB_STRNG DB_PrI("\n");
+                i++;    continue;
+            }
         }
-		if(lev == 0) {
-			DB_STRNG DB_PrI("not yet\n");
-			i++;	continue;
-		}
+        if(lev == 0) {
+            DB_STRNG DB_PrI("not yet\n");
+            i++;    continue;
+        }
         if(inS[i] == eC) {
             lev--;
         }
         if(lev < 1) {
-			DB_STRNG DB_PrI("end\n");
-			break;
-		}
-		if(subS) {
-           	subS[j] = inS[i];
-		}	
-		DB_STRNG DB_PrI("%d j %4d\n",lev,j);
-        i++;	j++;
+            DB_STRNG DB_PrI("end\n");
+            break;
+        }
+        if(subS) {
+            subS[j] = inS[i];
+        }   
+        DB_STRNG DB_PrI("%d j %4d\n",lev,j);
+        i++;    j++;
     }
-	if(lev != 0) {
+    if(lev != 0) {
         return(-1);
     }
-	DB_STRNG DB_PrI("<< DelimSubstringI %d\n",j);
+    DB_STRNG DB_PrI("<< DelimSubstringI %d\n",j);
     return(j);
 }
 /**************************************************************************/
 int GetNthWordI(char *bufS,int n,char *wordS)
 {
-	return(CopyNthWordI(bufS,n,wordS,TOO_BIG));
+    return(CopyNthWordI(bufS,n,wordS,TOO_BIG));
 }
 /**************************************************************************/
 int CopyNthWordI(char *bufS,int n,char *wordS,int max)
 {
-	int i;
-	char *cPC;
-	
-	if(wordS)
-	{	INIT_S(wordS);	}
-	cPC = bufS;
-	PASS_BLANK(cPC);
-	i = 1;
-	while(i<n)
-	{
-		if(!isgraph(INT(*cPC))) {
-			break;
+    int i;
+    char *cPC;
+    
+    if(wordS)
+    {   INIT_S(wordS);  }
+    cPC = bufS;
+    PASS_BLANK(cPC);
+    i = 1;
+    while(i<n)
+    {
+        if(!isgraph(INT(*cPC))) {
+            break;
         }
-		NEXT_WORD(cPC);
-		i++;
-	}
-	if(!isgraph(INT(*cPC))) {
-		return(FALSE);	
+        NEXT_WORD(cPC);
+        i++;
     }
-	if(wordS) {
-		sscanf(cPC,"%s",wordS);
-	}
-	return(TRUE);
+    if(!isgraph(INT(*cPC))) {
+        return(FALSE);  
+    }
+    if(wordS) {
+        sscanf(cPC,"%s",wordS);
+    }
+    return(TRUE);
 }
 /**************************************************************************
-*	Take input string and reverse it
+*   Take input string and reverse it
 */
 void ReverseString(char *inS,int len,char *outS)
 {
-	int i;
-	char uC,dC;
+    int i;
+    char uC,dC;
 
-	for(i=0;i<(len/2);i++)
-	{
-		uC = inS[i];
-		dC = inS[len-i-1];
-		outS[i] = dC;
-		outS[len-i-1] = uC;
-	}
-	if(len%2) {
-		outS[len/2] = inS[len/2];
-	}
+    for(i=0;i<(len/2);i++)
+    {
+        uC = inS[i];
+        dC = inS[len-i-1];
+        outS[i] = dC;
+        outS[len-i-1] = uC;
+    }
+    if(len%2) {
+        outS[len/2] = inS[len/2];
+    }
     return;
 }
 /***********************************************************************
-*	Parse True/False or Yes/No
-*	Returns TRUE, FALSE, or BOGUS is unrecognized
+*   Parse True/False or Yes/No
+*   Returns TRUE, FALSE, or BOGUS is unrecognized
 */
 int ParseTrueFalseI(char *wordS,int warn)
 {
-	int a;
+    int a;
 
-	if( (UPPER(wordS[0])=='T') || (UPPER(wordS[0])=='Y') )
-	{ 	a=TRUE; 	}
-	else if( (UPPER(wordS[0])=='F') || (UPPER(wordS[0])=='N') )
-	{ 	a=FALSE; }
-	else
-	{
-		if(warn) {
-			printf("Problem with keyword value (not True/False Yes/No)\n");
-		}
-		a = BOGUS;
-	}
-	return(a);
+    if( (UPPER(wordS[0])=='T') || (UPPER(wordS[0])=='Y') )
+    {   a=TRUE;     }
+    else if( (UPPER(wordS[0])=='F') || (UPPER(wordS[0])=='N') )
+    {   a=FALSE; }
+    else
+    {
+        if(warn) {
+            printf("Problem with keyword value (not True/False Yes/No)\n");
+        }
+        a = BOGUS;
+    }
+    return(a);
 }
 /************************************************************************
-*	Print True/False into string based on v
+*   Print True/False into string based on v
 */
 void FillTrueFalseString(int v,char *sS)
 {
-	if(v)
-	{ 	sprintf(sS,"True"); }
-	else
-	{ 	sprintf(sS,"False"); }
+    if(v)
+    {   sprintf(sS,"True"); }
+    else
+    {   sprintf(sS,"False"); }
     return;
 }
 /*************************************************************************
-*	Set name string for optional file 
+*   Set name string for optional file 
 */
 int FillOptionalNameStringI(char *nameS,char *deS)
 {
-	int ok;
+    int ok;
 
-	ok = FALSE;
-	if(NO_S(nameS))
-	{ 	
-		if(deS)
-		{	sprintf(deS,"None"); 	}
-	}
-	else
-	{ 	
-		if(deS)
-		{	strcpy(deS,nameS); 	}
-		ok++; 
-	}
-	return(ok);
+    ok = FALSE;
+    if(NO_S(nameS))
+    {   
+        if(deS)
+        {   sprintf(deS,"None");    }
+    }
+    else
+    {   
+        if(deS)
+        {   strcpy(deS,nameS);  }
+        ok++; 
+    }
+    return(ok);
 }
 /*************************************************************************
-*	Reports a parsing error Set name string for optional file 
+*   Reports a parsing error Set name string for optional file 
 */
 void ReportParseErrorLine(char *bufS, char *funcS, char *storyS)
 {
@@ -841,7 +841,7 @@ int WordStringMatchI(char *fS, char *sS, int kc, int st, int sub)
 /************************************************************************/
 void FloatFormatString(int w,int p,char *fmtS)
 {
-	sprintf(fmtS,"%%%d.%dlf",w,p);
+    sprintf(fmtS,"%%%d.%dlf",w,p);
     return;
 }
 /**********************************************************************

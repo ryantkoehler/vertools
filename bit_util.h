@@ -1,7 +1,7 @@
 /*
 * bit_util.h
 *
-* Copyright 2014 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
+* Copyright 2015 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
 *
 * The programs and source code of the vertools collection are free software.
 * They are distributed in the hope that they will be useful,
@@ -14,45 +14,45 @@
 *
 */
 
-#define VERSION_S 	"Bit_Util version 0.11"
+#define VERSION_S   "Bit_Util version 0.12"
 
-#define BIT_UTIL_ID  	5011
+#define BIT_UTIL_ID     5011
 typedef struct BIT_UTIL
 {
-	int ID;
-	char inname[NSIZE];		/* Input filename */
-	int iform;				/* Input file format */
-    int istrict;            /* Input strict error or warning */
-	FILE *out;				/* Output file */
-	char outname[NSIZE];	/* Output filename */
-    int oform;              /* Output format */
-    struct BITPOOL *bits;   /* Bit pool */
-    int bsize;              /* Bit size (n bits) */
-    int num;                /* Number of members in bit pool */
-    char *mmask;            /* Member mask */
-    char *bmask;            /* Bit mask */
-	char sbname[NSIZE];		/* Second bit set filename */
-    struct BITPOOL *sbits;  /* Second bit pool */
-	int firstr,lastr;		/* First / last record */
-    int outbits;            /* Outputing bits? */
-    int outcomp;            /* Outputing comparison results */
-	int do_stat;			/* Flag to report global stats */
-	int do_ostat;			/* Flag to output stats per rec */
-	int do_band;			/* Flag for logical AND */
-	int do_bor;				/* Flag for logical OR */
-	int do_bxor;			/* Flag for logical XOR */
-	int do_bnot;			/* Flag for logical NOT */
-	int do_b3;			    /* Flag for all 3 logical outputs */
-	int do_dump;			/* Flag to dump */
-	int do_fmat;			/* Report full pairwise matrix */
-	int do_rap;			    /* Flag to report all pairs */
-    struct BITPOOL *pretwk; /* Pre-tweak bit pool */
-	int tw_num;			    /* Tweak this number of bits */
-    DOUB tw_frac;           /* Tweak this fraction of bits */
-    int seed;               /* Random seed */
+    int ID;
+    char inname[NSIZE];     /* nput filename */
+    int iform;              /* nput file format */
+    int istrict;            /* nput strict error or warning */
+    FILE *out;              /* utput file */
+    char outname[NSIZE];    /* utput filename */
+    int oform;              /* utput format */
+    struct BITPOOL *bits;   /* it pool */
+    int bsize;              /* it size (n bits) */
+    int num;                /* umber of members in bit pool */
+    char *mmask;            /* ember mask */
+    char *bmask;            /* it mask */
+    char sbname[NSIZE];     /* econd bit set filename */
+    struct BITPOOL *sbits;  /* econd bit pool */
+    int firstr,lastr;       /* irst / last record */
+    int outbits;            /* utputing bits? */
+    int outcomp;            /* utputing comparison results */
+    int do_stat;            /* lag to report global stats */
+    int do_ostat;           /* lag to output stats per rec */
+    int do_band;            /* lag for logical AND */
+    int do_bor;             /* lag for logical OR */
+    int do_bxor;            /* lag for logical XOR */
+    int do_bnot;            /* lag for logical NOT */
+    int do_b3;              /* lag for all 3 logical outputs */
+    int do_dump;            /* lag to dump */
+    int do_fmat;            /* eport full pairwise matrix */
+    int do_rap;             /* lag to report all pairs */
+    struct BITPOOL *pretwk; /* re-tweak bit pool */
+    int tw_num;             /* weak this number of bits */
+    DOUB tw_frac;           /* weak this fraction of bits */
+    int seed;               /* andom seed */
 }BIT_UTIL;
 
-#define CHECK_BIT_UTIL(bu)	if(bu){DestroyBit_utilI(bu); bu=NULL;}
+#define CHECK_BIT_UTIL(bu)  if(bu){DestroyBit_utilI(bu); bu=NULL;}
 
 
 /*********************** ppp ********************

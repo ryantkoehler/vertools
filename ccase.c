@@ -1,7 +1,7 @@
 /*
 * ccase.c
 *
-* Copyright 2014 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
+* Copyright 2015 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
 *
 * The programs and source code of the vertools collection are free software.
 * They are distributed in the hope that they will be useful,
@@ -20,7 +20,7 @@
 #define __MAIN__
 #include "prim.h"
 
-#define VERSION_S "CCase Version 0.2"
+#define VERSION_S "CCase Version 0.21"
 
 int main(int argc, char **argv);
 void CCaseUse(void);
@@ -33,58 +33,58 @@ int main(int argc, char **argv)
 void CCaseUse()
 {
     VersionSplash(NULL,VERSION_S,"#  ",TRUE);
-	printf("Usage: <input> [...options]\n");
-	printf("  -u   Change to Upper case\n");
-	printf("  -l   Change to Lower case\n");
-	printf("  -f   Treat input as a file and lowerize contents\n");
+    printf("Usage: <input> [...options]\n");
+    printf("  -u   Change to Upper case\n");
+    printf("  -l   Change to Lower case\n");
+    printf("  -f   Treat input as a file and lowerize contents\n");
 }
 /**************************************************************************/
 int CCaseI(int argc, char **argv)
 {
-	int file,up,low,c;
-	char inS[DEF_BS*2];
-	FILE *fPF;	
+    int file,up,low,c;
+    char inS[DEF_BS*2];
+    FILE *fPF;  
 
-	file = up = low = FALSE;
+    file = up = low = FALSE;
     if(!ParseArgsI(argc,argv,"S -f B -u B -l B",
-		inS, &file, &up, &low,
-		(int *)NULL))
+        inS, &file, &up, &low,
+        (int *)NULL))
     {
         CCaseUse();
         return(FALSE);
     }
-/* printf("inS |%s|\n",inS); */
-	if(file)
-	{
-		if(!(fPF=OpenUFilePF(inS,"r",NULL)))
-		{
-        	return(FALSE);
-		}
-		while((c = fgetc(fPF)) != EOF)
-		{
-			if(up)
-			{
-				c = toupper(c);
-			}
-			else if(low)
-			{
-				c = tolower(c);
-			}
-			fputc(c,stdout);
-		}
-		FILECLOSE(fPF);
-	}
-	else
-	{
-		if(low)
-		{
-			Lowerize(inS);
-		}
-		else if(up)
-		{
-			Upperize(inS);
-		}
-		printf("%s\n",inS);
-	}
-	return(TRUE);
+/* rintf("inS |%s|\n",inS); */
+    if(file)
+    {
+        if(!(fPF=OpenUFilePF(inS,"r",NULL)))
+        {
+            return(FALSE);
+        }
+        while((c = fgetc(fPF)) != EOF)
+        {
+            if(up)
+            {
+                c = toupper(c);
+            }
+            else if(low)
+            {
+                c = tolower(c);
+            }
+            fputc(c,stdout);
+        }
+        FILECLOSE(fPF);
+    }
+    else
+    {
+        if(low)
+        {
+            Lowerize(inS);
+        }
+        else if(up)
+        {
+            Upperize(inS);
+        }
+        printf("%s\n",inS);
+    }
+    return(TRUE);
 }

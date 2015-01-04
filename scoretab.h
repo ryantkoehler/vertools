@@ -1,7 +1,7 @@
 /*
 * scoretab.h
 *
-* Copyright 2014 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
+* Copyright 2015 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
 *
 * The programs and source code of the vertools collection are free software.
 * They are distributed in the hope that they will be useful,
@@ -14,79 +14,79 @@
 *
 */
 
-#define VERSION_S   "ScoreTab Version 1.03"
+#define VERSION_S   "ScoreTab Version 1.04"
 
 #define SCORETAB_ID     5131
 typedef struct SCORETAB
 {
     int ID;
-    char inname[NSIZE];     /* Input filename */
-    char sdfname[NSIZE];    /* Score definition filename */
-    FILE *out;              /* Output file */
-    char outname[NSIZE];    /* Output filename */
-    int owhat;              /* Output what? */
-    char mergname[NSIZE];   /* Merge filename */
-    char macpre[NSIZE];     /* Merge append col prefix */
-    char macsuf[NSIZE];     /* Merge append col suffix */
-    int rlab,clab;          /* Flag to expect table with row/colum lables */
-    int corn;               /* Flag that table has no row-col label "corner" */
-    int do_skp;             /* Flag to skip problem input lines */
-    int do_mlis;            /* Flag to treat merge as list of tables */
-    int do_msub;            /* Flag to subtract merged tables */
-    int do_mmul;            /* Flag to multiply merged tables */
-    int do_mdiv;            /* Flag to div merged tables */
-    int do_mmin;            /* Flag to take min of merged tables */
-    int do_mmax;            /* Flag to take max of merged tables */
-    int do_mapc;            /* Merge by appanding columns */
-    int do_mrow;            /* Report row merges */
-    int do_abs;             /* Flag to replace with absolute value */
-    int do_symu,do_symd;    /* Flag to symmetrize up (max) or down (min) */
-    int do_tran;            /* Transpose tables */
-    int do_stru,do_strd;    /* Flags to sort rows up / down */
-    int ccor;               /* Correlate this column to others */
-    int cinfo;              /* Calculate info in this column relative to others */
-    int inf_maxhb;          /* Information calc max histogram bins */
-    int minrow,maxrow;      /* Bounds on rows to consider */
-    int mincol,maxcol;      /* Bounds on cols to consider */
-    char rlisname[NSIZE];   /* File with row subset list */
-    char clisname[NSIZE];   /* File with col subset list */
-    int do_kc;              /* Flag to keep case in name comparisions */
-    int do_wst;             /* Flag for word start only for name compare */
-    int do_wsub;            /* Flag for word substr only for name compare */
-    int do_igd;             /* Flag to ignore diagonal */
-    int do_wfm;             /* Flag to do weak-first matching */
-    int do_dwfm;            /* Flag to dump weak-first matching matrix */
-    int do_ncv;             /* Flag to normalize column values */
-    int do_qcv;             /* Flag / number to quantize column values */
-    int do_srow;            /* Flag to smooth rows */
-    int do_scol;            /* Flag to smooth rows */
-    int partalg;            /* Partition algorithm */
-    int psize;              /* Flag to partition into pools of this size */
-    DOUB pmin;              /* Partition minimum compatibility value allowed */
-    char dumpbase[NSIZE];   /* Partition matrix dumping file basename */
-    char pvsep[NSIZE];      /* Printed column separator string */
-    int do_ocsv, do_ossv;   /* Flag for output comma-sep-value or space-sep-value */
-    int usp_form;           /* Flag for user specific formatting */
-    DOUB mval,sval;         /* Value multipy and shift coefficients */
-    DOUB blval,bhval;       /* Bound low and high values */
-    DOUB exp;               /* Exponent */
-    struct TABLE *tab;      /* Table with numbers */
-    struct TABLE *stab;     /* Second table structure */
-    struct NUMLIST *tvals1; /* Array to hold temp row or col values */ 
-    struct NUMLIST *tvals2; /* Array to hold temp row or col values */ 
-    int nscores;            /* Number of score fields */
-    struct SCFIELD **scores;/* Array to pointers to score fields */
-    int do_scg;             /* Flag to apply score transforms globally */
+    char inname[NSIZE];     /* nput filename */
+    char sdfname[NSIZE];    /* core definition filename */
+    FILE *out;              /* utput file */
+    char outname[NSIZE];    /* utput filename */
+    int owhat;              /* utput what? */
+    char mergname[NSIZE];   /* erge filename */
+    char macpre[NSIZE];     /* erge append col prefix */
+    char macsuf[NSIZE];     /* erge append col suffix */
+    int rlab,clab;          /* lag to expect table with row/colum lables */
+    int corn;               /* lag that table has no row-col label "corner" */
+    int do_skp;             /* lag to skip problem input lines */
+    int do_mlis;            /* lag to treat merge as list of tables */
+    int do_msub;            /* lag to subtract merged tables */
+    int do_mmul;            /* lag to multiply merged tables */
+    int do_mdiv;            /* lag to div merged tables */
+    int do_mmin;            /* lag to take min of merged tables */
+    int do_mmax;            /* lag to take max of merged tables */
+    int do_mapc;            /* erge by appanding columns */
+    int do_mrow;            /* eport row merges */
+    int do_abs;             /* lag to replace with absolute value */
+    int do_symu,do_symd;    /* lag to symmetrize up (max) or down (min) */
+    int do_tran;            /* ranspose tables */
+    int do_stru,do_strd;    /* lags to sort rows up / down */
+    int ccor;               /* orrelate this column to others */
+    int cinfo;              /* alculate info in this column relative to others */
+    int inf_maxhb;          /* nformation calc max histogram bins */
+    int minrow,maxrow;      /* ounds on rows to consider */
+    int mincol,maxcol;      /* ounds on cols to consider */
+    char rlisname[NSIZE];   /* ile with row subset list */
+    char clisname[NSIZE];   /* ile with col subset list */
+    int do_kc;              /* lag to keep case in name comparisions */
+    int do_wst;             /* lag for word start only for name compare */
+    int do_wsub;            /* lag for word substr only for name compare */
+    int do_igd;             /* lag to ignore diagonal */
+    int do_wfm;             /* lag to do weak-first matching */
+    int do_dwfm;            /* lag to dump weak-first matching matrix */
+    int do_ncv;             /* lag to normalize column values */
+    int do_qcv;             /* lag / number to quantize column values */
+    int do_srow;            /* lag to smooth rows */
+    int do_scol;            /* lag to smooth rows */
+    int partalg;            /* artition algorithm */
+    int psize;              /* lag to partition into pools of this size */
+    DOUB pmin;              /* artition minimum compatibility value allowed */
+    char dumpbase[NSIZE];   /* artition matrix dumping file basename */
+    char pvsep[NSIZE];      /* rinted column separator string */
+    int do_ocsv, do_ossv;   /* lag for output comma-sep-value or space-sep-value */
+    int usp_form;           /* lag for user specific formatting */
+    DOUB mval,sval;         /* alue multipy and shift coefficients */
+    DOUB blval,bhval;       /* ound low and high values */
+    DOUB exp;               /* xponent */
+    struct TABLE *tab;      /* able with numbers */
+    struct TABLE *stab;     /* econd table structure */
+    struct NUMLIST *tvals1; /* rray to hold temp row or col values */ 
+    struct NUMLIST *tvals2; /* rray to hold temp row or col values */ 
+    int nscores;            /* umber of score fields */
+    struct SCFIELD **scores;/* rray to pointers to score fields */
+    int do_scg;             /* lag to apply score transforms globally */
     int quiet;
-    DOUB flglo,flghi;       /* Flagging low and high values */
-    int do_not;             /* Invert flagging criteria */
-    int seed;               /* Random number seed */
-    int do_gax;             /* Flag for some GA crossover operation */
-    DOUB gaxr;              /* GA row crossover fraction */
-    DOUB gaxc;              /* GA col crossover fraction */
-    int do_gam;             /* Flag for some GA mutation operation */
-    DOUB gamf;              /* GA mutation fraction */
-    DOUB gamg;              /* GA mutation gaussian */
+    DOUB flglo,flghi;       /* lagging low and high values */
+    int do_not;             /* nvert flagging criteria */
+    int seed;               /* andom number seed */
+    int do_gax;             /* lag for some GA crossover operation */
+    DOUB gaxr;              /* A row crossover fraction */
+    DOUB gaxc;              /* A col crossover fraction */
+    int do_gam;             /* lag for some GA mutation operation */
+    DOUB gamf;              /* A mutation fraction */
+    DOUB gamg;              /* A mutation gaussian */
 }SCORETAB;
 
 #define CHECK_SCORETAB(tu)    if(tu){DestroyScoretabI(tu); tu=NULL;}
@@ -101,26 +101,26 @@ typedef struct SCORETAB
 /***
 *    Output codes
 */
-#define SCTO_FULL    61    /* Full dump */
-#define SCTO_RPRO    65    /* Row product */
-#define SCTO_RSTAT   68    /* Row stats */
-#define SCTO_CSTAT   79    /* Col stats */
-#define SCTO_FSTAT   87    /* Full stats */
-#define SCTO_CCOR    90    /* Col correlation */
-#define SCTO_FCCM    91    /* Ful Col correlation matrix */
-#define SCTO_CINFO   92    /* Col information measures */
-#define SCTO_RCL     93    /* Row-Col list */
-#define SCTO_CRL     94    /* Col-Row list */
-#define SCTO_FLAG    95    /* Flagged subset of values */
-#define SCTO_NONE    99    /* Nothing at all */
+#define SCTO_FULL    61    /* ull dump */
+#define SCTO_RPRO    65    /* ow product */
+#define SCTO_RSTAT   68    /* ow stats */
+#define SCTO_CSTAT   79    /* ol stats */
+#define SCTO_FSTAT   87    /* ull stats */
+#define SCTO_CCOR    90    /* ol correlation */
+#define SCTO_FCCM    91    /* ul Col correlation matrix */
+#define SCTO_CINFO   92    /* ol information measures */
+#define SCTO_RCL     93    /* ow-Col list */
+#define SCTO_CRL     94    /* ol-Row list */
+#define SCTO_FLAG    95    /* lagged subset of values */
+#define SCTO_NONE    99    /* othing at all */
 
 
-#define INFO_DEF_MBIN   5   /* Default (max) bins for mutual information calc */
+#define INFO_DEF_MBIN   5   /* efault (max) bins for mutual information calc */
 
 
-#define PALG_BTS    222    /* Partition algorithm block-then-swap */
+#define PALG_BTS    222    /* artition algorithm block-then-swap */
 
-#define DEF_PALG    PALG_BTS    /* Default partition algoritm */
+#define DEF_PALG    PALG_BTS    /* efault partition algoritm */
 
 
 
@@ -149,10 +149,10 @@ int HandleRowSortI(TABLE *tabPO, int sdir, int mask);
 */
 int HandleSetPartitioningI(SCORETAB *stPO, TABLE *tabPO);
 int SetStartingPoolsI(SCORETAB *stPO,TABLE *tabPO, TABLE *poolsPO, int npools,
-	int psize);
+    int psize);
 int GetPoolMemTabIndexI(TABLE *poolsPO, int p1, int m1, int *indPI);
 int GetPoolPairValueI(TABLE *poolsPO, int p1, int m1, int p2, int m2,
-	TABLE *tabPO, DOUB *vPD);
+    TABLE *tabPO, DOUB *vPD);
 int ScreenPoolI(TABLE *poolsPO,int pool,TABLE *tabPO,DOUB minD, FILE *outPF);
 int CanSwapOutI(TABLE *poolsPO,int pool,int i,int j,TABLE *tabPO, DOUB minD);
 int HandlePoolSwapI(TABLE *poolsPO,int pool1,int m1,int pool2,int m2);
@@ -204,11 +204,11 @@ void PrintTabLabsValLineI(TABLE *tabPO, char *fS, char *sS, DOUB vD, FILE *outPF
 void HandleSctOutRows(SCORETAB *stPO,TABLE *tabPO,FILE *outPF);
 void HandleSctOutCols(SCORETAB *stPO,TABLE *tabPO,FILE *outPF);
 void HandleSctOutStats(SCORETAB *stPO,TABLE *tabPO,int what,int which,
-	FILE *outPF);
+    FILE *outPF);
 void HandleSctSingColInfo(SCORETAB *stPO,TABLE *tabPO,int c1, int c2,
-	FILE *outPF);
+    FILE *outPF);
 void HandleSctSingColCors(SCORETAB *stPO,TABLE *tabPO,int c1, int c2,
-	FILE *outPF);
+    FILE *outPF);
 void HandleSctColCors(SCORETAB *stPO,TABLE *tabPO,FILE *outPF);
 void HandleSctFlaggedOut(SCORETAB *stPO,TABLE *tabPO,FILE *outPF);
 void HandleSctWfmOut(SCORETAB *stPO,TABLE *vtabPO,TABLE *tabPO,FILE *outPF);

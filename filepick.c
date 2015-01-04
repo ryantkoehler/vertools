@@ -1,7 +1,7 @@
 /*
 * filepick.c
 *
-* Copyright 2014 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
+* Copyright 2015 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
 *
 * The programs and source code of the vertools collection are free software.
 * They are distributed in the hope that they will be useful,
@@ -26,73 +26,73 @@
 
 /**************************************************************************/
 int main(int argc, char **argv)
-{ Init(argc,argv); exit( AllDoneI(FilePickI(argc,argv),NULL) );	}
+{ Init(argc,argv); exit( AllDoneI(FilePickI(argc,argv),NULL) ); }
 /*******************************************************************/
 void FilePickUse()
 {
-	VersionSplash(NULL,VERSION_S,"#  ",TRUE);
+    VersionSplash(NULL,VERSION_S,"#  ",TRUE);
     printf("Usage: <infile> ['-' for stdin] [...options]\n");
-	printf("   <file>     A keyword delimited file\n");
-	printf("   -out XXX   Set output file to XXX\n");
-	printf("   -rst XXX   Set record START token to XXX (def = \"%s\")\n", DEF_STOK);
-	printf("   -rsany     Record start token may be anywhere (strstr)\n");
-	printf("   -ret XXX   Set record END token to XXX\n");
-	printf("   -ner       No end record output\n");
-	printf("   -snl       Separate records with new line\n");
-	printf("   -srn       Separate records with record number line\n");
-	printf("   -rg # #    Select subset of records # to #\n");
+    printf("   <file>     A keyword delimited file\n");
+    printf("   -out XXX   Set output file to XXX\n");
+    printf("   -rst XXX   Set record START token to XXX (def = \"%s\")\n", DEF_STOK);
+    printf("   -rsany     Record start token may be anywhere (strstr)\n");
+    printf("   -ret XXX   Set record END token to XXX\n");
+    printf("   -ner       No end record output\n");
+    printf("   -snl       Separate records with new line\n");
+    printf("   -srn       Separate records with record number line\n");
+    printf("   -rg # #    Select subset of records # to #\n");
     printf("   -wlis XXX  Select records matching words in XXX (first token / line)\n");
     printf("   -kc        Keep case for word comparison (default ignore)\n");
     printf("   -wst       Word start only needs to match line (not full token)\n");
     printf("   -wsub      Word substring only needs to match line (not full token)\n");
-	printf("   -not       Invert selection criteria\n");
-	printf("   -dh        Dump input header (before START token)\n");
-	printf("   -oh        Only dump input header (before START token)\n");
-	printf("   -esf       Extract records to separate files\n");
-	printf("   -esb XXX   Set extract file base name to XXX\n");
-	printf("   -esx XXX   Set extract file extension to XXX\n");
-	printf("   -stat      Just report the numbers\n");
+    printf("   -not       Invert selection criteria\n");
+    printf("   -dh        Dump input header (before START token)\n");
+    printf("   -oh        Only dump input header (before START token)\n");
+    printf("   -esf       Extract records to separate files\n");
+    printf("   -esb XXX   Set extract file base name to XXX\n");
+    printf("   -esx XXX   Set extract file extension to XXX\n");
+    printf("   -stat      Just report the numbers\n");
     printf("\n");
 }
 /**************************************************************************
-*	top level function
+*   top level function
 */
 int FilePickI(int argc, char **argv)
 {
     int stat, record, nokrec, in_rec, ok_rec, out_line, rec_line;
-	FILEPICK *fpPO;
+    FILEPICK *fpPO;
     char bufS[BBUFF_SIZE], tempS[DEF_BS], curecS[NSIZE];
 
-	stat = FALSE;
-	fpPO=CreateFilepickPO();
-	if(!ParseArgsI(argc, argv,
-		"S -out S -wlis S -rst S -ret S -rg I2 -not B -kc B -dh B -stat B\
-		-rsany B -esf B -esb S -esx S -oh B -snl B -srn B -tst B -tsub B\
+    stat = FALSE;
+    fpPO=CreateFilepickPO();
+    if(!ParseArgsI(argc, argv,
+        "S -out S -wlis S -rst S -ret S -rg I2 -not B -kc B -dh B -stat B\
+        -rsany B -esf B -esb S -esx S -oh B -snl B -srn B -tst B -tsub B\
         -ner B",
-		fpPO->inname, fpPO->outname, fpPO->wlisname, fpPO->stok, fpPO->etok, 
-		&fpPO->first,&fpPO->last, &fpPO->do_not, &fpPO->do_kc, &fpPO->do_dh, 
-		&stat, &fpPO->do_rsany, &fpPO->do_esf, fpPO->esbase, fpPO->esext,
-		&fpPO->do_oh, &fpPO->do_snl, &fpPO->do_srn, 
+        fpPO->inname, fpPO->outname, fpPO->wlisname, fpPO->stok, fpPO->etok, 
+        &fpPO->first,&fpPO->last, &fpPO->do_not, &fpPO->do_kc, &fpPO->do_dh, 
+        &stat, &fpPO->do_rsany, &fpPO->do_esf, fpPO->esbase, fpPO->esext,
+        &fpPO->do_oh, &fpPO->do_snl, &fpPO->do_srn, 
         &fpPO->do_wst, &fpPO->do_wsub, &fpPO->do_ner,
-		(int *)NULL))
-	{
-		FilePickUse();
-		CHECK_FILEPICK(fpPO);
-		return(FALSE);
-	}
-	/***
-	*	Set up
-	*/
-	if(!(fpPO->in = OpenUFilePF(fpPO->inname,"r",NULL)))
-	{
-		ABORTLINE;
-		CHECK_FILEPICK(fpPO);
-		return(FALSE);
-	}
+        (int *)NULL))
+    {
+        FilePickUse();
+        CHECK_FILEPICK(fpPO);
+        return(FALSE);
+    }
+    /***
+    *   Set up
+    */
+    if(!(fpPO->in = OpenUFilePF(fpPO->inname,"r",NULL)))
+    {
+        ABORTLINE;
+        CHECK_FILEPICK(fpPO);
+        return(FALSE);
+    }
     if(!CheckFilepickOptions(fpPO)) {
-		ABORTLINE;
-		CHECK_FILEPICK(fpPO);
-		return(FALSE);
+        ABORTLINE;
+        CHECK_FILEPICK(fpPO);
+        return(FALSE);
     }
     /***
     *   Party through input file
@@ -100,9 +100,9 @@ int FilePickI(int argc, char **argv)
     record = nokrec = 0;
     in_rec = ok_rec = 0;
     rec_line = 0;
-	while(fgets(bufS,BLINEGRAB,fpPO->in))
-	{
-	    if(LineMatchRecTokenI(fpPO,bufS,fpPO->stok,curecS)) {
+    while(fgets(bufS,BLINEGRAB,fpPO->in))
+    {
+        if(LineMatchRecTokenI(fpPO,bufS,fpPO->stok,curecS)) {
             record++;
             in_rec++;
             ok_rec = IsRecordOkI(fpPO,record,curecS);
@@ -120,7 +120,7 @@ int FilePickI(int argc, char **argv)
         /***
         *   Match end token? If so, still may print this line
         */
-	    if(LineMatchRecTokenI(fpPO,bufS,fpPO->etok,NULL)) {
+        if(LineMatchRecTokenI(fpPO,bufS,fpPO->etok,NULL)) {
             if(fpPO->do_ner) {
                 out_line = FALSE;
             }
@@ -141,7 +141,7 @@ int FilePickI(int argc, char **argv)
             */
             if(rec_line == 0) {
                 if(!HandleFilepickOutfileI(fpPO,record,curecS)) {
-		            ABORTLINE;
+                    ABORTLINE;
                     break;
                 }
                 if(fpPO->do_snl) {
@@ -157,63 +157,63 @@ int FilePickI(int argc, char **argv)
             rec_line++;
         }
     }
-	if(stat)
-	{
-		printf("# Total %d records\n",record);
-		printf("#       %d qualify\n",nokrec);
-	}
-	/***
-	*	All Done
-	*/
-	CHECK_FILEPICK(fpPO);
-	return(TRUE);
+    if(stat)
+    {
+        printf("# Total %d records\n",record);
+        printf("#       %d qualify\n",nokrec);
+    }
+    /***
+    *   All Done
+    */
+    CHECK_FILEPICK(fpPO);
+    return(TRUE);
 }
 /*************************************************************************/
 FILEPICK *CreateFilepickPO()
 {
-	FILEPICK *fpPO;
+    FILEPICK *fpPO;
 
-	if(!(fpPO=(FILEPICK *)ALLOC(1,sizeof(FILEPICK)))) {
-		return(NULL);
-	}
-	fpPO->ID = FILEPICK_ID;
-	InitFilepick(fpPO);
-	return(fpPO);
+    if(!(fpPO=(FILEPICK *)ALLOC(1,sizeof(FILEPICK)))) {
+        return(NULL);
+    }
+    fpPO->ID = FILEPICK_ID;
+    InitFilepick(fpPO);
+    return(fpPO);
 }
 /*************************************************************************/
 int DestroyFilepickI(FILEPICK *fpPO)
 {
-	VALIDATE(fpPO,FILEPICK_ID);
-	CHECK_WORDLIST(fpPO->wlis);
-	CHECK_FILE(fpPO->in);
-	CHECK_NFILE(fpPO->out,fpPO->outname);
-	FREE(fpPO);
-	return(TRUE);
+    VALIDATE(fpPO,FILEPICK_ID);
+    CHECK_WORDLIST(fpPO->wlis);
+    CHECK_FILE(fpPO->in);
+    CHECK_NFILE(fpPO->out,fpPO->outname);
+    FREE(fpPO);
+    return(TRUE);
 }
 /*************************************************************************
-*	Init structure
+*   Init structure
 */
 void InitFilepick(FILEPICK *fpPO)
 {
-	VALIDATE(fpPO,FILEPICK_ID);
-	INIT_S(fpPO->inname);
-	fpPO->in = NULL;
-	INIT_S(fpPO->outname);
-	fpPO->out = NULL;
-	strcpy(fpPO->stok,DEF_STOK);
-	INIT_S(fpPO->etok);
-	INIT_S(fpPO->wlisname);
+    VALIDATE(fpPO,FILEPICK_ID);
+    INIT_S(fpPO->inname);
+    fpPO->in = NULL;
+    INIT_S(fpPO->outname);
+    fpPO->out = NULL;
+    strcpy(fpPO->stok,DEF_STOK);
+    INIT_S(fpPO->etok);
+    INIT_S(fpPO->wlisname);
     fpPO->wlis = NULL;
     fpPO->first = fpPO->last = BOGUS;
-	fpPO->do_not = FALSE;
-	fpPO->do_ner = FALSE;
-	fpPO->do_kc = FALSE;
-	fpPO->do_dh = FALSE;
-	fpPO->do_oh = FALSE;
-	fpPO->do_rsany = FALSE;
-	fpPO->do_esf = FALSE;
-	INIT_S(fpPO->esbase);
-	INIT_S(fpPO->esext);
+    fpPO->do_not = FALSE;
+    fpPO->do_ner = FALSE;
+    fpPO->do_kc = FALSE;
+    fpPO->do_dh = FALSE;
+    fpPO->do_oh = FALSE;
+    fpPO->do_rsany = FALSE;
+    fpPO->do_esf = FALSE;
+    INIT_S(fpPO->esbase);
+    INIT_S(fpPO->esext);
 }
 /*************************************************************************
 *
@@ -238,7 +238,7 @@ int CheckFilepickOptions(FILEPICK *fpPO)
 */
 int LineMatchRecTokenI(FILEPICK *fpPO, char *bufS, char *tokS, char *nameS)
 {
-	int n;
+    int n;
     char *cPC, wordS[DEF_BS];
 
     /***
@@ -250,29 +250,29 @@ int LineMatchRecTokenI(FILEPICK *fpPO, char *bufS, char *tokS, char *nameS)
     /***
     *   Look anywhere or at first word on line
     */
-	n = 0;
+    n = 0;
     if (nameS) {
         INIT_S(nameS);
     }
-	if(fpPO->do_rsany) {
-		cPC = strstr(bufS,tokS);
-		if(cPC) {
-			n++;
+    if(fpPO->do_rsany) {
+        cPC = strstr(bufS,tokS);
+        if(cPC) {
+            n++;
             if (nameS) {
                 sscanf(cPC,"%*s %s",nameS);
             }
         }
-	}
-	else {
+    }
+    else {
         sscanf(bufS,"%s",wordS);
-		if(WordStringMatchI(tokS,wordS,fpPO->do_kc,FALSE,FALSE)) {
-			n++;
+        if(WordStringMatchI(tokS,wordS,fpPO->do_kc,FALSE,FALSE)) {
+            n++;
             if (nameS) {
                 sscanf(bufS,"%*s %s",nameS);
             }
         }
-	}
-	return(n);
+    }
+    return(n);
 }
 /*************************************************************************
 *   Check record status and return if it's qualified or not 
@@ -322,7 +322,7 @@ int FpOutputThisLineI(FILEPICK *fpPO,int record,int in_rec,int ok_rec)
     return(ok);
 }
 /*************************************************************************
-*	Make sure output file is set right
+*   Make sure output file is set right
 */
 int HandleFilepickOutfileI(FILEPICK *fpPO,int record,char *recS)
 {
@@ -335,25 +335,25 @@ int HandleFilepickOutfileI(FILEPICK *fpPO,int record,char *recS)
         CHECK_NFILE(fpPO->out,fpPO->outname);
         GetFilePartsI(fpPO->inname,NULL,baseS,extS);
         if(!NO_S(fpPO->esbase)) {
-			strcpy(baseS,fpPO->esbase);
+            strcpy(baseS,fpPO->esbase);
         }
         if(!NO_S(fpPO->esext)) {
-			strcpy(extS,fpPO->esext);
+            strcpy(extS,fpPO->esext);
         }
-		sprintf(fpPO->outname,"%s_part%02d.%s",baseS,record,extS);
+        sprintf(fpPO->outname,"%s_part%02d.%s",baseS,record,extS);
     }
-	/***
-	*	Try to open?
-	*/
+    /***
+    *   Try to open?
+    */
     if(!NO_S(fpPO->outname)) {
-	    if(!(fpPO->out = OpenUFilePF(fpPO->outname,"w",NULL))) {
+        if(!(fpPO->out = OpenUFilePF(fpPO->outname,"w",NULL))) {
             return(FALSE);
         }
     }
     return(TRUE);
 }
 /*************************************************************************
-*	Handle output line
+*   Handle output line
 */
 int FpOutOneLineI(FILEPICK *fpPO, char *lineS, FILE *outPF)
 {

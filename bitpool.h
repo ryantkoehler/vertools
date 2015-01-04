@@ -1,7 +1,7 @@
 /*
 * bitpool.h
 *
-* Copyright 2014 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
+* Copyright 2015 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
 *
 * The programs and source code of the vertools collection are free software.
 * They are distributed in the hope that they will be useful,
@@ -23,8 +23,8 @@
 *   Type for bitwise operations; int32_t is 32 bits
 */
 typedef int32_t BITPTR;
-#define BU_WORDLEN      32      /* Word length; 32 bits */
-#define BU_BLK_SIZE		8       /* Block size; Process 8 bits at a time */
+#define BU_WORDLEN      32      /* ord length; 32 bits */
+#define BU_BLK_SIZE     8       /* lock size; Process 8 bits at a time */
 
 
 #define BITPOOL_ID  4002
@@ -32,33 +32,33 @@ typedef int32_t BITPTR;
 typedef struct BITPOOL
 {
     int ID;
-    char name[NSIZE];       /* Name */
-    char fname[NSIZE];      /* Input file name */
-    int num;                /* Number of records */
-    BITPTR *blocks;         /* Bit array */
-    int n_blocks;           /* Dimension of blocks */
-    int bsize;              /* Bitstring size for records */
-    int bkprec;             /* Blocks per record */
-    struct WORDLIST *mnames;/* Member names */
-    char prlform[NSIZE];    /* Print formatting string for labels */
-    DOUB coef;              /* Coefficient for weighting */
+    char name[NSIZE];       /* ame */
+    char fname[NSIZE];      /* nput file name */
+    int num;                /* umber of records */
+    BITPTR *blocks;         /* it array */
+    int n_blocks;           /* imension of blocks */
+    int bsize;              /* itstring size for records */
+    int bkprec;             /* locks per record */
+    struct WORDLIST *mnames;/* ember names */
+    char prlform[NSIZE];    /* rint formatting string for labels */
+    DOUB coef;              /* oefficient for weighting */
 }BITPOOL;
 
 #define CHECK_BITPOOL(ob) if(ob){DestroyBitpoolI(ob); ob=NULL;}
 
 
-#define BP_NSIZE            100     /* Size for bit pool member name space */
+#define BP_NSIZE            100     /* ize for bit pool member name space */
 
-#define DEF_BP_PRLFORM_S    "%s"    /* Default row label format string */
+#define DEF_BP_PRLFORM_S    "%s"    /* efault row label format string */
 
 
 /***
 *   Input format codes
 */
-#define BPF_BITS    200     /*  BitString input format as 0100110.. etc */
-#define BPF_SBITS   201     /*  BitString input format as 0 1 0 0 1 .. etc */
-#define BPF_HEX     202     /*  BitString input format as hex numbers */
-#define BPF_TAB     203     /*  BitString input format as table */
+#define BPF_BITS    200     /* BitString input format as 0100110.. etc */
+#define BPF_SBITS   201     /* BitString input format as 0 1 0 0 1 .. etc */
+#define BPF_HEX     202     /* BitString input format as hex numbers */
+#define BPF_TAB     203     /* BitString input format as table */
 
 /***
 *   Pairwise operator codes
