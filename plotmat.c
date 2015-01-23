@@ -19,13 +19,13 @@
 #include <string.h>
 #include <ctype.h>
 #include <math.h>
+#include <gd.h> 
 #define __MAIN__
 #include "prim.h"
 #include "numlist.h"
 #include "wordlist.h"
 #include "table.h"
 #include "color.h"
-#include "gd.h"     /* D graphics library; must preceed plot_lib.h */
 #include "plot_lib.h"
 #include "plotmat.h"
 

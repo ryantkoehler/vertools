@@ -17,9 +17,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <ctype.h>
+#include <gd.h>
 #include "prim.h"
 #include "color.h"
-#include "gd.h"     /* D graphics library; must preceed plot_lib.h */
 #include "plot_lib.h"
 
 #define DB_IMAGE    if(DB[125])

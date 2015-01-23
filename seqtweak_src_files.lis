@@ -1,0 +1,17 @@
+autil.c
+dfutil.c
+mutil.c
+putil.c
+sutil.c
+sysinfo.c
+util.c
+dna.c
+dna_char.c
+dna_file.c
+dna_in.c
+dna_seqs.c
+snp_char.c
+seqtweak.c
+dna.h
+prim.h
+seqtweak.h

@@ -1,19 +1,18 @@
-/*
-* fold_vars.h
-*
-* Copyright 2015 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
-*
-* The programs and source code of the vertools collection are free software.
-* They are distributed in the hope that they will be useful,
-* WITHOUT ANY WARRANTY OF FITNESS FOR ANY PARTICULAR PURPOSE.  
-* 
-* Permission is granted for research, educational, and commercial use and 
-* modification as long as 1) Code and any derived works are not redistributed
-* for any fee, and 2) Proper credit is given to the authors. If you wish to 
-* include this software in a product, please contact the authors.
-*
-*/
+#ifndef __VIENNA_RNA_PACKAGE_FOLD_VARS_H__
+#define __VIENNA_RNA_PACKAGE_FOLD_VARS_H__
 
+#include "data_structures.h"
+
+/**
+ *  \file fold_vars.h
+ *  \brief Here all all declarations of the global variables used throughout RNAlib
+ */
+
+
+#define PUBLIC
+#define PRIVATE static
+
+/**
  *  \brief Global switch to activate/deactivate folding with structure constraints
  */
 extern int    fold_constrained;

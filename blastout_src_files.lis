@@ -1,0 +1,13 @@
+autil.c
+dfutil.c
+mutil.c
+putil.c
+sutil.c
+sysinfo.c
+util.c
+blast_io.c
+blasthit.c
+blaststr.c
+blastout.c
+blastout.h
+prim.h

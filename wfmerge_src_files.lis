@@ -1,0 +1,15 @@
+autil.c
+dfutil.c
+mutil.c
+putil.c
+sutil.c
+sysinfo.c
+util.c
+wfutil.c
+wfmerge.c
+dna.h
+prim.h
+score.h
+wfmerge.h
+wfutil.h
+wordfreq.h

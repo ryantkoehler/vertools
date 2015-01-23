@@ -1,19 +1,42 @@
-/*
-* fold.h
-*
-* Copyright 2015 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
-*
-* The programs and source code of the vertools collection are free software.
-* They are distributed in the hope that they will be useful,
-* WITHOUT ANY WARRANTY OF FITNESS FOR ANY PARTICULAR PURPOSE.  
-* 
-* Permission is granted for research, educational, and commercial use and 
-* modification as long as 1) Code and any derived works are not redistributed
-* for any fee, and 2) Proper credit is given to the authors. If you wish to 
-* include this software in a product, please contact the authors.
-*
-*/
+#ifndef __VIENNA_RNA_PACKAGE_FOLD_H__
+#define __VIENNA_RNA_PACKAGE_FOLD_H__
 
+#include "data_structures.h"
+
+#ifdef __GNUC__
+#define DEPRECATED(func) func __attribute__ ((deprecated))
+#else
+#define DEPRECATED(func) func
+#endif
+
+/**
+ *  \addtogroup mfe_fold
+ *  \ingroup folding_routines
+ *  \brief This section covers all functions and variables related to the calculation
+ *  of minimum free energy (MFE) structures.
+ *
+ *  The library provides a fast dynamic programming minimum free energy
+ *  folding algorithm as described in \cite zuker:1981.
+ *  All relevant parts that directly implement the "Zuker & Stiegler" algorithm for single
+ *  sequences are described in this section.
+ *
+ *  Folding of circular RNA sequences is handled as a post-processing step of the forward
+ *  recursions. See \cite hofacker:2006 for further details.
+ *
+ *  Nevertheless, the RNAlib also
+ *  provides interfaces for the prediction of consensus MFE structures of sequence alignments,
+ *  MFE structure for two hybridized sequences, local optimal structures and many more. For
+ *  those more specialized variants of MFE folding routines, please consult the appropriate
+ *  subsections (Modules) as listed above.
+ *  
+ *  \file fold.h
+ *  \brief MFE calculations and energy evaluations for single RNA sequences
+ * 
+ *  This file includes (almost) all function declarations within the RNAlib that are related to
+ *  MFE folding...
+ */
+
+/**
  *  \defgroup eval Energy evaluation
  *  @{
  *    \brief This module contains all functions and variables related to energy evaluation

@@ -15,7 +15,7 @@
 */
 
 
-#define VERSION_S   "PlotMat Version 0.52"
+#define VERSION_S   "PlotMat Version 0.53"
 
 #define PLOTMAT_ID     5121
 typedef struct PLOTMAT

@@ -18,14 +18,14 @@
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
+#include <gd.h>     
+#include <gdfontt.h>
+#include <gdfonts.h>
+#include <gdfontmb.h>
+#include <gdfontl.h>
+#include <gdfontg.h>
 #include "prim.h"
 #include "color.h"
-#include "gd.h"     /* D graphics library; must preceed plot_lib.h */
-#include "gdfontt.h"
-#include "gdfonts.h"
-#include "gdfontmb.h"
-#include "gdfontl.h"
-#include "gdfontg.h"
 #include "plot_lib.h"
 
 #define DB_IMAGE    if(DB[125])

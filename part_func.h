@@ -1,19 +1,34 @@
-/*
-* part_func.h
-*
-* Copyright 2015 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
-*
-* The programs and source code of the vertools collection are free software.
-* They are distributed in the hope that they will be useful,
-* WITHOUT ANY WARRANTY OF FITNESS FOR ANY PARTICULAR PURPOSE.  
-* 
-* Permission is granted for research, educational, and commercial use and 
-* modification as long as 1) Code and any derived works are not redistributed
-* for any fee, and 2) Proper credit is given to the authors. If you wish to 
-* include this software in a product, please contact the authors.
-*
-*/
+#ifndef __VIENNA_RNA_PACKAGE_PART_FUNC_H__
+#define __VIENNA_RNA_PACKAGE_PART_FUNC_H__
 
+#include "data_structures.h"
+
+#ifdef __GNUC__
+#define DEPRECATED(func) func __attribute__ ((deprecated))
+#else
+#define DEPRECATED(func) func
+#endif
+
+
+/**
+ *  \addtogroup pf_fold
+ *  \brief This section provides information about all functions and variables related to
+ *  the calculation of the partition function and base pair probabilities.
+ *
+ *  Instead of the minimum free energy structure the partition function of all possible structures
+ *  and from that the pairing probability for every possible pair can be calculated, using a dynamic
+ *  programming algorithm as described in \cite mccaskill:1990. 
+ *
+ *  @{
+ *    \file part_func.h
+ *    \brief Partition function of single RNA sequences
+ * 
+ *    This file includes (almost) all function declarations within the <b>RNAlib</b> that are related to
+ *    Partion function folding...
+ *  @}
+ */
+
+/**
  *  \brief Flag indicating that auxilary arrays are needed throughout the computations. This is essential for stochastic backtracking
  *
  *  Set this variable to 1 prior to a call of pf_fold() to ensure that all matrices needed for stochastic backtracking
