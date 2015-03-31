@@ -54,7 +54,9 @@ void PlotMatUse(void)
     printf("   -sdc #      Set Standard Deviation color range +/- # sd\n");
     printf("   -nolab      No lables in output\n");
     printf("   -norl -nocl No row / col lables in output\n");
+    printf("   -rls #      Set row lable step to every #'th row\n");
     printf("   -rlw #      Set row lable width to # (def = %d)\n",DEF_RLABW);
+    printf("   -clf        Set col lables 'flat'; Default is rotated\n");
     printf("   -pcv        Print cell values\n");
     printf("   -pxv        Print only Extreme cell values (over / under)\n");
     printf("   -pfmt # #   Set print format # wide # precision (%%#.#f)\n");
@@ -86,7 +88,7 @@ int PlotMatI(int argc,char **argv)
         "S -out S -pdim I2 -dump B -vcr D2 -igd B -nrlab B -nclab B\
         -cdim I2 -tm I -bm I -rm I -lm I -corcol B -corgbr B\
         -nolab B -acr B -rlw I -ucol S -ocol S -norl B -nocl B -pcv B -pfmt I2\
-        -ngrid B -colmen B -fcol S -sdc D -pxv B -sk B -ncorn B",
+        -ngrid B -colmen B -fcol S -sdc D -pxv B -sk B -ncorn B -rls I -clf B",
         pmPO->inname, pmPO->outname, &pmPO->xdim,&pmPO->ydim,
         &dump, &pmPO->lo,&pmPO->hi, &pmPO->do_igd, &rlab, &clab,
         &pmPO->xc,&pmPO->yc, &pmPO->tm, &pmPO->bm, &pmPO->rm, &pmPO->lm,
@@ -95,6 +97,7 @@ int PlotMatI(int argc,char **argv)
         &pmPO->do_rowlab, &pmPO->do_collab,
         &pmPO->do_pcv, &pmPO->pftw,&pmPO->pftp, &pmPO->pgrid, &colmen,
         pmPO->fcolor, &pmPO->sd_col, &pmPO->do_pxv, &skip, &corn,
+        &pmPO->rlab_step, &pmPO->do_roclab,
         (int *)NULL))
     {
         PlotMatUse();
@@ -141,6 +144,7 @@ int PlotMatI(int argc,char **argv)
     if(nolab) {
         pmPO->do_rowlab = pmPO->do_collab = FALSE;
     }
+    LIMIT_NUM(pmPO->rlab_step, 1, TOO_BIG)
     if(!CheckPlotmatOptionsI(pmPO)) {
         PROBLINE;
         CHECK_PLOTMAT(pmPO);
@@ -208,12 +212,14 @@ void InitPlotmat(PLOTMAT *pmPO)
     pmPO->lo = 0.0;
     pmPO->xdim = DEF_DIMS;
     pmPO->ydim = DEF_DIMS;
-    pmPO->tm = DEF_TMAR;
+    pmPO->tm = BOGUS;
     pmPO->bm = DEF_BMAR;
     pmPO->lm = DEF_LMAR;
     pmPO->rm = DEF_RMAR;
     pmPO->do_rowlab = TRUE;
     pmPO->do_collab = TRUE;
+    pmPO->do_roclab = TRUE;
+    pmPO->rlab_step = 1;
     pmPO->do_pcv = pmPO->do_pxv = FALSE;
     pmPO->pftw = pmPO->pftp = BOGUS;
     pmPO->pgrid = TRUE;
@@ -258,10 +264,16 @@ void SetPlotmatFormatString(PLOTMAT *pmPO)
     return;
 }
 /*************************************************************************
-*
+*   Check if options are OK ... TODO; Sham setting things here?
 */
 int CheckPlotmatOptionsI(PLOTMAT *pmPO)
 {
+    if(pmPO->do_roclab && pmPO->do_collab) {
+        pmPO->tm = DEF_TMAR;
+    }
+    else {
+        pmPO->tm = DEF_TMAR_NL;
+    }
     return(TRUE);
 }
 /*************************************************************************
@@ -386,16 +398,14 @@ void SetLegendPosition(PLOTMAT *pmPO)
     */
     x = pmPO->lm + DEF_LEGTEX;
     y = pmPO->ydim - DEF_LEGY;
-    if(pmPO->do_rowlab)
-    {
+    if(pmPO->do_rowlab) {
         x += pmPO->rowlabw;
     }
     /***
     *   Legend width reduced if narrowed plot
     */
     legw = DEF_LEGW;
-    if( (x+legw) >= (pmPO->xdim - 10) )
-    {
+    if( (x+legw) >= (pmPO->xdim - 10) ) {
         legw = pmPO->xdim - 10;
     }
 /*
@@ -409,16 +419,13 @@ printf("XXX x=%d y=%d leg=%d\n",x,y,legw);
 void SetupPlotPage(PLOTMAT *pmPO, IMAGEPLOT *plotPO)
 {
     ImageplotColorBoxI(plotPO,0,0,plotPO->x,plotPO->y,WHITE);
-    if(pmPO->do_corcol)
-    {
+    if(pmPO->do_corcol) {
         SetCorrelationRWBSpectrumI(plotPO);
     }
-    else if(pmPO->do_corgbr)
-    {
+    else if(pmPO->do_corgbr) {
         SetCorrelationRKGSpectrumI(plotPO);
     }
-    else
-    {
+    else {
         SetRainbowRHighSpectrumI(plotPO);
     }
     /***
@@ -449,24 +456,26 @@ void PlotTableOnPage(PLOTMAT *pmPO)
         if(pmPO->do_rowlab) {
             x += pmPO->rowlabw;
         }
-        for(c=0;c<nc;c++) {
+        for(c=0; c<nc; c++) {
             GetTableColLabI(pmPO->tab,c,nameS,NSIZE-1);
-            ImageplotTextStringI(pmPO->plot,x,y,nameS,GFONT_MEDBOLD,BLACK);
+            ImageplotTextStringI(pmPO->plot,x,y,nameS,GFONT_MEDBOLD,BLACK,pmPO->do_roclab);
             x += w;
         }
     }
     /***
     *   Loop down the rows
     */
-    for(r=0;r<nr;r++) {
+    for(r=0; r<nr; r++) {
         y = pmPO->tm + r * h;
         if(pmPO->do_collab) {
             y += pmPO->collabh;
         }
         x = pmPO->lm;
         if(pmPO->do_rowlab) {
-            GetTableRowLabI(pmPO->tab,r,nameS,NSIZE-1);
-            ImageplotTextStringI(pmPO->plot,x,y,nameS,GFONT_MEDBOLD,BLACK);
+            if((r % pmPO->rlab_step) == 0) {
+                GetTableRowLabI(pmPO->tab,r,nameS,NSIZE-1);
+                ImageplotTextStringI(pmPO->plot,x,y,nameS,GFONT_MEDBOLD,BLACK,FALSE);
+            }
             x += pmPO->rowlabw;
         }
         /***
@@ -506,7 +515,7 @@ void PlotTableOnPage(PLOTMAT *pmPO)
     }
 }
 /******************************************************************************
-*   XXX SHAM with hard-coded color bounds!!!
+*   TODO; sham with hard-coded color bounds!!!
 */
 void PlotCellValue(PLOTMAT *pmPO, int x, int y, DOUB rD, int color)
 {
@@ -551,5 +560,5 @@ void PlotCellValue(PLOTMAT *pmPO, int x, int y, DOUB rD, int color)
     fx = x + 3;
     fy = y + 3;
     /* mageplotTextStringI(pmPO->plot,x+3,y+10,bufS,GFONT_MEDBOLD,fcol); */
-    ImageplotTextStringI(pmPO->plot,fx,fy,bufS,GFONT_MEDBOLD,fcol);
+    ImageplotTextStringI(pmPO->plot,fx,fy,bufS,GFONT_MEDBOLD,fcol,FALSE);
 }

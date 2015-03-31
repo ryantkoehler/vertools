@@ -646,13 +646,13 @@ void ImageplotSpecLegendTex(IMAGEPLOT *plotPO, char *sS,char *eS)
     if(sS)
     {
         DB_IMAGE DB_PrI("+ S|%s| sx=%d sy=%d\n",sS,sx,sy);
-        ImageplotTextStringI(plotPO,sx,sy,sS,GFONT_MEDBOLD,color);
+        ImageplotTextStringI(plotPO,sx,sy,sS,GFONT_MEDBOLD,color,FALSE);
     }
     if(eS)
     {
         sx = sx + plotPO->specw + 2 * plotPO->spectex;
         DB_IMAGE DB_PrI("+ E|%s| sx=%d sy=%d\n",sS,sx,sy);
-        ImageplotTextStringI(plotPO,sx,sy,eS,GFONT_MEDBOLD,color);
+        ImageplotTextStringI(plotPO,sx,sy,eS,GFONT_MEDBOLD,color,FALSE);
     }
     DB_IMAGE DB_PrI("<< ImageplotSpecLegendTex\n");
 }
@@ -738,50 +738,79 @@ void ImageplotSubSpecTex(IMAGEPLOT *plotPO,char *sS)
     color = plotPO->colors[BLACK];
     sx = plotPO->specx;
     sy = plotPO->specy + plotPO->spech + 2;
-    ImageplotTextStringI(plotPO,sx,sy,sS,GFONT_MEDBOLD,color);
+    ImageplotTextStringI(plotPO,sx,sy,sS,GFONT_MEDBOLD,color,FALSE);
 }
 /****************************************************************************
 *   11/30/10 RTK; Had to sham up string char pointer to unsigned char for
 *       library calls; Mac gcc issued pointer missmatch warning.
+*   3/23/15 RTK; Add rotate argument and option to call regular or "Up" 
 */
 int ImageplotTextStringI(IMAGEPLOT *plotPO, int x, int y, char *texPC, int font,
-    int color)
+    int color, int rotate)
 {
     unsigned char *texS;
 
-    DB_DRAW DB_PrI(">> ImageplotTextStringI x=%d y=%d font=%d color=%d\n",
-        x,y,font,color);
+    DB_DRAW DB_PrI(">> ImageplotTextStringI x=%d y=%d font=%d color=%d rotate=%d\n",
+        x,y,font,color,rotate);
     texS = (unsigned char *) texPC;
     VALIDATE(plotPO,IMAGEPLOT_ID);
-    if(!plotPO->havegd) 
-    {
+    if(!plotPO->havegd) {
         DB_DRAW DB_PrI("<< ImageplotTextStringI no image\n");
         return(FALSE);
     }
-    if(color<0)
-    {
+    if(color<0) {
         color = plotPO->colors[BLACK];
         DB_DRAW DB_PrI("+ Black = col=%d\n",color);
     }
     switch(font)
     {
         case GFONT_TINY:
-            gdImageString(plotPO->gd,gdFontTiny,x,y,texS,color);
+            if(rotate) {
+                gdImageStringUp(plotPO->gd,gdFontTiny,x,y,texS,color);
+            }
+            else {
+                gdImageString(plotPO->gd,gdFontTiny,x,y,texS,color);
+            }
             break;
         case GFONT_SMALL:
-            gdImageString(plotPO->gd,gdFontSmall,x,y,texS,color);
+            if(rotate) {
+                gdImageStringUp(plotPO->gd,gdFontSmall,x,y,texS,color);
+            }
+            else {
+                gdImageString(plotPO->gd,gdFontSmall,x,y,texS,color);
+            }
             break;
         case GFONT_MEDBOLD:
-            gdImageString(plotPO->gd,gdFontMediumBold,x,y,texS,color);
+            if(rotate) {
+                gdImageStringUp(plotPO->gd,gdFontMediumBold,x,y,texS,color);
+            }
+            else {
+                gdImageString(plotPO->gd,gdFontMediumBold,x,y,texS,color);
+            }
             break;
         case GFONT_LARGE:
-            gdImageString(plotPO->gd,gdFontLarge,x,y,texS,color);
+            if(rotate) {
+                gdImageStringUp(plotPO->gd,gdFontLarge,x,y,texS,color);
+            }
+            else {
+                gdImageString(plotPO->gd,gdFontLarge,x,y,texS,color);
+            }
             break;
         case GFONT_GIANT:
-            gdImageString(plotPO->gd,gdFontGiant,x,y,texS,color);
+            if(rotate) {
+                gdImageStringUp(plotPO->gd,gdFontGiant,x,y,texS,color);
+            }
+            else {
+                gdImageString(plotPO->gd,gdFontGiant,x,y,texS,color);
+            }
             break;
         default:
-            gdImageString(plotPO->gd,gdFontMediumBold,x,y,texS,color);
+            if(rotate) {
+                gdImageStringUp(plotPO->gd,gdFontMediumBold,x,y,texS,color);
+            }
+            else {
+                gdImageString(plotPO->gd,gdFontMediumBold,x,y,texS,color);
+            }
             break;
     }
     DB_DRAW DB_PrI("<< ImageplotTextStringI TRUE\n");

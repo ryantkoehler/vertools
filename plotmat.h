@@ -15,7 +15,7 @@
 */
 
 
-#define VERSION_S   "PlotMat Version 0.53"
+#define VERSION_S   "PlotMat Version 0.6"
 
 #define PLOTMAT_ID     5121
 typedef struct PLOTMAT
@@ -35,6 +35,8 @@ typedef struct PLOTMAT
     int do_corgbr;          /* Flag for correlation coloring Green Black Red */
     int do_rowlab;          /* Flag to label rows */
     int do_collab;          /* Flag to label cols */
+    int do_roclab;          /* Flag rotate col labels */
+    int rlab_step;          /* Row label step (i.e. plot every x'th) */
     int do_pcv;             /* Flag to print cell values */
     int do_pxv;             /* Flag to print only extreme cell values */
     int pgrid;              /* Plot grid spaced every x spaces */
@@ -56,7 +58,8 @@ typedef struct PLOTMAT
 *   Def size values
 */
 #define DEF_DIMS    450     /* Default plotting space dims */
-#define DEF_TMAR    20      /* Top margin */
+#define DEF_TMAR    100     /* Top margin */
+#define DEF_TMAR_NL 20      /* Top margin if no col lable */
 #define DEF_BMAR    20      /* Bottom margin */
 #define DEF_LMAR    20      /* Left margin */
 #define DEF_RMAR    20      /* Right margin */
