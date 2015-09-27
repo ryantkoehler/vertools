@@ -38,7 +38,7 @@ void ProcHitList(BLASTOUT *bPO, BLASTANS *aPO)
             continue;
         }
         num = HitMatchCountI(aPO,i,bPO->firstb,bPO->lastb,bPO->rre,
-            bPO->do_con,&den);
+            bPO->do_con, bPO->do_co3, &den);
         max = MAX_NUM(num,max);
         /***
         *   Qualify by max match 
@@ -84,8 +84,7 @@ int MergeHitListsI(BLASTOUT *bPO, BLASTANS *a1PO,BLASTANS *a2PO,BLASTANS *a3PO)
     REAL fracR;
     BLASTANS *aPO;
 
-    if(!SameBlastQueryI(a1PO,a2PO))
-    {
+    if(!SameBlastQueryI(a1PO,a2PO)) {
         return(FALSE);
     }
     /***
@@ -98,44 +97,36 @@ int MergeHitListsI(BLASTOUT *bPO, BLASTANS *a1PO,BLASTANS *a2PO,BLASTANS *a3PO)
         /***
         *   Figure out which source to copy from
         */
-        if( (a1>=a1PO->nhits) && (a2>=a2PO->nhits) )
-        {
+        if( (a1>=a1PO->nhits) && (a2>=a2PO->nhits) ) {
             break;
         }
-        else if( (a1<a1PO->nhits) && (a2<a2PO->nhits) )
-        {
-            if(ODD_NUM(n))
-            {
+        else if( (a1<a1PO->nhits) && (a2<a2PO->nhits) ) {
+            if(ODD_NUM(n)) {
                 aPO = a2PO;
                 a = a2++;
             }
-            else
-            {
+            else {
                 aPO = a1PO;
                 a = a1++;
             }
         }
-        else if(a1<a1PO->nhits)
-        {
+        else if(a1<a1PO->nhits) {
             aPO = a1PO;
             a = a1++;
         }
-        else if(a2<a2PO->nhits)
-        {
+        else if(a2<a2PO->nhits) {
             aPO = a2PO;
             a = a2++;
         }
         num = HitMatchCountI(aPO,a,bPO->firstb,bPO->lastb,bPO->rre,
-            bPO->do_con,&den);
+            bPO->do_con, bPO->do_co3, &den);
         max = MAX_NUM(num,max);
-        if(num < bPO->mid)
-        {
+        if(num < bPO->mid) {
             continue;
         }
         alen = AdjustHitLenI(bPO,aPO,a,den);
         fracR = RNUM(num)/RNUM(alen);
-        if(fracR < bPO->mif)
-        {
+        if(fracR < bPO->mif) {
             continue;
         }
         /***
@@ -164,7 +155,7 @@ int MergeHitListsI(BLASTOUT *bPO, BLASTANS *a1PO,BLASTANS *a2PO,BLASTANS *a3PO)
 /****************************************************************************
 *   Fill histogram with matching base counts
 */
-int FillHitHistI(BLASTANS *aPO,int first,int last,int rre,int con)
+int FillHitHistI(BLASTANS *aPO,int first,int last,int rre,int con, int co3)
 {
     int i,num,max;
 
@@ -178,7 +169,7 @@ printf("nhits=%d\n",aPO->nhits);
 */
     for(i=0;i<aPO->nhits;i++)
     {
-        num = HitMatchCountI(aPO,i,first,last,rre,con,NULL);
+        num = HitMatchCountI(aPO,i,first,last,rre,con, co3, NULL);
         max = MAX_NUM(num,max);
         if(num >= HISTDIM)
             continue;
@@ -206,54 +197,64 @@ void IntegrateHist(BLASTANS *aPO)
 /****************************************************************************
 *   Returns the count of (qualified) matching bases 
 *   Also sets length of (qualified) alignment if passed third arg
+*   SHAM TODO; Break this up!
 */
 int HitMatchCountI(BLASTANS *aPO, int hit, int first, int last, int rre,
-    int con, int *alenPI)
+    int con, int co3, int *alenPI)
 {
     int qs,qe,gap,ok,b,j,c,alen,max,num;
     char *qPC,*sPC;
 
+    j = gap = num = c = max = alen = 0;
     qs = aPO->qhsc[hit]; 
     qe = aPO->qhec[hit];
-/* xx 
-printf("xxx hit=%d\tqs=%d\tqe=%d\n",hit,qs,qe);
-*/
-    j = gap = num = c = max = alen = 0;
+    qPC = &aPO->qseqs[hit * BLBSIZE];
+    sPC = &aPO->sseqs[hit * BLBSIZE];
+    /*** 
+    *   Special case for 3' end contig (too messy to try and fit here!)
+    */
+    if(co3) {
+        /***
+        *   Query end has to be full length
+        */
+        if(qe == aPO->qlen) {
+            num = Cont3pEndMatchI(aPO, aPO->qlen - qs, qPC, sPC);
+        }
+        else {
+            num = 0;
+        }
+        if(alenPI) {
+            *alenPI = num;
+        }
+        return(num);
+    }
     /***
     *   Scan alignment until out of chars
     */
-    qPC = &aPO->qseqs[hit * BLBSIZE];
-    sPC = &aPO->sseqs[hit * BLBSIZE];
     while(isgraph(INT(qPC[j])))
     {
         /***
         *   Restricted base range?
         */
         ok = TRUE;
-        if(qs<qe)
-        {
+        if(qs<qe) {
             b = qs+j-1-gap;
         }
-        else
-        {
+        else {
             b = qs-j-1+gap;
         }
-        if(first>0)
-        {
-            if(rre)
-            {
+        if(first>0) {
+            if(rre) {
                 if( ((aPO->qlen-b)<first) || 
                     ((aPO->qlen-b)>last) )
                     ok = FALSE;
             }
-            else
-            {
+            else {
                 if( ((b+1)<first) || (b>=last) )
                     ok = FALSE;
             }
         }
-        if(!ok)
-        {
+        if(!ok) {
             j++;
             continue;
         }
@@ -262,10 +263,8 @@ printf("xxx hit=%d\tqs=%d\tqe=%d\n",hit,qs,qe);
         *   Missmatch
         * SHAM; Could check if degenerate IUB codes match?
         */
-        if(qPC[j] != sPC[j])
-        {
-            if(qPC[j] == '-')
-            {
+        if(qPC[j] != sPC[j]) {
+            if(qPC[j] == '-') {
                 gap++;
             }
             max = MAX_NUM(c,max);
@@ -284,15 +283,37 @@ printf("xxx hit=%d\tqs=%d\tqe=%d\n",hit,qs,qe);
     *   Final counts and what to return?
     */
     max = MAX_NUM(c,max);
-    if(con)
-    {
+    if(con) {
         num = max;
     }
-    if(alenPI)
-    {
+    if(alenPI) {
         *alenPI = alen;
     }
     return(num);
+}
+/**************************************************************************
+*   Count contiguous matches from 3' end
+*/
+int Cont3pEndMatchI(BLASTANS *aPO, int len, char *qPC, char *sPC)
+{
+    int n,i;
+
+    n = 0;
+    i = len;
+/*
+printf("xxx i=%d len=%d %p %p\n",i,len,qPC,sPC);
+*/
+    while(i>=0) {
+/*
+        printf("\t%c %c %d\n", qPC[i], sPC[i], i);
+*/
+        if(qPC[i] != sPC[i]) {
+            break;
+        }
+        n++;
+        i--;
+    }
+    return(n);
 }
 /**************************************************************************/
 int SameBlastQueryI(BLASTANS *fPO, BLASTANS *sPO)

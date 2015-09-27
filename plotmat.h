@@ -15,7 +15,7 @@
 */
 
 
-#define VERSION_S   "PlotMat Version 0.6"
+#define VERSION_S   "PlotMat Version 0.61"
 
 #define PLOTMAT_ID     5121
 typedef struct PLOTMAT
@@ -39,6 +39,8 @@ typedef struct PLOTMAT
     int rlab_step;          /* Row label step (i.e. plot every x'th) */
     int do_pcv;             /* Flag to print cell values */
     int do_pxv;             /* Flag to print only extreme cell values */
+    int do_pcr1, do_pcr2;   /* Range of values to print cell values */
+    int do_pcnot;           /* Flag to invert print range; i.e. not in range */
     int pgrid;              /* Plot grid spaced every x spaces */
     int pftw,pftp;          /* Print format width and precision */
     char pnform[NSIZE];     /* Printed number formatting string */

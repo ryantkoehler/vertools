@@ -73,12 +73,13 @@ int DataTableDimsI(FILE *inPF,int hr,int *ncolPI,int *nrowPI)
 int FileStatsI(FILE *fPF, int *linePI, int *minPI, int *maxPI, int *comPI, 
     int *blankPI)
 {
-    int c,n,p,g,pos,line,min,max,com,blank;
+    int c,n,p,g,line,min,max,com,blank;
+    off_t fpos;
 
     line = n = 0;
     if(!fPF)
     {   return(n);  }
-    pos = ftell(fPF);
+    fpos = ftell(fPF);
     max = -TOO_BIG;
     min = TOO_BIG;
     com = blank = p = g = 0;
@@ -132,7 +133,7 @@ int FileStatsI(FILE *fPF, int *linePI, int *minPI, int *maxPI, int *comPI,
     if(blankPI) {
         *blankPI = blank;
     }
-    fseek(fPF,pos,0);
+    fseek(fPF,fpos,0);
     return(n);
 }
 /*************************************************************************

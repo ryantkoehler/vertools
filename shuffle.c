@@ -25,7 +25,7 @@
 typedef struct LINEREC
 {
     int id;
-    int fpos;
+    off_t fpos;
 }LINEREC;
 
 #define BLOCK_SIZE 5000
@@ -52,7 +52,8 @@ void ShuffleUse()
 /**************************************************************************/
 int ShuffleI(int argc, char **argv)
 {
-    int i,n,nline,fpos,seed;
+    int i,n,nline,seed;
+    off_t fpos;
     LINEREC *linesPO;
     FILE *inPF,*outPF;
     char inS[NSIZE],outS[NSIZE],bufS[BBUFF_SIZE+1];

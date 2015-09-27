@@ -59,6 +59,8 @@ void PlotMatUse(void)
     printf("   -clf        Set col lables 'flat'; Default is rotated\n");
     printf("   -pcv        Print cell values\n");
     printf("   -pxv        Print only Extreme cell values (over / under)\n");
+    printf("   -pcr # #    Print cell values in range # to #\n");
+    printf("   -pcnot      Print cell values NOT in range\n");
     printf("   -pfmt # #   Set print format # wide # precision (%%#.#f)\n");
     printf("   -fcol XXX   Use color XXX for printed cell value font\n");
     printf("   -igd        Ignore diagonal (leave blank)\n");
@@ -88,7 +90,8 @@ int PlotMatI(int argc,char **argv)
         "S -out S -pdim I2 -dump B -vcr D2 -igd B -nrlab B -nclab B\
         -cdim I2 -tm I -bm I -rm I -lm I -corcol B -corgbr B\
         -nolab B -acr B -rlw I -ucol S -ocol S -norl B -nocl B -pcv B -pfmt I2\
-        -ngrid B -colmen B -fcol S -sdc D -pxv B -sk B -ncorn B -rls I -clf B",
+        -ngrid B -colmen B -fcol S -sdc D -pxv B -sk B -ncorn B -rls I -clf B\
+        -pcr I2, -pcnot B",
         pmPO->inname, pmPO->outname, &pmPO->xdim,&pmPO->ydim,
         &dump, &pmPO->lo,&pmPO->hi, &pmPO->do_igd, &rlab, &clab,
         &pmPO->xc,&pmPO->yc, &pmPO->tm, &pmPO->bm, &pmPO->rm, &pmPO->lm,
@@ -97,7 +100,8 @@ int PlotMatI(int argc,char **argv)
         &pmPO->do_rowlab, &pmPO->do_collab,
         &pmPO->do_pcv, &pmPO->pftw,&pmPO->pftp, &pmPO->pgrid, &colmen,
         pmPO->fcolor, &pmPO->sd_col, &pmPO->do_pxv, &skip, &corn,
-        &pmPO->rlab_step, &pmPO->do_roclab,
+        &pmPO->rlab_step, &pmPO->do_roclab, 
+        &pmPO->do_pcr1,&pmPO->do_pcr2, &pmPO->do_pcnot,
         (int *)NULL))
     {
         PlotMatUse();
@@ -221,6 +225,9 @@ void InitPlotmat(PLOTMAT *pmPO)
     pmPO->do_roclab = TRUE;
     pmPO->rlab_step = 1;
     pmPO->do_pcv = pmPO->do_pxv = FALSE;
+    pmPO->do_pcr1 = -TOO_BIG_R; 
+    pmPO->do_pcr2 = TOO_BIG_R; 
+    pmPO->do_pcnot = FALSE;
     pmPO->pftw = pmPO->pftp = BOGUS;
     pmPO->pgrid = TRUE;
     pmPO->do_acr = FALSE;
@@ -273,6 +280,15 @@ int CheckPlotmatOptionsI(PLOTMAT *pmPO)
     }
     else {
         pmPO->tm = DEF_TMAR_NL;
+    }
+    /*** 
+    *   Print values; If extremes only, set range and invert it
+    */
+    if(pmPO->do_pxv) {
+        pmPO->do_pcv = TRUE;
+        pmPO->do_pcnot = TRUE;
+        pmPO->do_pcr1 = pmPO->lo;
+        pmPO->do_pcr2 = pmPO->hi;
     }
     return(TRUE);
 }
@@ -439,7 +455,7 @@ void SetupPlotPage(PLOTMAT *pmPO, IMAGEPLOT *plotPO)
 */
 void PlotTableOnPage(PLOTMAT *pmPO)
 {
-    int r,c,w,h,x,y,color,p,nr,nc;
+    int r,c,w,h,x,y,color,p,nr,nc,pcell;
     DOUB rD;
     char nameS[NSIZE];
     
@@ -504,10 +520,14 @@ void PlotTableOnPage(PLOTMAT *pmPO)
             /***
             *   Printing cell values?
             */
+            pcell = FALSE;
             if(pmPO->do_pcv) {
-                PlotCellValue(pmPO, x, y, rD, color);
+                if(( rD >= pmPO->do_pcr1 ) && ( rD <= pmPO->do_pcr2 )) {
+                    pcell = TRUE;
+                }
             }
-            else if(pmPO->do_pxv && ((rD < pmPO->lo) || (rD > pmPO->hi)) ) {
+            pcell = pmPO->do_pcnot ? !pcell : pcell;
+            if(pcell) {
                 PlotCellValue(pmPO, x, y, rD, color);
             }
             x += w;

@@ -1,5 +1,5 @@
-11/28/14 RTK 
-List of all C, H and makefiles for VerTools 1.0
+9/27/15 RTK 
+List of all C, H and makefiles for VerTools 1.1
 
 alphcont.c
 autil.c
@@ -99,6 +99,7 @@ blastout.h
 color.h
 competfb.h
 comp_seq.h
+data_structures.h
 divinds.h
 dna_cons.h
 dna.h
@@ -106,17 +107,12 @@ dna_pair.h
 dna_util.h
 dset.h
 dset_tm.h
+energy_const.h
 fbound.h
 filepick.h
 filter.h
 fold.h
 fold_vars.h
-gdfontg.h
-gdfontl.h
-gdfontmb.h
-gdfonts.h
-gdfontt.h
-gd.h
 gen_nums.h
 gen_seq.h
 getsnps.h

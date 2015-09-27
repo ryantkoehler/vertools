@@ -52,7 +52,8 @@ int LoadBlastoutRecordI(BLASTANS *aPO,int warn)
 */
 int LoadBlastRecordI(BLASTANS *aPO,FILE *inPF,int warn)
 {
-    int in,hit,n,fpos,ok;
+    int in,hit,n,ok;
+    off_t fpos;
     char bufS[BBUFF_SIZE];
 
     DB_BIO DB_PrI(">> LoadBlastRecordI\n");
@@ -62,11 +63,6 @@ int LoadBlastRecordI(BLASTANS *aPO,FILE *inPF,int warn)
     */ 
     while(fgets(bufS,BLINEGRAB,inPF)) {
         if(EQSTRING(bufS,"Query=",6)) {
-/*
-            if( ! LoadBlastQueryLineData(aPO, bufS, inPF) ) {
-                return(FALSE);
-            }
-*/
             ok = LoadBlastQueryLineData(aPO, bufS, inPF);
             if( ok != TRUE ) {
                 if( (warn) && (ok < 0) ) {
@@ -179,12 +175,13 @@ int BlastRecordEndLine(BLASTANS *aPO, char *bufS)
     return(FALSE);
 }
 /****************************************************************************
-*   Load info for single query bloack (can be multiple alignment hits)
+*   Load info for single query block (can be multiple alignment hits)
 *   Return the number of actual aligment hits
 */
 int AddBlastHitSetI(char *headS, FILE *inPF, BLASTANS *aPO, int hit, int warn)
 {
-    int thit, fpos, match, v1, v2;
+    int thit, match, v1, v2;
+    off_t fpos;
     int coordsIA[4];
     char bufS[BBUFF_SIZE], tbufS[BBUFF_SIZE], *cPC;
     char hitS[BLBSIZE+1], scoreS[BLBSIZE+1], identS[BLBSIZE+1];
@@ -222,8 +219,7 @@ int AddBlastHitSetI(char *headS, FILE *inPF, BLASTANS *aPO, int hit, int warn)
     */
     thit = 0;
     INIT_S(scoreS); INIT_S(identS); INIT_S(qseqS); INIT_S(sseqS);
-    coordsIA[0] = coordsIA[2] = TOO_BIG;
-    coordsIA[1] = coordsIA[3] = 0;
+    InitArrayI(coordsIA, IS_INT, 0, 4, -1);
     while(fgets(bufS,BLINEGRAB,inPF)) {
         DB_BIO {
             DB_PrI("+ "); fputs(bufS,stdout);
@@ -251,8 +247,7 @@ int AddBlastHitSetI(char *headS, FILE *inPF, BLASTANS *aPO, int hit, int warn)
                 }
                 thit++;
                 INIT_S(scoreS); INIT_S(identS); INIT_S(qseqS); INIT_S(sseqS);
-                coordsIA[0] = coordsIA[2] = TOO_BIG;
-                coordsIA[1] = coordsIA[3] = 0;
+                InitArrayI(coordsIA, IS_INT, 0, 4, -1);
             }
             ReplaceChars('\n',cPC,'\0',scoreS);
         }
@@ -280,8 +275,11 @@ xxx SHAM; Old version not working; No queries parse ... not sure if this is prob
         if( match ) {
             INIT_S(tbufS);
             sscanf(bufS, "%*s %d %s %d", &v1, tbufS, &v2);
-            coordsIA[0] = MIN_NUM(coordsIA[0],v1);
-            coordsIA[1] = MAX_NUM(coordsIA[1],v2);
+            /* Use first start and last end */
+            if( coordsIA[0] < 0 ) {
+                coordsIA[0] = v1;
+            }
+            coordsIA[1] = v2;
             if( (strlen(qseqS) + strlen(tbufS)) >= BLBSIZE) {
                 if(warn) {
                         printf("# Warning: Query alignment length > %d ignored\n",BLBSIZE);
@@ -304,8 +302,10 @@ xxx SHAM; Old version not working; No queries parse ... not sure if this is prob
         if( match ) {
             INIT_S(tbufS);
             sscanf(bufS, "%*s %d %s %d", &v1, tbufS, &v2);
-            coordsIA[2] = MIN_NUM(coordsIA[2],v1);
-            coordsIA[3] = MAX_NUM(coordsIA[3],v2);
+            if( coordsIA[2] < 0 ) {
+                coordsIA[2] = v1;
+            }
+            coordsIA[3] = v2;
             if( (strlen(sseqS) + strlen(tbufS)) >= BLBSIZE) {
                 if(warn) {
                         printf("# Warning: Subject alignment length > %d ignored\n",BLBSIZE);
@@ -334,7 +334,6 @@ xxx SHAM; Old version not working; No queries parse ... not sure if this is prob
 }
 
 /****************************************************************************
-*   Load hits for record in blastout dci format
 */
 int SaveOneHitRecI(BLASTANS *aPO, int hit, char *hitS, char *scoreS, char *identS,
     char *qseqS, char *sseqS, int *coordPI)
@@ -546,7 +545,7 @@ void DumpBlastout(BLASTOUT *bPO, BLASTANS *aPO,int qn, FILE *outPF)
     *   Hit histogram, then bail
     */
     if(bPO->dhis > 0) {
-        max = FillHitHistI(aPO,bPO->firstb,bPO->lastb,bPO->rre,bPO->do_con);
+        max = FillHitHistI(aPO,bPO->firstb,bPO->lastb,bPO->rre,bPO->do_con, bPO->do_co3);
         if(bPO->chis) {
             IntegrateHist(aPO);
         }
@@ -693,8 +692,7 @@ void DumpBlastoutHitSeqs(BLASTANS *aPO, int hit, int mod_case, char *nsqhS, FILE
 */
 int FillBlastRecHitName(BLASTANS *aPO, int r, char *bufS)
 {
-    if( (r < 0) || ( r >= aPO->nhits) )
-    {
+    if( (r < 0) || ( r >= aPO->nhits) ) {
         return(FALSE);
     }
     strncpy(bufS,&aPO->hits[r*BLBSIZE],NAME_MAX);
@@ -709,8 +707,7 @@ int FillBlastRecHitCoordsLineI(BLASTANS *aPO, int r, char *bufS)
     int qs,qe,ss,se,t;
     char qS[NAME_MAX+1], sS[NAME_MAX+1], strandS[DEF_BS];
 
-    if( (r < 0) || ( r >= aPO->nhits) )
-    {
+    if( (r < 0) || ( r >= aPO->nhits) ) {
         return(FALSE);
     }
     /*
@@ -726,12 +723,10 @@ int FillBlastRecHitCoordsLineI(BLASTANS *aPO, int r, char *bufS)
     ss = aPO->shsc[r]; 
     se = aPO->shec[r];
     FillBlastRecHitName(aPO, r, sS);
-    if ( ss < se ) 
-    {
+    if ( ss < se ) {
         sprintf(strandS,"Pos");
     }
-    else
-    {
+    else {
         sprintf(strandS,"Neg");
         t = ss;
         ss = se;
@@ -779,7 +774,7 @@ void DumpBlastFracMatchList(BLASTOUT *bPO,BLASTANS *aPO,FILE *outPF)
     for(i=0; i<bPO->do_dfml; i++) {
         if(i<aPO->nhits){
             num = HitMatchCountI(aPO, i, bPO->firstb, bPO->lastb, bPO->rre, 
-                bPO->do_con, &den);
+                bPO->do_con, bPO->do_co3, &den);
             fR = RNUM(num)/normD;
         }
         else {
@@ -878,7 +873,8 @@ void DumpBlastMatchBaseCounts(BLASTOUT *bPO,BLASTANS *aPO,FILE *outPF)
 */
 int GuessBlastInputTypeI(FILE *inPF)
 {
-    int line,fpos,itype;
+    int line,itype;
+    off_t fpos;
     char bufS[BBUFF_SIZE];
 
     DB_BIO DB_PrI(">> GuessBlastInputTypeI\n");

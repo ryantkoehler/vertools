@@ -53,6 +53,7 @@ void BlastOutUse()
     printf("   -mfq         Min Fraction of Query (not of hit)\n");
     printf("   -mnot        Inverse (i.e. 'not') for minimum match qualifications\n");
     printf("   -con         Count contiguous matches, not total\n");
+    printf("   -co3         Count contiguous matches starting from 3' end\n");
     printf("   -bran # #    Consider query bases only in range # to #\n");
     printf("   -rre         Base range relative to end; i.e. backwards\n");
     printf("   -qran # #    Restrict output to query range # to #\n"); 
@@ -78,14 +79,14 @@ int BlastOutI(int argc, char **argv)
         "S -out S -dhit B -mid I -mif R -dsum B -dhis I -phis I\
         -dseq B -con B -dhc B -dmbc B -bran I2 -rre B -dsco B -dci B\
         -qran I2 -opq S -chis B -mhit I -merg S -hran I2 -mfq B\
-        -smc B -dfml I -mnot B -sml B -nsqh S -dffl B",
+        -smc B -dfml I -mnot B -sml B -nsqh S -dffl B -co3 B",
         inS, bPO->outname, &bPO->dhit, &bPO->mid, &bPO->mif, 
         &bPO->dsum, &bPO->dhis, &bPO->phis, &bPO->dseq, 
         &bPO->do_con, &bPO->dhc, &bPO->dmbc, &bPO->firstb,&bPO->lastb, 
         &bPO->rre, &bPO->dsco, &bPO->do_dci, &bPO->firstq,&bPO->lastq, 
         &bPO->opq, &bPO->chis, &mhit, mergS, &bPO->firsth,&bPO->lasth,
         &bPO->do_mfq, &bPO->do_smc, &bPO->do_dfml, &bPO->do_mnot,
-        &bPO->do_sml, bPO->nsqh, &bPO->do_dffl,
+        &bPO->do_sml, bPO->nsqh, &bPO->do_dffl, &bPO->do_co3,
         (int *)NULL))
     {
         BlastOutUse();
@@ -267,7 +268,10 @@ void WriteHeader(BLASTOUT *bPO,BLASTANS *aPO,BLASTANS *mPO,FILE *outPF)
     /***
     *   Restrictions
     */
-    if(bPO->do_con) {
+    if(bPO->do_co3) {
+        fprintf(outPF,"# 3' end contiguous matches considered\n");
+    }
+    else if(bPO->do_con) {
         fprintf(outPF,"# Contiguous matches considered\n");
     }
     else {

@@ -222,62 +222,49 @@ int Gen_makefileI(int argc, char **argv)
     /***
     *   Do we need math?
     */
-    if(do_lgd || do_lxml || do_lxgd)
-    {
+    if(do_lgd || do_lxml || do_lxgd) {
         link_math = TRUE;
     }
     /***
     *   gcc -vs- cc
     */
-    if(do_cc)
-    {
+    if(do_cc) {
         fprintf(outPF,"CC = cc\n");
     }
-    else
-    {
+    else {
         fprintf(outPF,"CC = gcc\n");
     }
     /***
     *   CFLAGS
     */
     fprintf(outPF,"CFLAGS =");
-    if(!do_nw)
-    {
-        if(do_cc)
-        {
+    if(!do_nw) {
+        if(do_cc) {
             fprintf(outPF," %s",WARNCC_CF_S);
         }
-        else
-        {
+        else {
             fprintf(outPF," %s",WARN_CF_S);
         }
     }
-    if(do_std)
-    {
+    if(do_std) {
         fprintf(outPF," %s",STD99_CF_S);
     }
-    if(do_opt)
-    {
+    if(do_opt) {
         fprintf(outPF," %s",OPT_CF_S);
     }
-    if(do_lp)
-    {
+    if(do_lp) {
         fprintf(outPF," %s",LP_CF_S);
     }
-    if(do_large)
-    {
+    if(do_large) {
         fprintf(outPF," %s",BIG_CF_S);
     }
-    if(do_lxml)
-    {
+    if(do_lxml) {
         fprintf(outPF," %s",LXML_INC_S);
     }
-    if(do_lxgd)
-    {
+    if(do_lxgd) {
         fprintf(outPF," %s",LXGD_INC_S);
     }
-    if(do_lopt)
-    {
+    if(do_lopt) {
         fprintf(outPF," %s",LOPT_INC_S);
     }
     fprintf(outPF,"\n");    
@@ -285,28 +272,22 @@ int Gen_makefileI(int argc, char **argv)
     *   SYSLIBS 
     */
     fprintf(outPF,"SYSLIBS ="); 
-    if(link_math)
-    {
+    if(link_math) {
         fprintf(outPF," %s",LM_SYS_S);
     }
-    if(do_lp)
-    {
+    if(do_lp) {
         fprintf(outPF," %s",LP_SYS_S);
     }
-    if(do_lgd)
-    {
+    if(do_lgd) {
         fprintf(outPF," %s",LGD_SYS_S);
     }
-    if(do_lxml)
-    {
+    if(do_lxml) {
         fprintf(outPF," %s",LXML_SYS_S);
     }
-    if(do_lxgd)
-    {
+    if(do_lxgd) {
         fprintf(outPF," %s",LXGD_SYS_S);
     }
-    if(do_lopt)
-    {
+    if(do_lopt) {
         fprintf(outPF," %s",LOPT_SYS_S);
     }
     fprintf(outPF,"\n");    
@@ -320,22 +301,18 @@ int Gen_makefileI(int argc, char **argv)
         /***
         *   If target is a lib and last file is .a then ignore
         */
-        if( (targ_lib) && (i == (files-1)) && IS_A_FILE(typeS[i]) ) 
-        {
+        if( (targ_lib) && (i == (files-1)) && IS_A_FILE(typeS[i]) ) {
             DEBUG DB_PrI("+  last = .a so ignoring\n");
             continue;
         }
         GetFilePartsI(sourceS[i],NULL,nameS,NULL);
-        if(IS_A_FILE(typeS[i])) 
-        {
+        if(IS_A_FILE(typeS[i])) {
             strcat(nameS,".a");
         }
-        else
-        {
+        else {
             strcat(nameS,".o");
         }
-        if( (i>0) && ((i%5)==0) )
-        {
+        if( (i>0) && ((i%5)==0) ) {
             fprintf(outPF," \\\n          ");
         }
         sprintf(bufS,"%-10s",nameS);
@@ -345,12 +322,10 @@ int Gen_makefileI(int argc, char **argv)
     *   Target is a library -vs- program
     */
     fprintf(outPF,"\n\n$(TARGET) : $(OBJS)\n");
-    if(targ_lib)
-    {
+    if(targ_lib) {
         fprintf(outPF,"\tar r $(TARGET) $(OBJS)\n");
     }
-    else
-    {
+    else {
         fprintf(outPF,"\t$(CC) $(CFLAGS) -o $(TARGET) $(OBJS) ${SYSLIBS}\n");
     }
     /***
@@ -360,10 +335,12 @@ int Gen_makefileI(int argc, char **argv)
     for(i=0;i<files;i++)
     {
         DEBUG DB_PrI("+  file %2d %s\n",i,sourceS[i]);
-        if(IS_A_FILE(typeS[i])) 
+        if(IS_A_FILE(typeS[i])) {
             continue;
-        if(!(cPF = FileOpenPF(sourceS[i],"r",FALSE)))
+        }
+        if(!(cPF = FileOpenPF(sourceS[i],"r",FALSE))) {
             continue;
+        }
         printf(".");
         GetFilePartsI(sourceS[i],NULL,nameS,NULL);
         strcat(nameS,".o");
@@ -382,15 +359,14 @@ int Gen_makefileI(int argc, char **argv)
             if(!EQSTRING(bufS,"#include",8))
                 continue;
 **/
-            if( (bufS[0]!='#') || (!strstr(bufS,"#include")) )
-            {
+            if( (bufS[0]!='#') || (!strstr(bufS,"#include")) ) {
                 continue;
             }
-            if(FindHeaderFileI(bufS,hfileS))
-            {
+            if(FindHeaderFileI(bufS,hfileS)) {
                 DEBUG DB_PrI("+   header[%d] %s\n",hfiles,hfileS);
-                if( (hfiles%5)==0) 
+                if( (hfiles%5)==0) {
                     fprintf(outPF," \\\n          ");
+                }
                 sprintf(bufS,"%-10s",hfileS);
                 fprintf(outPF,"%s ",bufS);
                 hfiles++;
@@ -414,30 +390,32 @@ int GetSourceListI(FILE *fPF, char filesS[M_F][M_S], char *typeS)
     while(fgets(bufS,LINEGRAB,fPF))
     {
         i++;
-        if(COM_LINE(bufS))
+        if(COM_LINE(bufS)) {
             continue;
-        if((!com) && (strstr(bufS,"/*")))
+        }
+        if((!com) && (strstr(bufS,"/*"))) {
             com = TRUE;
-        if((com) && (strstr(bufS,"*/")))
+        }
+        if((com) && (strstr(bufS,"*/"))) {
             com = FALSE;
-        if(com)
+        }
+        if(com) {
             continue;
-        if(strstr(bufS,"break"))
+        }
+        if(strstr(bufS,"break")) {
             break;
+        }
         INIT_S(nameS);
         sscanf(bufS,"%s",nameS);
         DEBUG DB_PrI(" %3d (line %3d) |%s|\n",n,i,nameS);
-        if(!isgraph(INT(*nameS)))
-        {
+        if(!isgraph(INT(*nameS))) {
             break;
         }
         GetFilePartsI(nameS,NULL,bufS,exS);
-        if( (strlen(bufS)>8) || (strlen(exS)>3) )
-        {
+        if( (strlen(bufS)>8) || (strlen(exS)>3) ) {
             printf("WARNING: %s is incompatable with dos\n",nameS);
         }
-        if(strlen(nameS) >= M_S) 
-        {
+        if(strlen(nameS) >= M_S) {
             printf("ERROR:\n");
             printf("File %s is too long (max %d)\n",nameS,M_S);
             return(FALSE);
@@ -448,8 +426,7 @@ int GetSourceListI(FILE *fPF, char filesS[M_F][M_S], char *typeS)
         DEBUG DB_PrI("  |%s| ex |%c|\n",nameS,*exS);
         sprintf(filesS[n],"%s",nameS);
         typeS[n] = tolower(*exS);
-        if( (!IS_C_FILE(typeS[n])) && (!IS_A_FILE(typeS[n])) )
-        {
+        if( (!IS_C_FILE(typeS[n])) && (!IS_A_FILE(typeS[n])) ) {
             printf("ERROR:\n");
             printf("File %s bogus extension ('.c' '.a' recognized)\n",
                 filesS[n]);
@@ -470,16 +447,14 @@ int CheckSourceListI(char fileS[M_F][M_S],char *typeS,int nf,int tl)
     for(i=0;i<nf;i++)
     {
         DEBUG DB_PrI("+ %2d |%s|\n",i,fileS[i]);
-        if((tPF = FileOpenPF(fileS[i],"r",FALSE)))
-        {
+        if((tPF = FileOpenPF(fileS[i],"r",FALSE))) {
             FILECLOSE(tPF);     
             continue;
         }
         /***
         *   If last source file is a library, treat as target and don't check
         */
-        if( (tl) && (i == (nf-1)) && IS_A_FILE(typeS[i]) ) 
-        {
+        if( (tl) && (i == (nf-1)) && IS_A_FILE(typeS[i]) ) {
             DEBUG DB_PrI("+  last = .a so ignoring\n");
             continue;
         }
@@ -505,18 +480,18 @@ int FindProgNameI(char fileS[M_F][M_S],char *typeS,int nf, int tl,char *nameS)
         /***
         *   If not a library target, ignore library files for names
         */
-        if(IS_A_FILE(typeS[i]))
-        {
-            if(!tl)
+        if(IS_A_FILE(typeS[i])) {
+            if(!tl) {
                 continue;
-            else
+            }
+            else {
                 sprintf(nameS,"%s",fileS[i]);
+            }
         }
         else
             GetFilePartsI(fileS[i],NULL,nameS,NULL);
     }
-    if(NO_S(nameS))
-    {
+    if(NO_S(nameS)) {
         DEBUG DB_PrI("<< FindProgName FALSE; no name\n");
         return(FALSE);  
     }
@@ -537,8 +512,7 @@ int FindHeaderFileI(char *bufS, char *hfileS)
     {
         i++;
     }
-    if(bufS[i] != '"')
-    {
+    if(bufS[i] != '"') {
         return(FALSE);
     }
     i++;
