@@ -68,8 +68,9 @@ void InitScorecs(SCOREC *recsPO,int n)
 }
 /**************************************************************************
 *   Create an SCFIELD structure
+*   Only substructs / name is initialized; No X,Y values
 */
-SCFIELD *CreateScfieldPO(int ngive, int nval, char *nameS)
+SCFIELD *CreateScfieldPO(char *nameS)
 {
     SCFIELD *sfPO;
 
@@ -78,26 +79,14 @@ SCFIELD *CreateScfieldPO(int ngive, int nval, char *nameS)
         return(NULL);
     }
     sfPO->ID = SCFIELD_ID;
-    if(ngive > 0) {
-        sfPO->gxv = (DOUB *)ALLOC(ngive, sizeof(DOUB));
-        sfPO->gyv = (DOUB *)ALLOC(ngive, sizeof(DOUB));
-        if( (!sfPO->gxv) || (!sfPO->gyv) ) {
-            CHECK_SCFIELD(sfPO);
-            return(NULL);
-        }
-        sfPO->ngiven = ngive;
-    }
-    if(nval > 0) {
-        if( ! (sfPO->yval = (DOUB *)ALLOC(nval,sizeof(DOUB)) ) ) {
-            CHECK_SCFIELD(sfPO);
-            return(NULL);
-        }
-        sfPO->n = nval;
-    }
+    sfPO->xvals = CreateNumlistPO(IS_DOUB,NULL,0);
+    sfPO->yvals = CreateNumlistPO(IS_DOUB,NULL,0);
+    SetNumlistNamesI(sfPO->xvals,"Scfield-Xvals",NULL,NSIZE);
+    SetNumlistNamesI(sfPO->yvals,"Scfield-Yvals",NULL,NSIZE);
+    sfPO->minx = sfPO->maxx = 0.0;
     if(nameS) {
         SetScfieldNameI(sfPO,nameS,NSIZE);
     }
-    InitScfield(sfPO);
     DB_SCM DB_PrI("<< CreateScfieldPO %p\n",sfPO);
     return(sfPO);
 }
@@ -107,19 +96,10 @@ SCFIELD *CreateScfieldPO(int ngive, int nval, char *nameS)
 int DestroyScfieldI(SCFIELD *sfPO)
 {
     VALIDATE(sfPO,SCFIELD_ID);
-    CHECK_FREE(sfPO->yval);
-    CHECK_FREE(sfPO->gxv);
-    CHECK_FREE(sfPO->gyv);
+    CHECK_NUMLIST(sfPO->xvals);
+    CHECK_NUMLIST(sfPO->yvals);
     FREE(sfPO);
     return(TRUE);
-}
-/****************************************************************************
-*   Initialize SCFIELD structure
-*/
-void InitScfield(SCFIELD *sfPO)
-{
-    VALIDATE(sfPO,SCFIELD_ID);
-    InitArrayI(sfPO->yval, IS_DOUB, 0, sfPO->n, 0.0);
 }
 /****************************************************************************
 *   Sort SCOREC list[n] by value
@@ -225,50 +205,44 @@ int FillScfieldNameStringI(SCFIELD *sfPO,char *nameS,int max)
     return(TRUE);
 }
 /***********************************************************************
-*   Evaluate score for value vR given settings in SCFIELD
+*   Evaluate score for value (i.e. Y for X) given settings in SCFIELD
+*   Assumes X values are increasing and sorted for correct behavior
 */
-REAL EvalScfieldScoreR(SCFIELD *sfPO,REAL vR)
+REAL EvalScfieldScoreR(SCFIELD *sfPO, REAL vR)
 {
-    DOUB scR,dxR,fxR,y1R,y2R,dyR;
-    int x1,x2;
+    DOUB xval1D, xval2D, yval1D, yval2D, yD;
+    int xi;
 
-    DB_SCF DB_PrI(">> EvalScfieldScoreR %s (n=%d) %4.3f\n", sfPO->name,sfPO->n,vR);
+    VALIDATE(sfPO,SCFIELD_ID);
+    DB_SCF DB_PrI(">> EvalScfieldScoreR %s %4.3f\n", sfPO->name,vR);
     /***
-    *   No transform case = default val
+    *   Out of bound X = min / max Y index value
     */
-    if(sfPO->n < 2) {
-        DB_SCF DB_PrI("<< EvalScfieldScoreR no func elements = 1\n");
-        return(1.0);
+    if(vR <= sfPO->minx) {
+        GetNumlistDoubI(sfPO->yvals, 0, &yD);
     }
-    /***
-    *   Out of bounds or index cases
-    */
-    DB_SCF DB_PrI("+ min=%0.3f max=%0.3f step=%0.3f\n",
-        sfPO->min, sfPO->max, sfPO->step);
-    if(vR <= sfPO->min) {
-        DB_SCF DB_PrI("+ under [0]\n", sfPO->n,vR);
-        scR = sfPO->yval[0];
-    }
-    else if(vR >= sfPO->max) {
-        DB_SCF DB_PrI("+ over [%d]\n", sfPO->n - 1);
-        scR = sfPO->yval[sfPO->n - 1];
+    else if(vR >= sfPO->maxx) {
+        GetNumlistDoubI(sfPO->yvals, sfPO->n - 1, &yD);
     }
     else {
+        BOG_CHECK(sfPO->n < 2);
         /***
-        *   Interpolate 
+        *   Interpolate Y after finding bounding X indices
         */
-        dxR = (vR - sfPO->min) / sfPO->step;
-        x1 = INT(dxR);
-        x2 = x1 + 1;
-        DB_SCF DB_PrI("+ dx=%f X1=%d X2=%d\n",dxR,x1,x2);
-        BOG_CHECK(x2 >= sfPO->n);
-        y1R = sfPO->yval[x1];
-        y2R = sfPO->yval[x2];
-        dyR = y1R - y2R;
-        fxR = dxR - RNUM(INT(dxR));
-        DB_SCF DB_PrI("+ Y1=%f Y2=%f dY=%f fX=%f\n",y1R,y2R,dyR,fxR);
-        scR = y1R - (dyR * fxR);
-    }   
-    DB_SCF DB_PrI("<< EvalScfieldScoreR %f\n",scR);
-    return(scR);
+        xi = 0;
+        GetNumlistDoubI(sfPO->xvals, xi, &xval2D);
+        while( xval2D < vR ) 
+        {
+            xi++;
+            GetNumlistDoubI(sfPO->xvals, xi, &xval2D);
+        }
+        GetNumlistDoubI(sfPO->xvals, xi - 1, &xval1D);
+        /* Y values */
+        GetNumlistDoubI(sfPO->yvals, xi, &yval2D);
+        GetNumlistDoubI(sfPO->yvals, xi - 1, &yval1D);
+        DB_SCF DB_PrI("+ x1=%f x2=%f\ty1=%f y2=%f\n",xval1D,xval2D,yval1D,yval2D);
+        yD = yval1D + (yval2D-yval1D) * (vR-xval1D) / (xval2D-xval1D);
+    }
+    DB_SCF DB_PrI("<< EvalScfieldScoreR %f\n",yD);
+    return(yD);
 }

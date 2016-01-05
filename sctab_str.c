@@ -268,7 +268,7 @@ int SetUpSctAuxDataI(SCORETAB *stPO)
         stPO->nscores = n;
         if(!stPO->quiet) {
             printf("# Loaded %d scores from %s\n",stPO->nscores,stPO->sdfname);
-            ReportScfieldArrayI(stPO->scores, stPO->nscores, 2, NULL);
+            ReportScfieldArrayI(stPO->scores, stPO->nscores, "#\t", NULL);
         }
     }
     /***

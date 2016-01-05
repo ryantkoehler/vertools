@@ -17,6 +17,7 @@
 
 #ifndef __TABLEH__
 #define __TABLEH__
+
 #include "numlist.h"
 #include "wordlist.h"
 

@@ -189,9 +189,11 @@ int TmUtilI(int argc, char **argv)
         }
         /***
         *   Get name and check that can get a Tm
+        *   If doing table / extract, don't cap len
         */
         FillSeqNameStringI(tuPO->seq,nameS,NSIZE);
-        if( (slen<MIN_TM_LEN) || (slen>=MAX_TM_LEN) ) {
+        if( (!tuPO->do_tab_lo) &&
+            ((slen<MIN_TM_LEN) || (slen>=MAX_TM_LEN)) ) {
             fprintf(tuPO->out,"# %s is too short/long (%d; %d to %d OK)\n",
                 nameS,slen, MIN_TM_LEN, MAX_TM_LEN);
             continue;

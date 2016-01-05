@@ -1,10 +1,44 @@
 11/28/14 RTK
 1/4/15 RTK; Update with cleaned code (tabs to space, etc)
 9/27/15 RTK; V1.1
-VerTools 1.1
+1/4/16 RTK; V1.2; Update scoretab and tm_utl (and score, numlist stuff)
+VerTools 1.2
 
 Below are the list of version numbers for the (first) vertools source dump.
 These were taken from subdirectories packaged by "make_all.csh"
+
+--------------------------------------------------------------------------
+1/4/16 
+--------------------------------------------------------------------------
+alphcont_src.0.82
+bit_util_src.0.12
+blastout_src.0.66
+bpaste_src.0.22
+ccase_src.0.21
+chardump_src.0.41
+cmake_src.2.55
+comp_seq_src.1.45
+dna_util_src.0.83
+filepick_src.0.53
+filter_src.1.02
+fname_src.0.32
+gen_clis_src.0.32
+gen_nums_src.1.4
+gen_prot_src.1.36
+gen_seq_src.1.02
+getsnps_src.0.51
+lassoo_src.0.22
+num_src.1.24
+numstat_src.2.13
+pick_seq_src.0.72
+plotmat_src.0.61
+scoretab_src.1.1
+seqtweak_src.0.61
+shuffle_src.0.23
+tm_util_src.1.07
+venpipe_src.0.82
+wfmerge_src.0.41
+wordfreq_src.0.82
 
 --------------------------------------------------------------------------
 9/27/15 

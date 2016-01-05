@@ -439,7 +439,9 @@ int GetNumlistDoubI(NUMLIST *nlPO, int i, DOUB *vPD)
     }
     return(TRUE);
 }
-/***************************************************************************/
+/***************************************************************************
+*   Get numlist int and doub, regardless of actual type
+*/
 int GetNumlistIntDoubI(NUMLIST *nlPO, int i, int *vPI, DOUB *vPD)
 {
     DOUB vD;
@@ -611,6 +613,36 @@ int SortNumlistI(NUMLIST *nlPO, int dir)
         }
     } 
     return(ok);
+}
+/***************************************************************************
+*   Check if is sorted in given direction; Consecutive values must differ by mindif 
+*/
+int NumlistIsSortedI(NUMLIST *nlPO, int dir, DOUB mindifD)
+{
+    int i;
+    DOUB v1D, v2D;
+
+    VALIDATE(nlPO,NUMLIST_ID);
+    if( GetNumlistLengthI(nlPO) < 2) {
+        return(TRUE);
+    }
+    GetNumlistIntDoubI(nlPO, 0, NULL, &v1D);
+    i = 1; 
+    while( GetNumlistIntDoubI(nlPO, i++, NULL, &v2D) )
+    {
+        if(dir < 0) {
+            if( (v1D - v2D) < mindifD) {
+                return(FALSE);
+            }
+        }
+        else {
+            if( (v2D - v1D) < mindifD) {
+                return(FALSE);
+            }
+        }
+        v1D = v2D;
+    }
+    return(TRUE);
 }
 /***************************************************************************
 *   Smoothing (sliding window) of first numlist into second numlist
