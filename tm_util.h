@@ -1,7 +1,7 @@
 /*
 * tm_util.h
 *
-* Copyright 2015 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
+* Copyright 2016 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
 *
 * The programs and source code of the vertools collection are free software.
 * They are distributed in the hope that they will be useful,
@@ -14,7 +14,7 @@
 *
 */
 
-#define VERSION_S   "Tm_Util Version 1.07"
+#define VERSION_S   "Tm_Util Version 1.08"
 
 #define TMU_NLEN        255
 
@@ -39,6 +39,7 @@ typedef struct TM_UTIL
     int do_rsd;             /* Flag to reverse target strand */    
     int quiet;              /* Flag to be quiet */
     int do_dpar;            /* Flag to dump parameters */          
+    int do_ds;              /* Flag to dump seqs */          
     int do_therm;           /* Flag to dump thermo terms */    
     int do_dtherm;          /* Flag to dump delta thermo terms (tes) */    
     int do_cmb;             /* Flag for competitive miss-match binding */

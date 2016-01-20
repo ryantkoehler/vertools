@@ -1,7 +1,7 @@
 /*
 * filter.c
 *
-* Copyright 2015 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
+* Copyright 2016 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
 *
 * The programs and source code of the vertools collection are free software.
 * They are distributed in the hope that they will be useful,
@@ -39,31 +39,32 @@ void Filter_numsUse()
     printf("   -rg # #   Qualify line if value is in range from # to #\n");
     printf("   -gt #     Qualify line if value is greater than (or equal) #\n");
     printf("   -lt #     Qualify line if value is less than (or equal) #\n");
-    printf("   -lrg # #  Qualify line number range # to #\n");
+    printf("   -lrg # #  Qualify line number range # to #     [NOTE: Only data lines count]\n");
     printf("   -wlis XXX Qualify line with words (first token) listed in XXX\n");
     printf("   -kc       Keep case for token comparison (default ignore)\n");
     printf("   -wst      Word start only needs to match line (not full token)\n");
     printf("   -wsub     Word substring only needs to match line (not full token)\n");
-    printf("   -rann #   Qualify random number of lines #     [NOTE: exact, NO stdin]\n");
-    printf("   -ranf #   Qualify random fraction (0 - 1) #    [NOTE: exact, NO stdin]\n");
-    printf("   -ranm #   Set random mask dimension to # (rather than count input lines)\n");
-    printf("   -ranp #   Qualify random probability (0 -1) #  [NOTE: approximate]\n");
+    printf("   -rann #   Qualify random number of lines #     [NOTE: Exact, NO stdin]\n");
+    printf("   -ranf #   Qualify random fraction (0 - 1) #    [NOTE: Exact, NO stdin]\n");
+    printf("   -ranp #   Qualify random probability (0 -1) #  [NOTE: Approximate]\n");
     printf("   -seed #   Set random seed to #\n");
+    printf("   -A #      Report # lines After qualifiying lines (like grep -A)\n");
+    printf("   -B #      Report # lines Before qualifiying lines [NOTE: NO stdin]\n");
     printf("   -icbn     Ignore chars before numbers (i.e. strip leading chars)\n");
     printf("   -not      Invert line qualification test(s)\n");
     printf("   -flag     Preceed lines with 1/0 for good/bad\n");
     printf("   -pln      Preceed lines with line number\n");
     printf("   -stat     Report only stats about values\n");
+    printf("   -quiet    No summary report\n");
     printf("\n");
     printf("NOTE: Filtered file lines limited to %d chars wide\n",FILTBUF_SIZE);
-    printf("      Also, -rann and -ranf fractions limited by -ranm 'M' to at most 'M'\n");
     printf("\n");
 }
 /**************************************************************************/
 int Filter_numsI(int argc, char **argv)
 {
     char bufS[FILTBUF_SIZE+1], *cPC;
-    int j,ok,num,nok,line,tline;
+    int ok,nok,line,pout,extra;
     FILTER *filtPO;
     
     filtPO = CreateFilterPO();
@@ -71,8 +72,8 @@ int Filter_numsI(int argc, char **argv)
         "S -not B -stat B -rg D2 -gt D -lt D -col I -out S\
         -seed I -ranf D -ranp D\
         -rann I -sc I -flag B -icbn B\
-        -lrg I2 -wlis S -kc B -tst B -tsub B\
-        -ranm I -pln B",
+        -lrg I2 -wlis S -kc B -wst B -wsub B\
+        -pln B -A I -B I -qu B",
         filtPO->inname, &filtPO->do_not, &filtPO->do_stat, 
         &filtPO->min,&filtPO->max, &filtPO->min, &filtPO->max, 
         &filtPO->col, filtPO->outname, 
@@ -81,7 +82,8 @@ int Filter_numsI(int argc, char **argv)
         &filtPO->do_icbn,
         &filtPO->firstl,&filtPO->lastl, filtPO->wlisname, 
         &filtPO->do_kc, &filtPO->do_wst, &filtPO->do_wsub, 
-        &filtPO->ranm, &filtPO->do_pln,
+        &filtPO->do_pln, &filtPO->do_A, &filtPO->do_B, 
+        &filtPO->do_quiet, 
         (int *)NULL))
     {
         Filter_numsUse();
@@ -100,67 +102,113 @@ int Filter_numsI(int argc, char **argv)
         return(FALSE);
     }
     /***
-    *   Filter lines 
+    *   Process lines 
     */
-    tline = line = num = nok = 0;
+    line = nok = extra = pout = 0;
     while(fgets(bufS,FILTBUF_SIZE,filtPO->in) != NULL) 
     {
-        tline++;
-        /***
-        *   Only non-comment, non-blank lines count 
-        */
-        if( COM_LINE(bufS) || BlankStringI(bufS) ) {        
-            continue;   
+        if( SkipThisLineI(filtPO, bufS) ) {
+            continue;
         }
         line++;
-        /***
-        *   Jump past any up front chars to ingore 
-        */
-        cPC = bufS;
-        for(j=0;j<filtPO->skipc;j++)
-        {
-            if(!ISLINE(*cPC)) {
-                break;
+        cPC = GetLineStartPC(filtPO, bufS);
+        ok = IsFiltLineOkI(filtPO, line, cPC, TRUE); 
+        /*   Count ok, and set for any -After extra  */
+        if(ok) {
+            nok++;
+            if(filtPO->do_A > 0) {
+                extra = filtPO->do_A + 1;
             }
-            cPC++;
         }
+        /*  Not only stats = output */
+        if( !filtPO->do_stat) {
+            pout = FALSE;
+            if( (filtPO->do_flag) || (ok) || (extra>0) ) {
+                pout++;
+            }
+            if(pout) {
+                if(filtPO->do_pln) {
+                    fprintf(filtPO->out,"%d\t",line);
+                }
+                if(filtPO->do_flag) {
+                    fprintf(filtPO->out,"%d\t",ok);
+                }
+                fputs(bufS,filtPO->out);
+            }
+        }
+        extra--;
+    }
+    ReportFilterStats(filtPO, line, nok); 
+    CHECK_FILTER(filtPO);
+    return(TRUE);
+}
+/*************************************************************************/
+int SkipThisLineI(FILTER *filtPO, char *bufS)
+{
+    /*   comment, blank? */
+    if( COM_LINE(bufS) || BlankStringI(bufS) ) {        
+        return(TRUE);   
+    }
+    /*  Not a data line; Nothing to check? */
+    if( ! GetLineStartPC(filtPO, bufS) ) {
+        return(TRUE);
+    }
+    return(FALSE);
+}
+/*************************************************************************/
+char *GetLineStartPC(FILTER *filtPO, char *bufS)
+{
+    int j;
+    char *cPC;
+
+    cPC = bufS;
+    for(j=0;j<filtPO->skipc;j++)
+    {
         if(!ISLINE(*cPC)) {
+            break;
+        }
+        cPC++;
+    }
+    return(cPC);
+}
+/*************************************************************************/
+int SetBeforeMaskingI(FILTER *filtPO) 
+{
+    char bufS[FILTBUF_SIZE+1], *cPC;
+    int line, keep, rand;
+
+    /***
+    *   Screen all lines, setting mask for qualified ones
+    */
+    rand = DoingRandFilterI(filtPO, TRUE);
+    line = 0;
+    while(fgets(bufS,FILTBUF_SIZE,filtPO->in) != NULL) 
+    {
+        if( SkipThisLineI(filtPO, bufS) ) {
             continue;
         }
-        /***
-        *   Qualified?
-        */
-        ok = IsFiltLineOkI(filtPO, line, cPC); 
-        num++;
-        /***
-        *   Invert status
-        */
-        if(filtPO->do_not) {
-            ok = !ok;
-        }
-        nok += ok;
-        /***
-        *   Now output
-        */
-        if(filtPO->do_stat) {
-            continue;
-        }
-        if(filtPO->do_flag) {
-            if(filtPO->do_pln) {
-                fprintf(filtPO->out,"%d\t",line);
-            }
-            fprintf(filtPO->out,"%d\t",ok);
-            fputs(bufS,filtPO->out);
-        }
-        else if(ok) {
-            if(filtPO->do_pln) {
-                fprintf(filtPO->out,"%d\t",line);
-            }
-            fputs(bufS,filtPO->out);
+        line ++;
+        cPC = GetLineStartPC(filtPO, bufS);
+        if ( IsFiltLineOkI(filtPO, line, cPC, rand) ) {
+            filtPO->mask[line-1] = 1;
         }
     }
-    ReportFilterStats(filtPO, num, nok); 
-    CHECK_FILTER(filtPO);
+    rewind(filtPO->in);
+    /***
+    *   Mark all mask lines before qualified ones
+    */
+    keep = 0;
+    while(line > 0) 
+    {
+        if(filtPO->mask[line-1]) {
+            keep = filtPO->do_B + 1;
+        }
+        if(keep > 0) {
+            filtPO->mask[line-1] = 1;
+        }
+        keep--;
+        line--;
+    }
     return(TRUE);
 }
 /*************************************************************************/
@@ -205,26 +253,30 @@ void InitFilter(FILTER *fpPO)
     fpPO->max = TOO_BIG_D;
     fpPO->firstl = fpPO->lastl = BAD_I;
     fpPO->seed = BAD_I;
-    fpPO->rann = fpPO->ranm = BAD_I;
-    fpPO->ranf = fpPO->ranp = BAD_D;
+    fpPO->rann = -1;
+    fpPO->ranf = fpPO->ranp = -1.0;
     fpPO->do_not = FALSE;
     fpPO->do_stat = FALSE;
     fpPO->do_kc = fpPO->do_wst = fpPO->do_wsub = FALSE;
     fpPO->do_icbn = FALSE;
     fpPO->skipc = 0;
     fpPO->do_flag = fpPO->do_pln = FALSE;
+    fpPO->do_A = fpPO->do_B = 0;
+    fpPO->do_quiet = FALSE;
 }
-/*************************************************************************
-*
-*/
+/*************************************************************************/
 int CheckFilterOptionsI(FILTER *filtPO)
 {
-    /***
-    *   Random set and masks
-    */
     Srand(filtPO->seed);
+    /*** 
+    *   Allocate and set mask if random exact
+    */
     if(!HandleFilterMaskingI(filtPO)) {
         return(FALSE);
+    }
+    /*  Set before masking */
+    if(filtPO->do_B > 0) {
+        SetBeforeMaskingI(filtPO);
     }
     if(!HandleFilterListSetsI(filtPO)) {
         return(FALSE);
@@ -232,34 +284,24 @@ int CheckFilterOptionsI(FILTER *filtPO)
     return(TRUE);
 }
 /*************************************************************************
-*   Random number or fraction cases need a per-line mask
+*   Check options and allocate / set mask if needed
 */
 int HandleFilterMaskingI(FILTER *filtPO)
 {
-    int n;
     DOUB fracD;
 
-    n = 0;
-    /***
-    *   If need mask, bound or count for dimension
-    */
-    if(!BAD_INT(filtPO->ranm)) {
-        n = filtPO->ranm;
-        LIMIT_NUM(n, 1, TOO_BIG);
-    }
-    else if ( (!BAD_INT(filtPO->rann)) || (!BAD_DOUB(filtPO->ranf)) ) {
-        /*
+    if( NeedFilterMaskingI(filtPO)) {
+        if( IsFileStdinI(filtPO->in) ) {
+            PROBLINE;
+            printf("Options not compatible with stdin\n\n");
+            return(FALSE);
+        }
+        /***
         *   Last two args mean ignore comments and blanks
         *   Then rewind file and allocate space for lines
         */
-        n = FileLinesI(filtPO->in,TRUE,TRUE);
+        filtPO->n_mask = FileLinesI(filtPO->in,TRUE,TRUE);
         rewind(filtPO->in);
-    }
-    /***
-    *   Anything to allocate and set?
-    */
-    if(n>0) {
-        filtPO->n_mask = n;
         filtPO->mask = (char *)ALLOC(filtPO->n_mask,sizeof(char));
         if(!filtPO->mask) {
             PROBLINE;
@@ -267,18 +309,53 @@ int HandleFilterMaskingI(FILTER *filtPO)
             return(FALSE);
         }
         /***
-        *   Calculate / use fraction to mask subset
+        *   If doing random fraction, calc frac and set
         */
-        if(!BAD_INT(filtPO->rann)) {
+        fracD = -1.0;
+        if( filtPO->rann > 0) {
             fracD = RNUM(filtPO->rann) / RNUM(filtPO->n_mask);
         }
-        else {
+        else if( filtPO->ranf >= 0.0) {
             fracD = filtPO->ranf;
         }
-        LIMIT_NUM(fracD, 0.0, 1.0);
-        MaskRandSubsetI(filtPO->mask,filtPO->n_mask,RNUM(fracD));
+        if(fracD >= 0.0) {
+            LIMIT_NUM(fracD, 0.0, 1.0);
+            MaskRandSubsetI(filtPO->mask,filtPO->n_mask,RNUM(fracD));
+        }
     }
     return(TRUE);
+}
+/************************************************************************/
+int DoingRandFilterI(FILTER *filtPO, int do_ranp)
+{
+    int rand;
+
+    rand = FALSE;
+    rand = ( filtPO->rann > 0 ) ? TRUE : rand;
+    rand = ( filtPO->ranf > 0.0 ) ? TRUE : rand;
+    if(do_ranp) {
+        rand = ( filtPO->ranp > 0.0 ) ? TRUE : rand;
+    }
+    return(rand);
+}
+/************************************************************************/
+int NeedFilterMaskingI(FILTER *filtPO)
+{
+    int need;
+
+    /***
+    *   Need If random number or fraction (exact; not probability)
+    */
+    need = DoingRandFilterI(filtPO, FALSE);
+    /*  Need if reporting do_Before lines */
+    if( filtPO->do_B > 0 ) {
+        /* Random probability but do_Before too; Set fractional prob */
+        if( filtPO->ranp >= 0.0 ) {
+            filtPO->ranf = filtPO->ranp;
+        }
+        need = TRUE;
+    }
+    return(need);
 }
 /*************************************************************************
 *   Loading words from files?
@@ -311,14 +388,14 @@ int OpenFilterFilesI(FILTER *filtPO)
     HAND_NFILE(filtPO->out);
     return(TRUE);
 }
-/*************************************************************************
-*
-*/
+/**************************************************************************/
 void ReportFilterStats(FILTER *filtPO, int num, int nok) 
 {
-    printf("#  %d data lines\n",num);
-    printf("#  %d qualified data lines (%5.2f%%)\n",
-        nok, PERCENT_R(nok,num));   
+    if(!filtPO->do_quiet) {
+        printf("#  %d data lines\n",num);
+        printf("#  %d qualified data lines (%5.2f%%)\n",
+            nok, PERCENT_R(nok,num));   
+    }
 }
 /*************************************************************************
 *   Get number value from word and set it to pointer
@@ -356,7 +433,7 @@ int FiltGetWordNumValI(FILTER *filtPO, char *wordS, DOUB *valPD)
 /*************************************************************************
 *   Is the line pointed to by cPC OK based on filter criteria?
 */
-int IsFiltLineOkI(FILTER *filtPO, int line, char *cPC) 
+int IsFiltLineOkI(FILTER *filtPO, int line, char *cPC, int use_mask) 
 {
     char wordS[NSIZE];
     DOUB rD;
@@ -371,11 +448,8 @@ int IsFiltLineOkI(FILTER *filtPO, int line, char *cPC)
             ok = FALSE;
         }
     }
-    /***
-    *   Random fractions
-    *   If we've got a mask (i.e. random fractions), use that
-    */
-    else if(filtPO->mask) {
+    /*  Mask?  */
+    else if( (filtPO->mask) && (use_mask) ) {
         /***
         *   If mask is smaller than number of lines, disqualify
         */
@@ -386,7 +460,8 @@ int IsFiltLineOkI(FILTER *filtPO, int line, char *cPC)
             ok = INT(filtPO->mask[line-1]);
         }
     }
-    else if(!BAD_INT(filtPO->ranp)) {
+    /*  Random probability? */
+    else if(filtPO->ranp >= 0.0) {
         rD = RandD(1.0);
         ok = (rD < filtPO->ranp);
     }
@@ -415,6 +490,10 @@ int IsFiltLineOkI(FILTER *filtPO, int line, char *cPC)
             ok = WordInWordlistI(filtPO->wlis, wordS, filtPO->do_kc, filtPO->do_wst, 
                                 filtPO->do_wsub, NULL);
         }
+    }
+    /* Inverting qualificaiton? */
+    if(filtPO->do_not) {
+        ok = !ok;
     }
     return(ok);
 }

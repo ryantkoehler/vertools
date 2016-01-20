@@ -1,7 +1,7 @@
 /*
 * dna_util.c
 *
-* Copyright 2015 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
+* Copyright 2016 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
 *
 * The programs and source code of the vertools collection are free software.
 * They are distributed in the hope that they will be useful,
@@ -56,6 +56,7 @@ void DnaUtilUse(void)
     printf("   -flg       Flag output status; i.e. 1=in, 0=out\n");
     printf("   -ostat     Output sequences stats (Length Amb N LC [SNP])\n");
     printf("   -stat      Report overall stats for input file\n");
+    printf("   -ds        Dump (report) sequences appended as last column\n");
     printf("   -bran # #  Base range cut to # to # (1-base coords)\n");
     printf("   -rre       Base range relative to end; i.e. backwards\n");
     printf("   -mran # #  Mask range bases # to #; i.e. set to N's\n");
@@ -98,7 +99,7 @@ int DnaUtilI(int argc, char **argv)
         -flg B -psj I2 -inwf I2 -insh B -inbr B -inbp B -mran I2 -imask B\
         -cll B -pat I -exi B -tnb B\
         -pco B -pml I2\
-        -cstat B -csep B -wst B -tsub B -nan B -nfl I -nfb I",
+        -cstat B -csep B -wst B -tsub B -nan B -nfl I -nfb I -ds B",
         duPO->inname, duPO->outname, &oraw, &duPO->do_comp, &duPO->do_inv, 
         &duPO->do_rev, &ofas, &nfas, &stat, &duPO->min_len,&duPO->max_len, 
         &duPO->do_famb, &duPO->do_not,  
@@ -115,7 +116,7 @@ int DnaUtilI(int argc, char **argv)
         &duPO->do_tnb, &duPO->do_pco, &duPO->do_pol,&duPO->do_pml,
         &duPO->do_cstat, &duPO->do_csep, 
         &duPO->do_wst, &duPO->do_wsub, &duPO->do_nan,
-        &duPO->nfline, &duPO->nfblock,
+        &duPO->nfline, &duPO->nfblock, &duPO->do_ds,
         (int *)NULL))
     {
         DnaUtilUse();
@@ -348,6 +349,7 @@ void InitDna_util(DNA_UTIL *duPO)
     duPO->ifwmin = duPO->ifwmax = 0;
     duPO->lo_mran = duPO->hi_mran = BOGUS;
     duPO->do_imask = FALSE;
+    duPO->do_ds = FALSE;
 }
 /**************************************************************************
 *   Information indices set?
@@ -725,7 +727,7 @@ int HandleDuOutputI(SEQ *seqPO, int ok, DNA_UTIL *duPO, FILE *outPF)
         *   Length, number of ambigs, N's, lowercase, SNPs
         */
         case DNUO_STAT:
-            HandleDnaOstatI(nameS,seqPC,slen,outPF);
+            HandleDnaOstatI(duPO,nameS,seqPC,slen,outPF);
             break;
         case DNUO_INFO:
             if(snps > 0) {
@@ -749,12 +751,10 @@ int HandleDuOutputI(SEQ *seqPO, int ok, DNA_UTIL *duPO, FILE *outPF)
             duPO->len_lo = MIN_NUM(slen,duPO->len_lo);
             duPO->snp_hi = MAX_NUM(snps,duPO->snp_hi);
             duPO->snp_lo = MIN_NUM(snps,duPO->snp_lo);
-            if(snps>0)
-            {
+            if(snps>0) {
                 duPO->snp_c += 1;
             }
-            if(AnySeqAmbigsI(duPO->seq))
-            {
+            if(AnySeqAmbigsI(duPO->seq)) {
                 duPO->amb_c += 1;
             }
     }
@@ -763,7 +763,7 @@ int HandleDuOutputI(SEQ *seqPO, int ok, DNA_UTIL *duPO, FILE *outPF)
 /**************************************************************************
 *   Report stats for given sequence
 */
-int HandleDnaOstatI(char *nameS, char *seqS, int len, FILE *outPF)
+int HandleDnaOstatI(DNA_UTIL *duPO, char *nameS, char *seqS, int len, FILE *outPF)
 {
     int na,nn,lc,snp;
 
@@ -772,7 +772,11 @@ int HandleDnaOstatI(char *nameS, char *seqS, int len, FILE *outPF)
     nn = CountSeqAmbigDegensI(seqS,0,len,4);
     CountStringCaseI(seqS,len,&lc,NULL);
     snp = CountSeqSnpSitesI(seqS,0,len);
-    fprintf(outPF,"%s\t%d\t%d\t%d\t%d\t%d\n",nameS,len,na,nn,lc,snp);
+    fprintf(outPF,"%s\t%d\t%d\t%d\t%d\t%d",nameS,len,na,nn,lc,snp);
+    if(duPO->do_ds) {
+        fprintf(outPF,"\t%s",seqS);
+    }
+    fprintf(outPF,"\n");
     return(TRUE);
 }
 /**************************************************************************
@@ -787,35 +791,29 @@ void HandleDuStats(DNA_UTIL *duPO,int n,int nok,FILE *outPF)
     fprintf(outPF,"Number   %d\n",n);
     FillSeqFtypeDescString(duPO->iform,bufS);
     fprintf(outPF,"Format   %s\n",bufS);
-    if(n<1)
-    {
+    if(n<1) {
         return;
     }
     fprintf(outPF,"NumOk    %d  %5.2f%%\n",nok,PERCENT_R(nok,n));
-    if(nok<1)
-    {
+    if(nok<1) {
         return;
     }
     fprintf(outPF,"MinLen   %d\n",duPO->len_lo);
     fprintf(outPF,"MaxLen   %d\n",duPO->len_hi);
-    if(duPO->snp_hi>0)
-    {
+    if(duPO->snp_hi>0) {
         fprintf(outPF,"MinSNP   %d\n",duPO->snp_lo);
         fprintf(outPF,"MaxSNP   %d\n",duPO->snp_hi);
         fprintf(outPF,"WithSNPs %d  %5.2f%%\n",duPO->snp_c,
             PERCENT_R(duPO->snp_c,n));
     }
-    else
-    {
+    else {
         fprintf(outPF,"WithSNPs 0\n");
     }
-    if(duPO->amb_c>0)
-    {
+    if(duPO->amb_c>0) {
         fprintf(outPF,"WithAmbs %d  %5.2f%%\n",duPO->amb_c,
             PERCENT_R(duPO->amb_c,n));
     }
-    else
-    {
+    else {
         fprintf(outPF,"WithAmbs 0\n");
     }
 }
@@ -850,8 +848,7 @@ void HandleDnuFlagHeader(DNA_UTIL *duPO,FILE *outPF)
     if( duPO->do_fsnp ) {
         fprintf(outPF,"#  SNPs:   %s\n", okS);
     }
-    if(!NO_S(duPO->wlisname))
-    { 
+    if(!NO_S(duPO->wlisname)) { 
         fprintf(outPF,"#  Listed (%s) %s\n", duPO->wlisname,okS);
     }
 }
@@ -931,23 +928,19 @@ int HandleDnaInfoOutI(DNA_UTIL *duPO,FILE *outPF)
     DOUB dD,d2D,d3D;
 
     HAND_NFILE(outPF);
-    if(!GetSeqSeqI(duPO->seq,&seqPC))
-    {
+    if(!GetSeqSeqI(duPO->seq,&seqPC)) {
         return(FALSE);
     }
     slen = GetSeqLenI(duPO->seq);
     FillSeqNameStringI(duPO->seq,nameS,NSIZE-1);
-    if( (duPO->ifwmin>0) || (duPO->ifwmax>0 ) )
-    {
+    if( (duPO->ifwmin>0) || (duPO->ifwmax>0 ) ) {
         dD = SeqWordFreqInfoD(seqPC, slen, duPO->ifwmin, duPO->ifwmax);
-        fprintf(outPF,"%s\t%5.4f\n",nameS,dD);
-        return(TRUE);
+        fprintf(outPF,"%s\t%5.4f",nameS,dD);
     }
     /***
     *   Shannon div & evenness indices 
     */
-    if(duPO->do_insh)
-    {
+    else if(duPO->do_insh) {
         if(!Seq123ShannonInfoI(seqPC, slen, &dD, &d2D, &d3D))
         {
             fprintf(outPF,"%s\tPROBLEM WITH SHANNON INDEX\n",nameS);
@@ -955,34 +948,33 @@ int HandleDnaInfoOutI(DNA_UTIL *duPO,FILE *outPF)
         }
         fprintf(outPF,"%s\t%4.3f\t%4.3f\t%4.3f",nameS,dD,d2D,d3D);
         Seq123ShannonEvenInfoI(seqPC, slen, &dD, &d2D, &d3D);
-        fprintf(outPF,"\t%4.3f\t%4.3f\t%4.3f\n",dD,d2D,d3D);
-        return(TRUE);
+        fprintf(outPF,"\t%4.3f\t%4.3f\t%4.3f",dD,d2D,d3D);
     }
     /***
     *   Various info indices 
     */
-    if(duPO->do_inbr)
-    {
-        if(!Seq123BrillouinInfoI(seqPC, slen, &dD, &d2D, &d3D))
-        {
+    else if(duPO->do_inbr) {
+        if(!Seq123BrillouinInfoI(seqPC, slen, &dD, &d2D, &d3D)) {
             fprintf(outPF,"%s\tPROBLEM WITH BRILLOUIN INDEX\n",nameS);
             return(FALSE);
         }
+        fprintf(outPF,"%s\t%4.3f\t%4.3f\t%4.3f",nameS,dD,d2D,d3D);
     }
-    else if(duPO->do_inbp)
-    {
-        if(!Seq123BergerParkerInfoI(seqPC, slen, &dD, &d2D, &d3D))
-        {
+    else if(duPO->do_inbp) {
+        if(!Seq123BergerParkerInfoI(seqPC, slen, &dD, &d2D, &d3D)) {
             fprintf(outPF,"%s\tPROBLEM WITH BERGER-PARKER INDEX\n",nameS);
             return(FALSE);
         }
+        fprintf(outPF,"%s\t%4.3f\t%4.3f\t%4.3f",nameS,dD,d2D,d3D);
     }
-    else 
-    {
+    else {
         ERR("HandleDnaInfoOut","sham with div index flag");
         return(FALSE);
     }
-    fprintf(outPF,"%s\t%4.3f\t%4.3f\t%4.3f\n",nameS,dD,d2D,d3D);
+    if(duPO->do_ds) {
+        fprintf(outPF,"\t%s",seqPC);
+    }
+    fprintf(outPF,"\n");
     return(TRUE);
 }
 /*************************************************************************

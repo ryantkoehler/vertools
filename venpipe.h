@@ -1,7 +1,7 @@
 /*
 * venpipe.h
 *
-* Copyright 2015 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
+* Copyright 2016 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
 *
 * The programs and source code of the vertools collection are free software.
 * They are distributed in the hope that they will be useful,
@@ -14,7 +14,7 @@
 *
 */
 
-#define VEN_VERSION_S   "VenPipe Version 0.82"
+#define VEN_VERSION_S   "VenPipe Version 0.9"
 #define VLIB_VERSION_S  "Vienna Library: ViennaRNA-2.1.6"
 
 #define MAX_VSLEN   10000   /* Sequence buffer size; Max seq len */
@@ -39,10 +39,11 @@ typedef struct VENPIPE
     int do_ksapar;          /* Flag to keep salt adjusted parameter file */
     int firstb,lastb;       /* Base restrictions? */
     int rre;                /* Range relative to end flag */
-    int do_mask;            /* lag to mask range with N */
-    int do_not;             /* lag to invert mask range */
+    int do_ds;              /* flag to dump seq */
+    int do_mask;            /* flag to mask range with N */
+    int do_not;             /* flag to invert mask range */
     int dmb_f,dmb_l,mrre;   /* Range restrictions for dmb reporting */
-    int do_mbtab;           /* lag to dump match base table */
+    int do_mbtab;           /* flag to dump match base table */
     DOUB mst,men,mj;        /* Melt temperature start, end, and jump */
     /***
     *   Tm_pars / Vienna stuff

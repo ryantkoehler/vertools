@@ -1,7 +1,7 @@
 /*
 * wordfreq.c
 *
-* Copyright 2015 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
+* Copyright 2016 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
 *
 * The programs and source code of the vertools collection are free software.
 * They are distributed in the hope that they will be useful,
@@ -51,6 +51,7 @@ void WfUtilUse(void)
     printf("   -rre       Base range relative to end; i.e. Backwards\n");
     printf("   -pmat # #  Position-specific matrix from bases # to #\n");
     printf("   -sif XXX   Score input sequences via frequency tab XXX\n");
+    printf("   -ds        Dump (report) sequences appended as last column\n");
     printf("   -quiet     Suppress warnings about non-ACGT chars\n");
 }
 /**************************************************************************
@@ -66,13 +67,13 @@ int WfUtilI(int argc, char **argv)
     if(!ParseArgsI(argc,argv,
         "S -out S -iraw B -ifas B -siz I -deg B -bran I2 -rre B\
         -sran I2 -ran I2 -norm B -sif S -pmat I2\
-        -ilc B -iuc B -step I -quiet B",
+        -ilc B -iuc B -step I -quiet B -ds B",
         wfPO->inname, wfPO->outname, &iraw, &ifas, &wfPO->size, 
         &wfPO->do_deg, &wfPO->firstb,&wfPO->lastb, &wfPO->do_rre,
         &wfPO->firsts,&wfPO->lasts, &wfPO->min,&wfPO->max, &wfPO->do_norm,
         &wfPO->lisname, &wfPO->pmat_s,&wfPO->pmat_e,
-        &wfPO->do_ilc, &wfPO->do_iuc, &wfPO->step,
-        &quiet,
+        &wfPO->do_ilc, &wfPO->do_iuc, &wfPO->step, 
+        &quiet, &wfPO->do_ds,
         (int *)NULL))
     {
         WfUtilUse();
@@ -97,7 +98,7 @@ int WfUtilI(int argc, char **argv)
         return(FALSE);
     }
     if(!NO_S(wfPO->lisname)) {
-        /* f have a sequence list to score, normalize */
+        /* Have a sequence list to score, normalize */
         wfPO->do_norm = TRUE;
     }
     /***
@@ -238,6 +239,7 @@ void InitWf_util(WF_UTIL *wfPO)
     wfPO->igprob = FALSE;
     wfPO->do_not = FALSE;
     INIT_S(wfPO->lisname);
+    wfPO->do_ds = FALSE;
     wfPO->wf = NULL;
     wfPO->size = DEF_WSIZE;
     wfPO->step = 1;
@@ -486,7 +488,7 @@ void HandleWfuStats(WF_UTIL *wfPO,FILE *outPF)
 int HandleWfuSeqOutputI(WF_UTIL *wfPO,FILE *outPF)
 {
     int i,n,ind;
-    char nameS[NSIZE];
+    char nameS[NSIZE], seqS[BBUFF_SIZE];
     WORDFREQ *wordfPO;
     SEQ *seqPO;
     DOUB sD,minD,maxD;
@@ -534,7 +536,12 @@ int HandleWfuSeqOutputI(WF_UTIL *wfPO,FILE *outPF)
         return(FALSE);
     }
     sD /= DNUM(n);
-    fprintf(outPF,"%-15s\t%5.4f\t%5.4f\t%5.4f\n",nameS,minD,sD,maxD);
+    fprintf(outPF,"%-15s\t%5.4f\t%5.4f\t%5.4f",nameS,minD,sD,maxD);
+    if(wfPO->do_ds) {
+        FillSeqSeqStringI(seqPO,seqS,BBUFF_SIZE);
+        fprintf(outPF,"\t%s",seqS);
+    }
+    fprintf(outPF,"\n");
     return(TRUE);
 }
 /***************************************************************************

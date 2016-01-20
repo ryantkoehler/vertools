@@ -1,7 +1,7 @@
 /*
 * wordfreq.h
 *
-* Copyright 2015 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
+* Copyright 2016 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
 *
 * The programs and source code of the vertools collection are free software.
 * They are distributed in the hope that they will be useful,
@@ -14,7 +14,7 @@
 *
 */
 
-#define VERSION_S   "WordFreq, version 0.82"
+#define VERSION_S   "WordFreq, version 0.9"
 
 #define WFU_NLEN        255
 
@@ -45,6 +45,7 @@ typedef struct WF_UTIL
     int do_norm;            /* Flag to normalize counts */
     int do_ilc;             /* Flag to ignore lower case */
     int do_iuc;             /* Flag to ignore upper case */
+    int do_ds;              /* Flag to dump sequences (if scoring) */
     int pmat_s;             /* Staring base for Position-specific matrix */
     int pmat_e;             /* Ending base for Position-specific matrix */
     int pmat_r;             /* Position-specific matrix rows */

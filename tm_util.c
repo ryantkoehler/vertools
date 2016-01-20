@@ -1,7 +1,7 @@
 /*
 * tm_util.c
 *
-* Copyright 2015 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
+* Copyright 2016 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
 *
 * The programs and source code of the vertools collection are free software.
 * They are distributed in the hope that they will be useful,
@@ -55,7 +55,8 @@ void TmUtilUse(void)
     printf("   -tm24      Use the algorithm Tm = 2AT + 4GC\n");
     printf("   -bran # #  Base range cut to # to # (1-base coords)\n");
     printf("   -rre       Base range relative to end; i.e. backwards\n");
-    printf("   -dpar      Report Tm parameters / settings used\n");
+    printf("   -dpar      Dump (report) Tm parameters / settings used\n");
+    printf("   -ds        Dump (report) sequences appended as last column\n");
     printf("   -the       Report thermodynamic quantities dG dH dS\n");
     printf("   -fds       Report fraction double strand (i.e. Fraction Bound, FB)\n");
     printf("   -tlen #    Report sequence length required for Tm (or FB) of #\n");
@@ -104,7 +105,7 @@ int TmUtilI(int argc, char **argv)
         -tmsl B -tmpey B -scon D -rsd B -tem D -fds B\
         -tlmin B -tes B -btes B -den B\
         -tcon D -eraw B -bran I2 -rre B -otls B\
-        -iraw B -ifas B -dthe B -cmb B -pdc I -tab I2 -emin B -tbj I",
+        -iraw B -ifas B -dthe B -cmb B -pdc I -tab I2 -emin B -tbj I -ds B",
         tuPO->inname, tuPO->outname, tuPO->parname, &tuPO->con1, 
         &tuPO->salt, &tmoli, &tmelt, &tuPO->do_therm, &tuPO->do_dpar,
         &tuPO->do_tmpro, &tm24, &tmgb, &tuPO->mg, &tuPO->quiet, 
@@ -118,7 +119,7 @@ int TmUtilI(int argc, char **argv)
         &tuPO->do_dtherm, &tuPO->do_cmb, 
         &tuPO->pdc,
         &tuPO->do_tab_lo,&tuPO->do_tab_hi,
-        &tuPO->do_emin, &tuPO->do_tab_j,
+        &tuPO->do_emin, &tuPO->do_tab_j, &tuPO->do_ds, 
         (int *)NULL))
     {
         TmUtilUse();
@@ -318,6 +319,7 @@ int InitTm_utilI(TM_UTIL *tuPO)
     tuPO->do_rsd = FALSE;
     tuPO->quiet = FALSE;
     tuPO->do_dpar = FALSE;
+    tuPO->do_ds = FALSE;
     tuPO->do_therm = tuPO->do_dtherm = FALSE;
     tuPO->do_cmb = FALSE;
     tuPO->do_fds = tuPO->do_den = FALSE;
@@ -1066,6 +1068,10 @@ int HandleTmutilOutputI(TM_UTIL *tuPO, int good, char *seqS, int slen,
         if(!HandleCompetitiveFbOutputI(tuPO,outPF)) {
             ReportDsetProblemSeq(nameS,outPF);
         }
+    }
+    /*  Dump input seq? */
+    if(tuPO->do_ds) {
+        fprintf(outPF,"\t%s",seqS);
     }
     /***
     *   End of line, all done

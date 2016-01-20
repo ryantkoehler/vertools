@@ -1,7 +1,7 @@
 /*
 * alphcont.c
 *
-* Copyright 2015 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
+* Copyright 2016 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
 *
 * The programs and source code of the vertools collection are free software.
 * They are distributed in the hope that they will be useful,
@@ -55,6 +55,7 @@ void AlphContUse(void)
     printf("   -dfg       Dump flagging with matches along sequence length\n");
     printf("   -dfs       Dump flagging and sequence\n");
     printf("   -flg # #   Flag sequences with values # to #\n");
+    printf("   -ds        Dump (report) sequences appended as last column\n");
     printf("   -eraw      Extract flagged sequences in raw format\n");
     printf("   -not       Invert flagging criteria\n");
     printf("   -oval      Output only values (no seqs, e.g. with -eraw)\n");
@@ -79,7 +80,7 @@ int AlphContI(int argc,char **argv)
         "S -out S -igp B -bran I2 -flg R2 -row S -con S -not B -dnum B\
         -dfs B -dcc B -iraw B -ifas B -cwin I -dfg B -dcw B -rre B\
         -eraw B -oval B -stat B -ecc B -btab B -skew S -cent S\
-        -win I2 -wst I -wen I -ign B -rtab B -dtab B",
+        -win I2 -wst I -wen I -ign B -rtab B -dtab B -ds B",
         alPO->inname, alPO->outname, &alPO->igprob, 
         &alPO->firstb,&alPO->lastb,
         &alPO->min,&alPO->max, alPO->row, alPO->con,
@@ -88,7 +89,7 @@ int AlphContI(int argc,char **argv)
         &alPO->do_stat, &alPO->do_ecc, &alPO->do_btab,
         &alPO->skew, &alPO->cent,
         &alPO->winsize,&alPO->winstep, &alPO->winst, &alPO->winen, 
-        &alPO->do_ign, &alPO->do_rtab, &alPO->do_dtab,
+        &alPO->do_ign, &alPO->do_rtab, &alPO->do_dtab, &alPO->do_ds,
         (int *)NULL))
     {
         AlphContUse();
@@ -949,7 +950,7 @@ int HandleAlcoOutputI(ALPHCONT *alPO,SEQ *seqPO, char *nameS, int sok,
     *   If simple base table, handle and return
     */
     if( alPO->do_btab || alPO->do_dtab || alPO->do_rtab ) {
-        ReportAlphcontBaseTables(alPO,nameS,alPO->comp,outPF);
+        ReportAlphcontBaseTables(alPO,nameS,seqPO,alPO->comp,outPF);
         return(TRUE);
     }
     /***
@@ -982,11 +983,14 @@ int HandleAlcoOutputI(ALPHCONT *alPO,SEQ *seqPO, char *nameS, int sok,
                     fprintf(outPF,"\t%6.3f",ABS_VAL(alPO->val));
                     fprintf(outPF,"\t%6.3f",ABS_VAL(alPO->val2));
                 }
-                fprintf(outPF,"\n");
             }
             else {
-                fprintf(outPF,"%2d\n",INT(alPO->val));
+                fprintf(outPF,"%2d",INT(alPO->val));
             }
+            if(alPO->do_ds) {
+                fprintf(outPF,"\t%s",seqPC);
+            }
+            fprintf(outPF,"\n");
             break;
         case ALCO_SEQ:
             ok = TRUE;
@@ -1064,8 +1068,10 @@ void DumpAlphconMask(ALPHCONT *alPO, int len, FILE *outPF)
 /**************************************************************************
 *   Dump table output
 */
-void ReportAlphcontBaseTables(ALPHCONT *alPO, char *nameS, SEQCOMP *compPO, FILE *outPF)
+void ReportAlphcontBaseTables(ALPHCONT *alPO, char *nameS, SEQ *seqPO, SEQCOMP *compPO, FILE *outPF)
 {
+    char *seqPC;
+
     VALIDATE(compPO,SEQCOMP_ID);
     HAND_NFILE(outPF);
     fprintf(outPF,"%-15s",nameS);
@@ -1084,7 +1090,6 @@ void ReportAlphcontBaseTables(ALPHCONT *alPO, char *nameS, SEQCOMP *compPO, FILE
             (compPO->fg + compPO->fc), (compPO->fa + compPO->ft),
             (compPO->fg + compPO->fa), (compPO->fc + compPO->ft),
             (compPO->fa + compPO->fc), (compPO->fg + compPO->ft) );
-        fprintf(outPF,"\n");
     }
     /***
     *   Rows or counts 
@@ -1095,7 +1100,6 @@ void ReportAlphcontBaseTables(ALPHCONT *alPO, char *nameS, SEQCOMP *compPO, FILE
                 compPO->ra, compPO->rc, compPO->rg, compPO->rt);
             fprintf(outPF,"\t%3d\t%3d\t%3d\t%3d\t%3d\t%3d",
                 compPO->rs, compPO->rs, compPO->rr, compPO->ry, compPO->rm, compPO->rk);
-            fprintf(outPF,"\n");
         }
         else {
             fprintf(outPF,"%3d\t%3d\t%3d\t%3d",
@@ -1104,9 +1108,13 @@ void ReportAlphcontBaseTables(ALPHCONT *alPO, char *nameS, SEQCOMP *compPO, FILE
                 (compPO->ng + compPO->nc), (compPO->na + compPO->nt), 
                 (compPO->ng + compPO->na), (compPO->nc + compPO->nt), 
                 (compPO->na + compPO->nc), (compPO->ng + compPO->nt) );
-            fprintf(outPF,"\n");
         }
     }
+    GetSeqSeqI(seqPO,&seqPC);
+    if(alPO->do_ds) {
+        fprintf(outPF,"\t%s",seqPC);
+    }
+    fprintf(outPF,"\n");
 }
 /**************************************************************************
 *

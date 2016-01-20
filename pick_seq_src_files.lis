@@ -17,9 +17,11 @@ dna_pp.c
 dna_pair.c
 dna_loop.c
 score.c
+numlist.c
 pick_seq.c
 dna.h
 dna_pair.h
+numlist.h
 pick_seq.h
 prim.h
 score.h

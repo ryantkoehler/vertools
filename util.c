@@ -1,7 +1,7 @@
 /*
 * util.c
 *
-* Copyright 2015 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
+* Copyright 2016 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
 *
 * The programs and source code of the vertools collection are free software.
 * They are distributed in the hope that they will be useful,
@@ -409,6 +409,16 @@ FILE *FileOpenPF(char *nameS, char *modeS, int error)
         }
     }
     return(fPF);    
+}
+/************************************************************************/
+int IsFileStdinI(FILE *fPF)
+{
+    if(fPF) {
+        if(fPF == stdin) {
+            return(TRUE);
+        }
+    }
+    return(FALSE);
 }
 /*************************************************************************
 *   Closes the passed file and decrements the global active file count

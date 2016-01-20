@@ -14,11 +14,13 @@ dna_out.c
 dna_seqs.c
 dna_snp.c
 score.c
+numlist.c
 snp_char.c
 gen_seq.c
 dna_cons.h
 dna.h
 gen_seq.h
+numlist.h
 prim.h
 score.h
 tm_pars.h

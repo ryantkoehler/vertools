@@ -1,7 +1,7 @@
 /*
 * ven_io.c
 *
-* Copyright 2015 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
+* Copyright 2016 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
 *
 * The programs and source code of the vertools collection are free software.
 * They are distributed in the hope that they will be useful,
@@ -123,7 +123,6 @@ void HandleVenpipeOut(VENPIPE *venPO, FILE *outPF)
     ssPC = venPO->tss;
     pssPC = venPO->tss2;
     len = venPO->tlen;
-
     /***
     *   Energy story
     */
@@ -151,6 +150,9 @@ void HandleVenpipeOut(VENPIPE *venPO, FILE *outPF)
         fprintf(outPF,"# %-15s\t%s",nameS,enS);
         if(venPO->do_dmb) {
             fprintf(outPF,"\t%s",matS);
+        }
+        if(venPO->do_ds) {
+            fprintf(outPF,"\t%s",seqPC);
         }
         fprintf(outPF,"\n");
         fprintf(outPF,"# Sequence  %s\n",seqPC);
@@ -190,6 +192,9 @@ void HandleVenpipeOut(VENPIPE *venPO, FILE *outPF)
         fprintf(outPF,"%-15s\t%s",nameS,enS);
         if(venPO->do_dmb) {
             fprintf(outPF,"\t%s",matS);
+        }
+        if(venPO->do_ds) {
+            fprintf(outPF,"\t%s",seqPC);
         }
         fprintf(outPF,"\n");
     }
