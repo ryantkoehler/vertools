@@ -21,7 +21,6 @@
 #include <math.h>
 #define __MAIN__
 #include "prim.h"
-#include "dna.h"
 #include "table.h"
 #include "wfutil.h"
 #include "wordfreq.h"
@@ -126,43 +125,42 @@ int WfUtilI(int argc, char **argv)
         /***
         *   Parse sequence; FALSE = done
         */
-        ok = ParseSeqI(wfPO->in, wfPO->iform, SCLEAN_HI, !quiet, wfPO->seq);
+        ok = ParseSeqI(wfPO->in, wfPO->iform, SCLEAN_HI, !quiet, wfPO->fseq);
         if(ok==FALSE) {
             break;
         }
         if(ok!=TRUE) {
-            if(!wfPO->igprob) {
-                break;
-            }
             continue;
         }
         /***
         *   Filter here BEFORE any manipulations
         *   Update count and qualify
         */
-        if(!IsCurrentSeqOkI(wfPO,wfPO->n)) {
+        if(!IsCurrentSeqOkI(wfPO, wfPO->fseq, wfPO->n)) {
             wfPO->n += 1;
             continue;
         }
         wfPO->n += 1;
+        /* xxx Unconditional copy unneeded / slow??? */
+        CopySeqI(wfPO->fseq, wfPO->seq, -1, -1);
         /***
-        *   trim, case-based-mask?
+        *   Trim, case-based-mask?
         */
-        if(!HandleWfuSubseqI(wfPO)) {
+        if(!HandleWfuSubseqI(wfPO, wfPO->seq, wfPO->fseq)) {
             ABORTLINE;
             break;
         }
         if( (wfPO->do_ilc) || (wfPO->do_iuc) ) {
-            HandleWfuCaseMaskI(wfPO);
+            HandleWfuCaseMaskI(wfPO, wfPO->seq);
         }
         /***
         *   Processing current seq, or Tallying?
         */
         if(!NO_S(wfPO->lisname)) {
-            HandleWfuSeqOutputI(wfPO,wfPO->out);
+            HandleWfuSeqOutputI(wfPO, wfPO->seq, wfPO->fseq, wfPO->out);
         }
         else {
-            tal = HandleWfTallyI(wfPO);
+            tal = HandleWfTallyI(wfPO, wfPO->seq);
             if(tal<1) {
                 break;
             }
@@ -174,11 +172,11 @@ int WfUtilI(int argc, char **argv)
     */
     if(wfPO->pmat_s > 0) {
         if(tal>0) {
-            HandleWfuPosMat(wfPO,wfPO->out);
+            HandleWfuPosMat(wfPO, wfPO->out);
         }
     }
     else {
-        HandleWfuStats(wfPO,wfPO->out);
+        HandleWfuStats(wfPO, wfPO->out);
     }
     /***
     *   All done
@@ -200,12 +198,7 @@ WF_UTIL *CreateWf_utilPO()
     }
     wfPO->ID = WF_UTIL_ID;
     wfPO->seq = CreateSeqPO(0,NULL,NULL);
-    if(!wfPO->seq)
-    {
-        printf("# Failed to allocate seq space\n");
-        CHECK_WF_UTIL(wfPO);
-        return(NULL);
-    }
+    wfPO->fseq = CreateSeqPO(0,NULL,NULL);
     InitWf_util(wfPO);
     return(wfPO);
 }
@@ -218,6 +211,7 @@ int DestroyWf_utilI(WF_UTIL *wfPO)
     CHECK_FILE(wfPO->in);
     CHECK_NFILE(wfPO->out,wfPO->outname);
     CHECK_SEQ(wfPO->seq);
+    CHECK_SEQ(wfPO->fseq);
     CHECK_WORDFREQ(wfPO->wf);
     CHECK_TABLE(wfPO->pmat);
     FREE(wfPO);
@@ -236,7 +230,6 @@ void InitWf_util(WF_UTIL *wfPO)
     wfPO->iform = BOGUS;
     wfPO->out = NULL;
     wfPO->owhat = BOGUS;
-    wfPO->igprob = FALSE;
     wfPO->do_not = FALSE;
     INIT_S(wfPO->lisname);
     wfPO->do_ds = FALSE;
@@ -245,7 +238,7 @@ void InitWf_util(WF_UTIL *wfPO)
     wfPO->step = 1;
     wfPO->do_deg = FALSE;
     wfPO->do_rre = FALSE;
-    wfPO->firsts = wfPO->firstb = -TOO_BIG; 
+    wfPO->firsts = wfPO->firstb = -1; 
     wfPO->lasts = wfPO->lastb = TOO_BIG;
     wfPO->min = 0; 
     wfPO->max = TOO_BIG;
@@ -394,20 +387,25 @@ int SetPosMatLablesI(WF_UTIL *wfPO)
     }
     return(TRUE);
 }
-/***************************************************************************
-*
+/****************************************************************************
+*   If limited base range, copy full seq fseqPO and modify (bound) seqPO
+*   Also set fseqPO case to reflect any bounding 
 */
-int HandleWfuSubseqI(WF_UTIL *wfPO)
+int HandleWfuSubseqI(WF_UTIL *wfPO, SEQ *seqPO, SEQ *fseqPO)
 {
-    int len;
+    int len, flen;
 
-    if(wfPO->firstb >= 0) {
+    if(wfPO->firstb > 0) {
         len = wfPO->lastb - wfPO->firstb + 1;
+        SetCaseSeqSubseqI(fseqPO, FALSE, -1, -1);
         if(wfPO->do_rre) {
-            NarrowSeqI(wfPO->seq,wfPO->firstb-1,len,REVERSE,FALSE);
+            NarrowSeqI(seqPO, wfPO->firstb-1, len, REVERSE, FALSE);
+            flen = GetSeqLenI(fseqPO);
+            SetCaseSeqSubseqI(fseqPO, TRUE, flen - wfPO->lastb, flen - wfPO->firstb + 1);
         }
         else {
-            NarrowSeqI(wfPO->seq,wfPO->firstb-1,len,FORWARD,FALSE);
+            NarrowSeqI(seqPO, wfPO->firstb-1, len, FORWARD, FALSE);
+            SetCaseSeqSubseqI(fseqPO, TRUE, wfPO->firstb-1, wfPO->lastb);
         }
     }
     return(TRUE);
@@ -415,13 +413,13 @@ int HandleWfuSubseqI(WF_UTIL *wfPO)
 /***************************************************************************
 *   If masking lowercase, switch these to n and return the count 
 */
-int HandleWfuCaseMaskI(WF_UTIL *wfPO)
+int HandleWfuCaseMaskI(WF_UTIL *wfPO, SEQ *seqPO)
 {
     int i,n,len;
     char *seqPC;
 
-    len = GetSeqLenI(wfPO->seq);
-    GetSeqSeqI(wfPO->seq,&seqPC);
+    len = GetSeqLenI(seqPO);
+    GetSeqSeqI(seqPO, &seqPC);
     n = 0;
     for(i=0;i<len;i++) {
         if( (wfPO->do_ilc) && (islower(INT(seqPC[i]))) ) {
@@ -438,7 +436,7 @@ int HandleWfuCaseMaskI(WF_UTIL *wfPO)
 /**************************************************************************
 *   Screen current seq against filters
 */
-int IsCurrentSeqOkI(WF_UTIL *wfPO,int n)
+int IsCurrentSeqOkI(WF_UTIL *wfPO, SEQ *seqPO, int n)
 {
     int ok;
 
@@ -454,21 +452,7 @@ int IsCurrentSeqOkI(WF_UTIL *wfPO,int n)
     }
     return(ok);
 }
-/**************************************************************************
-*   Sequence "cleaning" options
-*/
-void HandleWfuClean(WF_UTIL *wfPO)
-{
-    SEQ *seqPO;
-    int slen;
-
-    seqPO = wfPO->seq;
-    slen = CleanUpSeqI(seqPO->seq,seqPO->len,seqPO->seq,FALSE,FALSE);
-    seqPO->len = slen;
-}
-/**************************************************************************
-*
-*/
+/***************************************************************************/
 void HandleWfuStats(WF_UTIL *wfPO,FILE *outPF)
 {
     HAND_NFILE(outPF);
@@ -485,25 +469,28 @@ void HandleWfuStats(WF_UTIL *wfPO,FILE *outPF)
 /***************************************************************************
 *   Score current seq against 
 */
-int HandleWfuSeqOutputI(WF_UTIL *wfPO,FILE *outPF)
+int HandleWfuSeqOutputI(WF_UTIL *wfPO, SEQ *seqPO, SEQ *fseqPO, FILE *outPF)
 {
-    int i,n,ind;
-    char nameS[NSIZE], seqS[BBUFF_SIZE];
+    int i,n,ind,len;
+    char nameS[NSIZE], *seqPC, *fseqPC;
     WORDFREQ *wordfPO;
-    SEQ *seqPO;
     DOUB sD,minD,maxD;
 
     HAND_NFILE(outPF);
-    seqPO = wfPO->seq;
+    GetSeqSeqI(seqPO,&seqPC);
+    len = GetSeqLenI(seqPO);
+    GetSeqSeqI(fseqPO,&fseqPC);
     wordfPO = wfPO->wf;
     minD = TOO_BIG_R;
     maxD = -TOO_BIG_R;
     sD = 0.0;
     n = 0;
-    for(i=0; i<=(seqPO->len - wordfPO->size); i += wfPO->step)
+    for(i=0; i<=(len - wordfPO->size); i += wfPO->step)
     {
-        ind = IndexFromSeqI(&seqPO->seq[i],wordfPO->size,
-            wordfPO->n, wordfPO->ald);
+/* xxx
+        ind = IndexFromSeqI(seqPC[i], wordfPO->size, wordfPO->n, wordfPO->ald);
+*/
+        ind = IndexFromSeqI(&seqPC[i], wordfPO->size, wordfPO->n, wordfPO->ald);
         if( (ind >= wordfPO->n) || (ind<0) ) {
             printf("Bogus index: %d\n",ind);
             ERR("HandleWfuSeqOutputI","bad index");
@@ -530,7 +517,7 @@ int HandleWfuSeqOutputI(WF_UTIL *wfPO,FILE *outPF)
             n++;
         }
     }
-    FillSeqNameStringI(seqPO,nameS,NSIZE);
+    FillSeqNameStringI(seqPO, nameS, NSIZE);
     if(n<1) {
         fprintf(outPF,"# %-15s\tNo words to count!\n",nameS);
         return(FALSE);
@@ -538,8 +525,7 @@ int HandleWfuSeqOutputI(WF_UTIL *wfPO,FILE *outPF)
     sD /= DNUM(n);
     fprintf(outPF,"%-15s\t%5.4f\t%5.4f\t%5.4f",nameS,minD,sD,maxD);
     if(wfPO->do_ds) {
-        FillSeqSeqStringI(seqPO,seqS,BBUFF_SIZE);
-        fprintf(outPF,"\t%s",seqS);
+        fprintf(outPF,"\t%s",fseqPC);
     }
     fprintf(outPF,"\n");
     return(TRUE);
@@ -556,10 +542,12 @@ void HandleWfuPosMat(WF_UTIL *wfPO, FILE *outPF)
     fprintf(outPF,"# Position-specific word frequencies\n");
     fprintf(outPF,"# Words of size %d\n",wfPO->size);
     fprintf(outPF,"# Bases %d to %d",wfPO->pmat_s,wfPO->pmat_e);
-    if(wfPO->do_rre)
-    {   fprintf(outPF," from 3' end\n"); }
-    else
-    {   fprintf(outPF," from 5' end\n"); }
+    if(wfPO->do_rre) {   
+        fprintf(outPF," from 3' end\n"); 
+    }
+    else {   
+        fprintf(outPF," from 5' end\n"); 
+    }
     /***
     *   Scale shams?
     */
@@ -580,23 +568,21 @@ void HandleWfuPosMat(WF_UTIL *wfPO, FILE *outPF)
 /***************************************************************************
 *   Tally words for current sequence
 */
-int HandleWfTallyI(WF_UTIL *wfPO)
+int HandleWfTallyI(WF_UTIL *wfPO, SEQ *seqPO)
 {
     int n;
-    SEQ *seqPO;
 
-    seqPO = wfPO->seq;
-    if(seqPO->len < wfPO->size) {
+    if(GetSeqLenI(seqPO) < wfPO->size) {
         return(0);
     }
     /***
     *   Position matrix or just word talley
     */
     if(wfPO->pmat_s > 0) {
-        n = TallyPosMatWordsI(wfPO,seqPO);
+        n = TallyPosMatWordsI(wfPO, seqPO);
     }
     else {
-        n = TallyWordsI(seqPO,wfPO->wf,wfPO->step);
+        n = TallyWordsI(seqPO, wfPO->wf, wfPO->step);
     }
     return(n);
 }
@@ -612,7 +598,7 @@ int TallyPosMatWordsI(WF_UTIL *wfPO, SEQ *seqPO)
 
     wordPO = wfPO->wf;
     len = GetSeqLenI(seqPO);
-    GetSeqSeqI(seqPO,&seqPC);
+    GetSeqSeqI(seqPO, &seqPC);
     /***
     *   For each position (col of matrix)
     */

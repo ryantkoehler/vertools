@@ -329,15 +329,15 @@ void PrintString(char *sourceS, int len, FILE *outPF)
 */
 void Upperize(char *stringS)
 {
-    UpperizeToLen(stringS, strlen(stringS));
+    UpperizeToLen(stringS, 0, strlen(stringS));
     return;
 }
 /************************************************************************/
-void UpperizeToLen(char *stringS, int n)
+void UpperizeToLen(char *stringS, int start, int end)
 {
     int i;
 
-    for(i=0;i<n;i++) {
+    for(i=start;i<end;i++) {
         stringS[i] = toupper(INT(stringS[i]));  
     }
 }
@@ -346,14 +346,14 @@ void UpperizeToLen(char *stringS, int n)
 */
 void Lowerize(char *stringS)
 {
-    LowerizeToLen(stringS, strlen(stringS));
+    LowerizeToLen(stringS, 0, strlen(stringS));
 }
 /************************************************************************/
-void LowerizeToLen(char *stringS, int n) 
+void LowerizeToLen(char *stringS, int start, int end) 
 {
     int i;
 
-    for(i=0;i<n;i++) {
+    for(i=start;i<end;i++) {
         stringS[i] = tolower(INT(stringS[i]));  
     }
 }

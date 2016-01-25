@@ -47,7 +47,7 @@ SEQ *CreateSeqPO(int len, char *seqS, char *nameS)
         len = strlen(seqS);
     }
     if(len>0) {
-        if(!AdjustSeqSizeI(seqPO,len+1,TRUE)) {
+        if(!AdjustSeqSizeI(seqPO, len+1, TRUE)) {
             CHECK_SEQ(seqPO);
             return(NULL);
         }
@@ -77,7 +77,7 @@ int DestroySeqI(SEQ *seqPO)
 /*****************************************************************************
 *   If needed, allocate space for sequence up to size len + 1 (seq + null)
 */
-int AdjustSeqSizeI(SEQ *seqPO,int len,int error)
+int AdjustSeqSizeI(SEQ *seqPO, int len, int error)
 {
     int n;
 
@@ -86,8 +86,7 @@ int AdjustSeqSizeI(SEQ *seqPO,int len,int error)
     /***
     *   If we don't have enough allocated size, we need to adjust 
     */
-    if(len >= seqPO->ssize)
-    {
+    if(len >= seqPO->ssize) {
         /***
         *   Allocate size = bigger of current + block or new length + 1
         */
@@ -175,7 +174,7 @@ int CopySeqI(SEQ *fseqPO, SEQ *sseqPO, int st, int len)
     /***
     *   Size adjustment; this handle's setting sseqPO->ssize
     */
-    if(!AdjustSeqSizeI(sseqPO,fseqPO->ssize,TRUE)) {
+    if(!AdjustSeqSizeI(sseqPO, fseqPO->ssize, TRUE)) {
         printf("Can't copy if can't allocate!\n");
         return(FALSE);
     }

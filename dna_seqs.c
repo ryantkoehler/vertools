@@ -31,8 +31,7 @@ int GetSeqsetSeqI(SEQSET *ssPO,int ind, SEQ **seqPPO)
     SEQ *seqPO;
 
     VALIDATE(ssPO,SEQSET_ID);
-    if( (ind < 0) || (ind >= ssPO->n) )
-    {
+    if( (ind < 0) || (ind >= ssPO->n) ) {
         return(FALSE);
     }
     seqPO = ssPO->seqs[ind];
@@ -47,8 +46,7 @@ int GetSeqsetSeqStringI(SEQSET *ssPO,int ind, char **seqPPC)
     SEQ *seqPO;
 
     VALIDATE(ssPO,SEQSET_ID);
-    if( (ind < 0) || (ind >= ssPO->n) )
-    {
+    if( (ind < 0) || (ind >= ssPO->n) ) {
         return(FALSE);
     }
     seqPO = ssPO->seqs[ind];
@@ -65,8 +63,7 @@ int FillSeqsetSeqStringI(SEQSET *ssPO,int ind,char *seqS,int max)
     SEQ *seqPO;
 
     VALIDATE(ssPO,SEQSET_ID);
-    if( (ind < 0) || (ind >= ssPO->n) )
-    {
+    if( (ind < 0) || (ind >= ssPO->n) ) {
         return(BOGUS);
     }
 
@@ -88,8 +85,7 @@ int SetSeqsetSeqNameI(SEQSET *ssPO,int ind, char *nS, int nlen)
     SEQ *seqPO;
 
     VALIDATE(ssPO,SEQSET_ID);
-    if( (ind < 0) || (ind >= ssPO->n) )
-    {
+    if( (ind < 0) || (ind >= ssPO->n) ) {
         return(FALSE);
     }
     LIMIT_NUM(nlen,0,NSIZE-1);
@@ -106,8 +102,7 @@ int GetSeqsetSeqNameI(SEQSET *ssPO,int ind, char **namePPC)
     SEQ *seqPO;
 
     VALIDATE(ssPO,SEQSET_ID);
-    if( (ind < 0) || (ind >= ssPO->n) )
-    {
+    if( (ind < 0) || (ind >= ssPO->n) ) {
         return(FALSE);
     }
     seqPO = ssPO->seqs[ind];
@@ -125,8 +120,7 @@ int FillSeqsetSeqNameI(SEQSET *ssPO,int ind,char *nS,int max)
     SEQ *seqPO;
 
     VALIDATE(ssPO,SEQSET_ID);
-    if( (ind < 0) || (ind >= ssPO->n) )
-    {
+    if( (ind < 0) || (ind >= ssPO->n) ) {
         return(FALSE);
     }
     seqPO = ssPO->seqs[ind];
@@ -146,8 +140,7 @@ int GetSeqsetSeqLenI(SEQSET *ssPO,int ind)
     SEQ *seqPO;
 
     VALIDATE(ssPO,SEQSET_ID);
-    if( (ind < 0) || (ind >= ssPO->n) )
-    {
+    if( (ind < 0) || (ind >= ssPO->n) ) {
         return(BOGUS);
     }
     seqPO = ssPO->seqs[ind];
@@ -163,8 +156,7 @@ int GetSeqsetSeqSnpCountI(SEQSET *ssPO,int ind)
     SEQ *seqPO;
 
     VALIDATE(ssPO,SEQSET_ID);
-    if( (ind < 0) || (ind >= ssPO->n) )
-    {
+    if( (ind < 0) || (ind >= ssPO->n) ) {
         return(BOGUS);
     }
     seqPO = ssPO->seqs[ind];
@@ -210,27 +202,30 @@ int SeqsetMinMaxLenI(SEQSET *ssPO,int *minPI,int *maxPI)
     SEQ *seqPO;
 
     VALIDATE(ssPO,SEQSET_ID);
-    if(minPI)
-    {   *minPI = BOGUS; }
-    if(maxPI)
-    {   *maxPI = BOGUS; }
+    if(minPI) {   
+        *minPI = BOGUS; 
+    }
+    if(maxPI) {   
+        *maxPI = BOGUS; 
+    }
     min = TOO_BIG;
     max = -TOO_BIG;
     n = 0;
     for(i=0;i<ssPO->n;i++)
     {
-        if(ssPO->mask[i])
-        {
+        if(ssPO->mask[i]) {
             seqPO = ssPO->seqs[i];
             min = MIN_NUM(seqPO->len,min);
             max = MAX_NUM(seqPO->len,max);
             n++;
         }
     }
-    if(minPI)
-    {   *minPI = min; }
-    if(maxPI)
-    {   *maxPI = max; }
+    if(minPI) {   
+        *minPI = min; 
+    }
+    if(maxPI) {   
+        *maxPI = max; 
+    }
     return(n);
 }
 /*****************************************************************************
@@ -294,22 +289,17 @@ int FindNamedSeqInSeqsetI(SEQSET *ssPO, char *nameS, int kc, char *tPC,
     for(i=0;i<ssPO->n;i++)
     {
         FillSeqsetSeqNameI(ssPO,i,snameS,NSIZE);
-        if(tPC)
-        {
+        if(tPC) {
             ReplaceChars(tPC[0],nameS,'\0',nameS);
         }
-        if(kc)
-        {
-            if(!strcmp(nameS,snameS))
-            {
+        if(kc) {
+            if(!strcmp(nameS,snameS)) {
                 m = i;
                 break;
             }
         }
-        else
-        {
-            if(!strcasecmp(nameS,snameS))
-            {
+        else {
+            if(!strcasecmp(nameS,snameS)) {
                 m = i;
                 break;
             }
@@ -318,10 +308,8 @@ int FindNamedSeqInSeqsetI(SEQSET *ssPO, char *nameS, int kc, char *tPC,
     /***
     *   Set pointer if real 
     */
-    if( (seqPPO) && (m>=0) )
-    {
-        if(!GetSeqsetSeqI(ssPO,m,seqPPO))
-        {
+    if( (seqPPO) && (m>=0) ) {
+        if(!GetSeqsetSeqI(ssPO,m,seqPPO)) {
             m = BOGUS;
         }
     }
@@ -457,14 +445,27 @@ int FillSeqNameStringI(SEQ *seqPO,char *nameS,int max)
     }
     return(max);
 }
+/*****************************************************************************/
+int SetCaseSeqSubseqI(SEQ *seqPO, int up, int start, int end)
+{
+    VALIDATE(seqPO,SEQ_ID);
+    start = (start < 0) ? 0 : start;
+    end = (end < 0) ? GetSeqLenI(seqPO) : end;
+    if(up) {
+        UpperizeToLen(seqPO->seq, start, end);
+    }
+    else {
+        LowerizeToLen(seqPO->seq, start, end);
+    }
+    FinishSeqSettingsI(seqPO,FALSE,FALSE);
+    return(TRUE);
+}
 /*****************************************************************************
 *   Set SEQ sequnece to uppercase 
 */
 int UppercaseSeqSeqI(SEQ *seqPO)
 {
-    VALIDATE(seqPO,SEQ_ID);
-    Upperize(seqPO->seq);
-    FinishSeqSettingsI(seqPO,FALSE,FALSE);
+    SetCaseSeqSubseqI(seqPO, TRUE, -1, -1);
     return(TRUE);
 }
 /*****************************************************************************

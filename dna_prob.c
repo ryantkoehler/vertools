@@ -62,15 +62,15 @@ int CheckDnuProbeOptionsI(DNA_UTIL *duPO)
 /**************************************************************************
 *   Output probes to length
 */
-int HandleDuProbesOutI(DNA_UTIL *duPO,FILE *outPF)
+int HandleDuProbesOutI(DNA_UTIL *duPO, SEQ *seqPO, FILE *outPF)
 {
     int len,plen,plen2,minlen,pos,fpos,flen;
     char bufS[DEF_BS],*seqPC,nameS[NSIZE],pnameS[NSIZE];
 
     HAND_NFILE(outPF);
-    FillSeqNameStringI(duPO->seq,nameS,NSIZE-1);
-    len = GetSeqLenI(duPO->seq);
-    if(!GetSeqSeqI(duPO->seq,&seqPC)) {
+    FillSeqNameStringI(seqPO,nameS,NSIZE-1);
+    len = GetSeqLenI(seqPO);
+    if(!GetSeqSeqI(seqPO,&seqPC)) {
         return(FALSE);
     }
     pos = duPO->opl_st -1;

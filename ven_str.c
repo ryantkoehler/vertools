@@ -19,7 +19,6 @@
 #include <string.h>
 #include <ctype.h>
 #include "prim.h"
-#include "dna.h"
 #include "venpipe.h"
 
 /****************************************************************************
@@ -34,7 +33,7 @@ VENPIPE *CreateVenpipePO()
         return(NULL);
     }
     vpPO->ID = VENPIPE_ID;
-    vpPO->seq = CreateSeqPO(MAX_VSLEN,NULL,NULL);
+    vpPO->seq = CreateSeqPO(MAX_VSLEN, NULL, NULL);
     vpPO->ven = CreateVenergyPO();
     if( (!vpPO->seq) || (!vpPO->ven) ) {
         CHECK_VENPIPE(vpPO);
@@ -66,7 +65,7 @@ int DestroyVenpipeI(VENPIPE *vpPO)
 *   Init venpipe data struct settings to defaults
 *   If full, fully clean things, else only per-seq info
 */
-int InitVenpipeI(VENPIPE *vpPO,int full)
+int InitVenpipeI(VENPIPE *vpPO, int full)
 {
     if(full)
     {
@@ -83,7 +82,6 @@ int InitVenpipeI(VENPIPE *vpPO,int full)
         /***
         *   Global settings / flags
         */
-        vpPO->max_problems = VEN_MAX_PROBLEMS;
         vpPO->do_pfe = FALSE;
         vpPO->firstb = vpPO->lastb = BAD_I;
         vpPO->rre = vpPO->mrre = FALSE;
@@ -224,18 +222,18 @@ int RealizeVenpipeI(VENPIPE *vpPO)
 /****************************************************************************
 *   Copy seq from SEQ structure into working buffer
 */
-int CopyWorkingSeqI(VENPIPE *venPO)
+int CopyWorkingSeqI(VENPIPE *venPO, SEQ *seqPO)
 {
     int i,n,ok,len;
     char nameS[NSIZE],*seqPC;
 
     VALIDATE(venPO,VENPIPE_ID);
-    len = GetSeqLenI(venPO->seq);
+    len = GetSeqLenI(seqPO);
     if(len > MAX_VSLEN) {
         printf("# %s is too long %d (%d max)\n",nameS,len,MAX_VSLEN);
         return(FALSE);
     }
-    if(!GetSeqSeqI(venPO->seq,&seqPC)) {
+    if(!GetSeqSeqI(seqPO,&seqPC)) {
         return(FALSE);
     }
     /***
@@ -247,7 +245,7 @@ int CopyWorkingSeqI(VENPIPE *venPO)
         /***
         *   Restricting bases?
         */
-        if(!BAD_INT(venPO->firstb)) {
+        if(venPO->firstb > 0) {
             if(venPO->rre) {
                 if( (len-i)<venPO->firstb ) {
                     ok = FALSE;
@@ -285,8 +283,21 @@ int CopyWorkingSeqI(VENPIPE *venPO)
     }
     venPO->tseq[n] = venPO->tseq2[n] = '\0';
     venPO->tlen = n;
-    FillSeqNameStringI(venPO->seq,nameS,NSIZE);
-    strcpy(venPO->tname,nameS);
+    FillSeqNameStringI(seqPO, nameS, NSIZE);
+    strcpy(venPO->tname, nameS);
+    /***
+    *   If subseq only and dumpign seq, set for display
+    *   All lowercase, except explicit range
+    */
+    if( (venPO->do_ds) && (venPO->firstb > 0) ) {
+        SetCaseSeqSubseqI(seqPO, FALSE, -1, -1);
+        if(venPO->rre) {
+            SetCaseSeqSubseqI(seqPO, TRUE, len - venPO->lastb, len - venPO->firstb + 1);
+        }
+        else {
+            SetCaseSeqSubseqI(seqPO, TRUE, venPO->firstb-1, venPO->lastb);
+        }
+    }
     return(TRUE);
 }
 /****************************************************************************

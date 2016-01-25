@@ -455,13 +455,11 @@ int GetReducedSeqI(char *seqS,int len,int fir,int las,int rre,char *newS)
 {
     int i,j,start,end;
 
-    if(rre)
-    {
+    if(rre) {
         start=len-las;
         end=len-fir+1;
     }
-    else
-    {
+    else {
         start=fir-1;
         end=las;
     }
@@ -481,7 +479,7 @@ int GetReducedSeqI(char *seqS,int len,int fir,int las,int rre,char *newS)
 *   If ols is TRUE, one-letter-SNP codes are used for SNPs
 *   If mlc is TRUE, mask-lower-case i.e. set lowercase to N's
 */
-int CleanUpSeqI(char *inS,int slen,char *outS,int ols,int mlc)
+int CleanUpSeqI(char *inS, int slen, char *outS, int ols, int mlc)
 {
     int i,j,s,nn,mn;
     char snpS[DEF_BS+1];
@@ -492,8 +490,7 @@ int CleanUpSeqI(char *inS,int slen,char *outS,int ols,int mlc)
         /***
         *   Masking lowercase?
         */
-        if( (mlc) && (islower(INT(inS[i]))) )
-        {
+        if( (mlc) && (islower(INT(inS[i]))) ) {
             inS[i] = 'N';
         }
         switch(inS[i])
@@ -512,17 +509,14 @@ int CleanUpSeqI(char *inS,int slen,char *outS,int ols,int mlc)
                 }
                 snpS[s] = '\0';
                 s = CollapseSnpStringI(snpS,snpS);
-
                 i++;
                 /***
                 *   If simple single-base, two-allele SNP and one-letter
                 */
-                if( (ols) && (strlen(snpS)==1) )
-                {
+                if( (ols) && (strlen(snpS)==1) ) {
                     outS[j++] = snpS[0];
                 }
-                else
-                {
+                else {
                     while(mn>0)
                     {
                         outS[j++] = 'N';
@@ -535,12 +529,10 @@ int CleanUpSeqI(char *inS,int slen,char *outS,int ols,int mlc)
                 i++;
                 break;
             default:
-                if(isalpha(INT(inS[i])))
-                {
+                if(isalpha(INT(inS[i]))) {
                     outS[j++] = 'N';
                 }
-                else
-                {
+                else {
                     outS[j++] = '?';
                 }
                 i++;

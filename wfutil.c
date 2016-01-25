@@ -20,7 +20,6 @@
 #include <ctype.h>
 #include <math.h>
 #include "prim.h"
-#include "dna.h"
 #include "score.h"
 #include "wfutil.h"
 #include "wordfreq.h"
@@ -33,8 +32,7 @@ WORDFREQ *CreateWordfreqPO(int size,int ald)
     WORDFREQ *wfPO;
 
     wfPO = (WORDFREQ*)ALLOC(1,sizeof(WORDFREQ));
-    if(!wfPO)
-    {
+    if(!wfPO) {
         ERR("CreateWordfreqPO","Failed to allocate WORDFREQ");
         return(NULL);
     }
@@ -44,8 +42,7 @@ WORDFREQ *CreateWordfreqPO(int size,int ald)
     wfPO->n = CalcInDimI(size,ald);
     wfPO->pmax = wfPO->n / wfPO->ald;
     wfPO->freqs = (FREC *)ALLOC(wfPO->n,sizeof(FREC));
-    if(!wfPO->freqs) 
-    {
+    if(!wfPO->freqs) {
         printf("Attempted n = %d\n",wfPO->n);
         CHECK_FREE(wfPO);
         ERR("CreateWordfreqPO","Failed to allocate freq records");
@@ -78,7 +75,8 @@ int CalcInDimI(int size,int aldim)
     int i,pmax;
 
     pmax = 1;
-    for(i=0;i<size;i++) {   
+    for(i=0;i<size;i++) 
+    {   
         pmax *= aldim; 
     }
     return(pmax);
@@ -86,7 +84,7 @@ int CalcInDimI(int size,int aldim)
 /****************************************************************************
 *   fasPO = record with sequence
 */
-int TallyWordsI(SEQ *seqPO,WORDFREQ *wfPO,int step)
+int TallyWordsI(SEQ *seqPO, WORDFREQ *wfPO, int step)
 {
     int i,ind;
 
@@ -181,9 +179,7 @@ int DumpWordsI(WORDFREQ *wfPO, int dgen, DOUB loD, DOUB hiD, FILE *outPF)
     }
     return(TRUE);
 }
-/****************************************************************************
-*
-*/
+/****************************************************************************/
 void WordfreqSummary(WORDFREQ *wfPO, DOUB loD, DOUB hiD, FILE *outPF)
 {
     int dif;
@@ -217,8 +213,7 @@ DOUB TotalWordsD(WORDFREQ *wfPO,DOUB loD,DOUB hiD)
     totD = 0.0;
     for(i=0;i<wfPO->n;i++)
     {
-        if( (wfPO->freqs[i].n >= loD) && (wfPO->freqs[i].n <= hiD) )
-        {
+        if( (wfPO->freqs[i].n >= loD) && (wfPO->freqs[i].n <= hiD) ) {
             totD += wfPO->freqs[i].n;
         }
     }
@@ -235,8 +230,7 @@ int TotalDifWordsI(WORDFREQ *wfPO,DOUB loD,DOUB hiD)
     tot = 0;
     for(i=0;i<wfPO->n;i++)
     {
-        if( (wfPO->freqs[i].n >= loD) && (wfPO->freqs[i].n <= hiD) )
-        {
+        if( (wfPO->freqs[i].n >= loD) && (wfPO->freqs[i].n <= hiD) ) {
             tot++;
         }
     }
@@ -346,8 +340,7 @@ void CollapseDegenRecs(WORDFREQ *wfPO)
     for(i=0;i<wfPO->n;i++)
     {
         cind = CompIndexI(wfPO->freqs[i].id,wfPO->pmax,wfPO->ald);
-        if(cind > wfPO->freqs[i].id)
-        {
+        if(cind > wfPO->freqs[i].id) {
             wfPO->freqs[i].n += wfPO->freqs[cind].n;
             wfPO->freqs[cind].n = 0;
         }
@@ -378,26 +371,32 @@ int qSortFrecsI(const void *e1, const void *e2)
     /***
     *   On frequency
     */
-    if( ((FREC *)e1)->n  > ((FREC *)e2)->n )
+    if( ((FREC *)e1)->n  > ((FREC *)e2)->n ) {
         return(-1);
-    if( ((FREC *)e1)->n  < ((FREC *)e2)->n )
+    }
+    if( ((FREC *)e1)->n  < ((FREC *)e2)->n ) {
         return(1);
+    }
     /***
     *   Index for alphabetic output on freq tie
     */
-    if( ((FREC *)e1)->id  < ((FREC *)e2)->id )
+    if( ((FREC *)e1)->id  < ((FREC *)e2)->id ) {
         return(-1);
-    if( ((FREC *)e1)->id  > ((FREC *)e2)->id )
+    }
+    if( ((FREC *)e1)->id  > ((FREC *)e2)->id ) {
         return(1);
+    }
     return(0);
 }
 /*************************************************************************/
 int qSortIndsI(const void *e1, const void *e2)
 {
-    if( ((FREC *)e1)->id  < ((FREC *)e2)->id )
+    if( ((FREC *)e1)->id  < ((FREC *)e2)->id ) {
         return(-1);
-    if( ((FREC *)e1)->id  > ((FREC *)e2)->id )
+    }
+    if( ((FREC *)e1)->id  > ((FREC *)e2)->id ) {
         return(1);
+    }
     return(0);
 }
 /*************************************************************************
@@ -410,14 +409,12 @@ int GetWordFreqsI(char *nameS,WORDFREQ **wfPPO)
     WORDFREQ *wfPO;
 
     wfPO = *wfPPO = NULL;
-    if(!(fPF = OpenUFilePF(nameS,"r",NULL)))
-    {
+    if(!(fPF = OpenUFilePF(nameS,"r",NULL))) {
         return(FALSE);
     }
     ok = LoadWordFreqDataI(fPF,&wfPO);
     FILECLOSE(fPF);
-    if(ok)
-    {
+    if(ok) {
         strcpy(wfPO->name,nameS);
     }
     *wfPPO = wfPO;
@@ -441,26 +438,21 @@ int LoadWordFreqDataI(FILE *inPF,WORDFREQ **wfPPO)
     size = s = ald = BOGUS;
     while(fgets(bufS,LINEGRAB,inPF))
     {
-        if(COM_LINE(bufS))
-        {
-            if(EQSTRING(bufS,"#ALPHDIM",8))
-            {
+        if(COM_LINE(bufS)) {
+            if(EQSTRING(bufS,"#ALPHDIM",8)) {
                 sscanf(bufS,"%*s %d",&ald);
             }
             continue;
         }
         INIT_S(seqS);
         sscanf(bufS,"%s",seqS);
-        if(size == BOGUS)
-        {
+        if(size == BOGUS) {
             s = size = strlen(seqS);
         }
-        else
-        {
+        else {
             s = strlen(seqS);
         }
-        if(s!=size)
-        {
+        if(s!=size) {
             PROBLINE;
             printf("Inconsistent word size\n");
             printf("   Expecting %d\n",size);
@@ -469,14 +461,12 @@ int LoadWordFreqDataI(FILE *inPF,WORDFREQ **wfPPO)
         }
         n++;
     }
-    if(size < 1)
-    {
+    if(size < 1) {
         PROBLINE;
         printf("No sequence data read in\n");
         return(FALSE);
     }
-    if(IS_BOG(ald))
-    {
+    if(IS_BOG(ald)) {
         PROBLINE;
         printf("No ALPHDIM keyword read from seq data\n");
         return(FALSE);
@@ -485,8 +475,7 @@ int LoadWordFreqDataI(FILE *inPF,WORDFREQ **wfPPO)
     *   Check line count
     */
     nw = CalcInDimI(size,ald);
-    if(n > nw)
-    {
+    if(n > nw) {
         PROBLINE;
         printf("%d data lines; max for size %d = %d\n",n,size,nw);
         return(FALSE);
@@ -495,8 +484,7 @@ int LoadWordFreqDataI(FILE *inPF,WORDFREQ **wfPPO)
     *   Allocate for the whip
     */
     wfPO = CreateWordfreqPO(size,ald);
-    if(!wfPO)
-    {
+    if(!wfPO) {
         PROBLINE;
         printf("Failed to allocate: %d words size %d (ald=%d)\n",nw,size,ald);
         return(FALSE);
@@ -506,10 +494,12 @@ int LoadWordFreqDataI(FILE *inPF,WORDFREQ **wfPPO)
     */
     rewind(inPF);
     while(fgets(bufS,LINEGRAB,inPF)) {
-        if(COM_LINE(bufS))
+        if(COM_LINE(bufS)) {
             continue;
-        if(EQSTRING(bufS,"#ALPHDIM",8))
+        }
+        if(EQSTRING(bufS,"#ALPHDIM",8)) {
             continue;
+        }
         INIT_S(seqS);   fD = BAD_R;
         sscanf(bufS,"%s %lf",seqS,&fD);
         s = IndexFromSeqI(seqS,wfPO->size,wfPO->n,wfPO->ald);
@@ -551,10 +541,12 @@ void  LogFrecs(WORDFREQ *wfPO)
     logR = LOG_10(TINY_R);
     for(i=0;i<wfPO->n;i++)
     {
-        if(wfPO->freqs[i].n < TINY_R)
+        if(wfPO->freqs[i].n < TINY_R) {
             wfPO->freqs[i].n = logR;
-        else
+        }
+        else {
             wfPO->freqs[i].n = LOG_10(wfPO->freqs[i].n);
+        }
     }
 }
 /*****************************************************************************
@@ -562,20 +554,19 @@ void  LogFrecs(WORDFREQ *wfPO)
 */
 int CompatWordfreqsI(WORDFREQ *fPO, WORDFREQ *sPO,int verb)
 {
-    if( (!fPO) || (!sPO) )
-    {
+    if( (!fPO) || (!sPO) ) {
         return(FALSE);
     }
-    if(fPO->size != fPO->size)
-    {
-        if(verb)
+    if(fPO->size != fPO->size) {
+        if(verb) {
             printf("Incompatable word sizes: %d %d\n",fPO->size,sPO->size);
+        }
         return(FALSE);
     }
-    if(fPO->ald != fPO->ald)
-    {
-        if(verb)
+    if(fPO->ald != fPO->ald) {
+        if(verb) {
             printf("Incompatable alphabet sizes: %d %d\n",fPO->ald,sPO->ald);
+        }
         return(FALSE);
     }
     return(TRUE);
@@ -587,12 +578,7 @@ int MergeWordfreqsI(WORDFREQ *fPO, WORDFREQ *sPO,int how, WORDFREQ *aPO)
 {
     int i;
 
-    if(!CompatWordfreqsI(fPO,sPO,FALSE))
-    {
-        return(FALSE);
-    }
-    if(!CompatWordfreqsI(fPO,aPO,FALSE))
-    {
+    if( (!CompatWordfreqsI(fPO,sPO,FALSE)) || (!CompatWordfreqsI(fPO,aPO,FALSE)) ) {
         return(FALSE);
     }
     for(i=0;i<aPO->n;i++)

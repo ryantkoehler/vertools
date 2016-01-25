@@ -19,7 +19,6 @@
 #include <string.h>
 #include <math.h>
 #include "prim.h"
-#include "dna.h"
 /** Define for global vienna_ok **/
 #define __VENERGY__ 
 #include "venpipe.h"

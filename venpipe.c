@@ -20,7 +20,6 @@
 #include <string.h>
 #define __MAIN__
 #include "prim.h"
-#include "dna.h"
 #include "venpipe.h"
 
 #define DB_VENG if(DB[142])
@@ -128,29 +127,21 @@ int VenPipeI(int argc, char **argv)
         }
         nseq++;
         /***
-        *   Init record and copy sequence 
+        *   Init vienna struct (not fully), and copy sequence 
         */
         if(ok==TRUE) {
-            InitVenpipeI(vpPO,FALSE);
-            ok = CopyWorkingSeqI(vpPO);
+            InitVenpipeI(vpPO, FALSE);
+            ok = CopyWorkingSeqI(vpPO, vpPO->seq);
         }
-        /***
-        *   Bail if too many problems already
-        */
-        if(ok!=TRUE) {
+        if(!ok) {
             nprob++;
-            if(nprob>=vpPO->max_problems) {
-                printf("TOO MANY PROBLEMS (%d) sequence # %d\n",nprob,nseq);
-                ABORTLINE;
-                break;
-            }
             continue;
         }
         /***
         *   If melting, only one sequence is done
         */
         if(!BAD_REAL(vpPO->mst)) {
-            HandleVenpipeMeltingI(vpPO,vpPO->out);
+            HandleVenpipeMeltingI(vpPO, vpPO->out);
             break;
         }
         else {
@@ -159,7 +150,7 @@ int VenPipeI(int argc, char **argv)
                 printf("Failed to seq structure for seq # %d\n",nseq);
                 break;
             }
-            HandleVenpipeOut(vpPO,vpPO->out);
+            HandleVenpipeOut(vpPO, vpPO->out);
         }
     }
     /***

@@ -280,7 +280,8 @@ TM_UTIL *CreateTm_utilPO()
     tuPO->tm = CreateTm_parsPO();
     tuPO->seq = CreateSeqPO(MAX_TM_LEN,NULL,NULL);
     tuPO->sseq = CreateSeqPO(MAX_TM_LEN,NULL,NULL);
-    if( (!tuPO->tm) || (!tuPO->seq) || (!tuPO->sseq) ) {
+    tuPO->fseq = CreateSeqPO(MAX_TM_LEN,NULL,NULL);
+    if( (!tuPO->tm) || (!tuPO->seq) || (!tuPO->sseq) || (!tuPO->fseq) ) {
         CHECK_TM_UTIL(tuPO);
         return(NULL);
     }
@@ -296,6 +297,7 @@ int DestroyTm_utilI(TM_UTIL *tuPO)
     CHECK_TM_PARS(tuPO->tm);
     CHECK_SEQ(tuPO->seq);
     CHECK_SEQ(tuPO->sseq);
+    CHECK_SEQ(tuPO->fseq);
     CHECK_FILE(tuPO->in);
     CHECK_NFILE(tuPO->out,tuPO->outname);
     CHECK_FREE(tuPO);
@@ -337,7 +339,7 @@ int InitTm_utilI(TM_UTIL *tuPO)
     tuPO->do_eraw = FALSE;
     tuPO->do_emin = FALSE;
     tuPO->do_padbad = TRUE;
-    tuPO->firstb = tuPO->lastb = BAD_I;
+    tuPO->firstb = tuPO->lastb = -1;
     tuPO->do_rre = FALSE;
     ClearTm_utilThermoVals(tuPO);
     return(TRUE);
@@ -568,10 +570,10 @@ int LoadTmutilSequenceI(TM_UTIL *tuPO)
     *   Return length (minimum) of seq
     */
     fok = sok = GetSeqLenI(tuPO->seq);
-    HandleTmuSubseqI(tuPO,tuPO->seq);
+    HandleTmuSubseqI(tuPO, tuPO->seq, tuPO->fseq);
     if( (tuPO->do_tes) || (tuPO->do_btes) ) {
         sok = GetSeqLenI(tuPO->sseq);
-        HandleTmuSubseqI(tuPO,tuPO->sseq);
+        HandleTmuSubseqI(tuPO, tuPO->sseq, tuPO->fseq);
     }
     return(MIN_NUM(fok,sok));
 }
@@ -690,12 +692,10 @@ int CheckTmutilOptionsI(TM_UTIL *tuPO)
     /***
     *   Restricted bases?
     */
-    if(!BAD_INT(tuPO->firstb))
-    {
-        if( (tuPO->firstb<1) || (tuPO->firstb>=tuPO->lastb) )
-        {
+    if(tuPO->firstb > 0) {
+        if( (tuPO->firstb<1) || (tuPO->firstb>=tuPO->lastb) ) {
             PROBLINE;
-            printf("Bad base range: %d %d\n",tuPO->firstb,tuPO->lastb);
+            printf("Bad base range: %d %d\n", tuPO->firstb, tuPO->lastb);
             return(FALSE);
         }
     }
@@ -708,8 +708,7 @@ int CheckTmutilOptionsI(TM_UTIL *tuPO)
     /***
     *   Can't do competitive binding if not doing delta binding
     */
-    if( (tuPO->do_cmb) && (!tuPO->do_dtherm) )
-    {
+    if( (tuPO->do_cmb) && (!tuPO->do_dtherm) ) {
         PROBLINE;
         printf("Competitive miss-match binding only works with -dthe\n");
         return(FALSE);
@@ -717,8 +716,7 @@ int CheckTmutilOptionsI(TM_UTIL *tuPO)
     /***
     *   Check for algoritm specific options
     */
-    if( tuPO->do_fds && (ConcTermsForTmAlgoI(tuPO->tm)<2) )
-    {
+    if( tuPO->do_fds && (ConcTermsForTmAlgoI(tuPO->tm)<2) ) {
         PROBLINE;
         FillTmAlgoString(tuPO->tm,bufS);
         printf("Fraction double stranded needs 2-conc algorithm\n"); 
@@ -902,8 +900,7 @@ void ReportTmutilSettings(TM_UTIL *tuPO, FILE *outPF)
     fprintf(outPF,"#   Run on %s, %s\n",hostS,osS);
     fprintf(outPF,"# Input file  %s\n",tuPO->inname);
     ReportFlaggedOutputI(tuPO,outPF);
-    if(!BAD_INT(tuPO->firstb))
-    {
+    if(tuPO->firstb > 0) {
         fprintf(outPF,"#   Base-Range:    %d to %d\t", tuPO->firstb, 
             tuPO->lastb);
         if(tuPO->do_rre) {
@@ -920,16 +917,13 @@ void ReportTmutilSettings(TM_UTIL *tuPO, FILE *outPF)
 */
 void ReportFlaggedOutputI(TM_UTIL *tuPO, FILE *outPF)
 {
-    if(!tuPO->do_flag)
-    {
+    if(!tuPO->do_flag) {
         return;
     }
-    if(tuPO->do_fds)
-    {
+    if(tuPO->do_fds) {
         fprintf(outPF,"# %% Double strand %3.3f to %3.3f\n",tuPO->minv,tuPO->maxv);
     }
-    else
-    {
+    else {
         fprintf(outPF,"# Tm limits   %3.3f to %3.3f\n",tuPO->minv,tuPO->maxv);
     }
     fprintf(outPF,"#\n");
@@ -1021,6 +1015,8 @@ int SeqFlaggingValI(TM_UTIL *tuPO, DOUB *valPD)
 int HandleTmutilOutputI(TM_UTIL *tuPO, int good, char *seqS, int slen,
     char *nameS, FILE *outPF)
 {
+    char *fseqPC;
+
     HAND_NFILE(outPF);
     /***
     *   Sequence output?
@@ -1071,7 +1067,13 @@ int HandleTmutilOutputI(TM_UTIL *tuPO, int good, char *seqS, int slen,
     }
     /*  Dump input seq? */
     if(tuPO->do_ds) {
-        fprintf(outPF,"\t%s",seqS);
+        if(tuPO->firstb > 0) {
+            GetSeqSeqI(tuPO->fseq, &fseqPC);
+        }
+        else {
+            GetSeqSeqI(tuPO->seq, &fseqPC);
+        }
+        fprintf(outPF,"\t%s", fseqPC);
     }
     /***
     *   End of line, all done
@@ -1109,17 +1111,22 @@ void ReportDsetProblemSeq(char *nameS,FILE *outPF)
 /***************************************************************************
 *   Shrink current sequence to given base range (if any)
 */
-int HandleTmuSubseqI(TM_UTIL *tuPO, SEQ *seqPO)
+int HandleTmuSubseqI(TM_UTIL *tuPO, SEQ *seqPO, SEQ *fseqPO)
 {
-    int len;
+    int len, flen;
 
-    if(!BAD_INT(tuPO->firstb)) {
+    if(tuPO->firstb > 0) {
         len = tuPO->lastb - tuPO->firstb + 1;
+        CopySeqI(seqPO, fseqPO, -1, -1);
+        SetCaseSeqSubseqI(fseqPO, FALSE, -1, -1);
         if(tuPO->do_rre) {
             NarrowSeqI(seqPO,tuPO->firstb-1,len,REVERSE,TRUE);
+            flen = GetSeqLenI(fseqPO);
+            SetCaseSeqSubseqI(fseqPO, TRUE, flen - tuPO->lastb, flen - tuPO->firstb + 1);
         }
         else {
             NarrowSeqI(seqPO,tuPO->firstb-1,len,FORWARD,TRUE);
+            SetCaseSeqSubseqI(fseqPO, TRUE, tuPO->firstb-1, tuPO->lastb);
         }
     }
     return(TRUE);

@@ -15,6 +15,8 @@
 */
 
 
+#include "dna.h"
+
 #define DEF_WSIZE   3   /* Default word size */
 #define ALPHDIM     4   /* Default alphabet dimension; ACGT */
 

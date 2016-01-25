@@ -19,7 +19,6 @@
 #include <string.h>
 #include <ctype.h>
 #include "prim.h"
-#include "dna.h"
 #include "venpipe.h"
 
 #define DB_VENIO if(DB[142])
@@ -115,7 +114,7 @@ void HandleVenpipeOut(VENPIPE *venPO, FILE *outPF)
 {
     int len, ssc_array[MAX_VSLEN], pssc_array[MAX_VSLEN];
     char nameS[DEF_BS],enS[DEF_BS], matS[DEF_BS];
-    char *ssPC, *pssPC, *seqPC;
+    char *ssPC, *pssPC, *seqPC, *fseqPC;
 
     HAND_NFILE(outPF);
     strcpy(nameS,venPO->tname);
@@ -146,13 +145,14 @@ void HandleVenpipeOut(VENPIPE *venPO, FILE *outPF)
     /***
     *   What to dump?
     */
+    GetSeqSeqI(venPO->seq,&fseqPC);
     if( (venPO->do_ss) || (venPO->do_mbtab) ) {
         fprintf(outPF,"# %-15s\t%s",nameS,enS);
         if(venPO->do_dmb) {
             fprintf(outPF,"\t%s",matS);
         }
         if(venPO->do_ds) {
-            fprintf(outPF,"\t%s",seqPC);
+            fprintf(outPF,"\t%s",fseqPC);
         }
         fprintf(outPF,"\n");
         fprintf(outPF,"# Sequence  %s\n",seqPC);
@@ -194,7 +194,7 @@ void HandleVenpipeOut(VENPIPE *venPO, FILE *outPF)
             fprintf(outPF,"\t%s",matS);
         }
         if(venPO->do_ds) {
-            fprintf(outPF,"\t%s",seqPC);
+            fprintf(outPF,"\t%s",fseqPC);
         }
         fprintf(outPF,"\n");
     }

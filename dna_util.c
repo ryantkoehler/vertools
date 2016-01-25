@@ -209,7 +209,7 @@ int DnaUtilI(int argc, char **argv)
         /***
         *   Parse sequence; FALSE = done
         */
-        ok = ParseSeqI(duPO->in,duPO->iform,duPO->iclean,TRUE,duPO->seq);
+        ok = ParseSeqI(duPO->in, duPO->iform, duPO->iclean, TRUE, duPO->fseq);
         if(ok==FALSE) {
             break;
         }
@@ -225,24 +225,26 @@ int DnaUtilI(int argc, char **argv)
         *   Update count and qualify
         */
         n++;
-        ok = IsCurrentSeqOkI(duPO,n);
+        ok = IsCurrentSeqOkI(duPO, duPO->fseq, n);
         if(ok) {
             nok++;
-            HandleDuCleanExp(duPO);
+            HandleDuCleanExpI(duPO, duPO->fseq);
+            /* Copy full to working seq */
+            CopySeqI(duPO->fseq, duPO->seq, -1, -1);
             /***
-            *   Do any masking, trim subseqs, and sequence flips
+            *   Do any masking, trim subseqs, sequence flips
             */
-            HandleDuSeqMaskingI(duPO);
-            if(!HandleDuSubseqI(duPO)) {
+            HandleDuSeqMaskingI(duPO, duPO->seq);
+            if(!HandleDuSubseqI(duPO, duPO->seq, duPO->fseq)) {
                 ABORTLINE;
                 break;
             }
-            HandleDuSeqFlipsI(duPO);
+            HandleDuSeqFlipsI(duPO, duPO->seq);
             /***
             *   If outputting listed / to-length probes, handle here
             */
             if (duPO->owhat==DNUO_PROBE) {
-                if(!HandleDuProbesOutI(duPO,duPO->out)) {
+                if(!HandleDuProbesOutI(duPO, duPO->seq, duPO->out)) {
                     if(!duPO->igprob) {
                         ABORTLINE;
                         break;
@@ -254,7 +256,7 @@ int DnaUtilI(int argc, char **argv)
         /***
         *   Output story
         */
-        HandleDuOutputI(duPO->seq,ok,duPO,duPO->out);
+        HandleDuOutputI(duPO, duPO->seq, ok, duPO->fseq, duPO->out);
     }
     /***
     *   Stats?
@@ -282,6 +284,7 @@ DNA_UTIL *CreateDna_utilPO()
     }
     duPO->ID = DNA_UTIL_ID;
     duPO->seq = CreateSeqPO(0,NULL,NULL);
+    duPO->fseq = CreateSeqPO(0,NULL,NULL);
     InitDna_util(duPO);
     return(duPO);
 }
@@ -296,6 +299,7 @@ int DestroyDna_utilI(DNA_UTIL *duPO)
     CHECK_FILE(duPO->olp);
     CHECK_NFILE(duPO->out,duPO->outname);
     CHECK_SEQ(duPO->seq);
+    CHECK_SEQ(duPO->fseq);
     FREE(duPO);
     return(TRUE);
 }
@@ -330,8 +334,8 @@ void InitDna_util(DNA_UTIL *duPO)
     duPO->first = BOGUS;
     duPO->last = BOGUS;
     duPO->n_flags = 0;
-    duPO->firstb = BOGUS;   
-    duPO->lastb = BOGUS;    
+    duPO->firstb = -1;   
+    duPO->lastb = -1;    
     duPO->min_len = BOGUS; 
     duPO->max_len = BOGUS;
     duPO->len_hi = duPO->snp_hi = -TOO_BIG;
@@ -356,12 +360,10 @@ void InitDna_util(DNA_UTIL *duPO)
 */
 int AnyInfoSettingsI(DNA_UTIL *duPO)
 {
-    if( duPO->do_insh || duPO->do_inbr || duPO->do_inbp ) 
-    {
+    if( duPO->do_insh || duPO->do_inbr || duPO->do_inbp ) {
         return(TRUE);
     }
-    if( (duPO->ifwmin>0) || (duPO->ifwmax>0 ) )
-    {
+    if( (duPO->ifwmin > 0) || (duPO->ifwmax > 0 ) ) {
         return(TRUE);
     }
     return(FALSE);
@@ -371,24 +373,19 @@ int AnyInfoSettingsI(DNA_UTIL *duPO)
 */
 int CheckDnuOptionsI(DNA_UTIL *duPO)
 {
-    if(!CheckDnuProbeOptionsI(duPO)) 
-    {
+    if(!CheckDnuProbeOptionsI(duPO)) {
         return(TRUE);
     }
-    if( (duPO->ifwmin>0) || (duPO->ifwmax>0 ) )
-    {
-        if( duPO->ifwmin > duPO->ifwmax )
-        {
+    if( (duPO->ifwmin>0) || (duPO->ifwmax>0 ) ) {
+        if( duPO->ifwmin > duPO->ifwmax ) {
             PROBLINE;
             printf("Bad word sizes for -inwf: %d %d\n",
                 duPO->ifwmin, duPO->ifwmax);
             return(FALSE);
         }
     }
-    if(!IS_BOG(duPO->firstb))
-    {
-        if( (duPO->firstb < 1) || (duPO->lastb < duPO->firstb) )
-        {
+    if(duPO->firstb > 0) {
+        if( duPO->lastb < duPO->firstb ) {
             PROBLINE;
             printf("Bad base range specified: %d to %d\n",
                 duPO->firstb,duPO->lastb);
@@ -458,54 +455,66 @@ int SetUpOptionFlags(DNA_UTIL *duPO)
     return(n);
 }
 /***************************************************************************
-*   Flip around seqs and maybe rename them
+*   Flip around seq and maybe rename them
 */
-int HandleDuSeqFlipsI(DNA_UTIL *duPO)
+int HandleDuSeqFlipsI(DNA_UTIL *duPO, SEQ *seqPO)
 {
     char *seqPC, nameS[NSIZE], addS[DEF_BS];
     int len, any;
 
-    if(!GetSeqSeqI(duPO->seq,&seqPC)) {
-        return(FALSE);
-    }
-    len = GetSeqLenI(duPO->seq);
-    INIT_S(addS);
+    seqPC = NULL;
     any = FALSE;
+    INIT_S(addS);
+    len = 0;    /* make compiler happy */
+    if(seqPO) {
+        GetSeqSeqI(seqPO, &seqPC);
+        len = GetSeqLenI(seqPO);
+    }
+    /*** 
+    *   Options that involve flipping / tweaking 
+    */
     if(duPO->do_comp) {
-        CompDNASeqI(seqPC,len,seqPC);
-        sprintf(addS,"_rc");
         any++;
+        if(seqPO) {
+            CompDNASeqI(seqPC,len,seqPC);
+            sprintf(addS,"_rc");
+        }
     }
     else if(duPO->do_inv) {
-        InverseDNASeqI(seqPC,len,seqPC);
-        sprintf(addS,"_inv");
         any++;
+        if(seqPO) {
+            InverseDNASeqI(seqPC,len,seqPC);
+            sprintf(addS,"_inv");
+        }
     }
     else if(duPO->do_rev) {
-        ReverseDNASeqI(seqPC,len,seqPC);
-        sprintf(addS,"_rev");
         any++;
+        if(seqPO) {
+            ReverseDNASeqI(seqPC,len,seqPC);
+            sprintf(addS,"_rev");
+        }
     }
-    if( (any) && (!duPO->do_nan) ) {
-        FillSeqNameStringI(duPO->seq,nameS,-1);
+    if( (seqPO) && (any) && (!duPO->do_nan) ) {
+        FillSeqNameStringI(seqPO,nameS,-1);
         strcat(nameS,addS);
-        SetSeqName(duPO->seq,nameS);
+        SetSeqName(seqPO,nameS);
     }
-    return(TRUE);
+    return(any);
 }
 /***************************************************************************
 *   Possibly mask portions of current sequence 
 */
-int HandleDuSeqMaskingI(DNA_UTIL *duPO)
+int HandleDuSeqMaskingI(DNA_UTIL *duPO, SEQ *seqPO)
 {
-    int i,n;
-    SEQ *seqPO;
+    int i,n,len;
+    char *seqPC;
 
     if(IS_BOG(duPO->lo_mran)) {
         return(FALSE);
     }
-    seqPO = duPO->seq;
-    for(i=0;i<seqPO->len;i++)
+    len = GetSeqLenI(seqPO);
+    GetSeqSeqI(seqPO, &seqPC);
+    for(i=0;i<len;i++)
     {
         n = 0;
         if( ((i+1) >= duPO->lo_mran) && ((i+1) <= duPO->hi_mran) ) {    
@@ -516,37 +525,39 @@ int HandleDuSeqMaskingI(DNA_UTIL *duPO)
         }
         if(n) { 
             if(duPO->do_rre) {
-                seqPO->seq[seqPO->len - i - 1] = 'N';   
+                seqPC[len - i - 1] = 'N';   
             }
             else {
-                seqPO->seq[i] = 'N';    
+                seqPC[i] = 'N';    
             }
         }
     }
     return(TRUE);
 }
 /***************************************************************************
-*   Possibly shrink current sequence 
+*   Possibly shrink current sequence, seqPO
+*   Also set case on full sequence fseqPO to reflect subseq seleciton
 */
-int HandleDuSubseqI(DNA_UTIL *duPO)
+int HandleDuSubseqI(DNA_UTIL *duPO, SEQ *seqPO, SEQ *fseqPO)
 {
-    int len,start;
+    int len,flen,start;
 
     /***
     *   Shrink?
     *   First base, firstb, is 1-based coord
     */
-    if(!IS_BOG(duPO->firstb))
-    {
+    if( duPO->firstb > 0) {
+        SetCaseSeqSubseqI(fseqPO, FALSE, -1, -1);
         start = duPO->firstb - 1;
         len = duPO->lastb - duPO->firstb + 1;
-        if(duPO->do_rre)
-        {
-            NarrowSeqI(duPO->seq,start,len,REVERSE,FALSE);
+        if(duPO->do_rre) {
+            NarrowSeqI(seqPO, start, len, REVERSE, FALSE);
+            flen = GetSeqLenI(fseqPO);
+            SetCaseSeqSubseqI(fseqPO, TRUE, flen - duPO->lastb, flen - duPO->firstb + 1);
         }
-        else
-        {
-            NarrowSeqI(duPO->seq,start,len,FORWARD,FALSE);
+        else {
+            NarrowSeqI(seqPO, start, len, FORWARD, FALSE);
+            SetCaseSeqSubseqI(fseqPO, TRUE, duPO->firstb-1, duPO->lastb);
         }
     }
     return(TRUE);
@@ -554,13 +565,11 @@ int HandleDuSubseqI(DNA_UTIL *duPO)
 /**************************************************************************
 *   Screen current seq against filters
 */
-int IsCurrentSeqOkI(DNA_UTIL *duPO,int n)
+int IsCurrentSeqOkI(DNA_UTIL *duPO, SEQ *seqPO, int n)
 {
     int ok;
-    SEQ *seqPO;
     char nameS[NSIZE];
 
-    seqPO = duPO->seq;
     ok = TRUE;
     if(duPO->first > 0) {
         if( (n < duPO->first) || (n > duPO->last) ) {
@@ -604,17 +613,14 @@ int HandleMergeSeqsI(SEQ *fPO, SEQ *sPO, int dir, int over, SEQ **newPPO)
     *   Create new seq big enough for both parts
     */
     nlen = GetSeqLenI(fPO) + GetSeqLenI(sPO);;
-    if(!(newPO=CreateSeqPO(nlen,NULL,NULL)) )
-    {
+    if(!(newPO=CreateSeqPO(nlen,NULL,NULL)) ) {
         return(FALSE);
     }
     if( (!GetSeqSeqI(fPO,&fPC)) || (!GetSeqSeqI(sPO,&sPC)) || 
-        (!GetSeqSeqI(newPO,&nPC)) )
-    {
+        (!GetSeqSeqI(newPO,&nPC)) ) {
         return(FALSE);
     }
-    if(!SpliceTwoSeqsI(fPC,sPC,NULL,dir,over,FALSE,NULL,nPC))
-    {
+    if(!SpliceTwoSeqsI(fPC,sPC,NULL,dir,over,FALSE,NULL,nPC)) {
         CHECK_SEQ(newPO);
         return(FALSE);
     }
@@ -630,69 +636,61 @@ int HandleMergeSeqsI(SEQ *fPO, SEQ *sPO, int dir, int over, SEQ **newPPO)
 /**************************************************************************
 *   Sequence "cleaning" options
 */
-void HandleDuCleanExp(DNA_UTIL *duPO)
+int HandleDuCleanExpI(DNA_UTIL *duPO, SEQ *seqPO)
 {
-    int slen;
-    char nameS[NSIZE],tokS[NSIZE];
-    SEQ *seqPO;
+    int len, slen;
+    char nameS[NSIZE],tokS[NSIZE], *seqPC;
 
-    seqPO = duPO->seq;
     VALIDATE(seqPO,SEQ_ID);
+    GetSeqSeqI(seqPO, &seqPC);
+    len = GetSeqLenI(seqPO);
     /***
     *   Sequence per se
     */
     switch(duPO->do_clean)
     {
         case CLEAN_CASE:
-            slen = CleanUpSeqI(seqPO->seq,seqPO->len,seqPO->seq,FALSE,TRUE);
+            slen = CleanUpSeqI(seqPC, len, seqPC, FALSE,TRUE);
             seqPO->len = slen;
             break;
         case CLEAN_ALL:
-            slen = CleanUpSeqI(seqPO->seq,seqPO->len,seqPO->seq,FALSE,FALSE);
+            slen = CleanUpSeqI(seqPC, len, seqPC, FALSE,FALSE);
             seqPO->len = slen;
             break;
         case CLEAN_SNP:
-            slen = CleanUpSeqI(seqPO->seq,seqPO->len,seqPO->seq,TRUE,FALSE);
+            slen = CleanUpSeqI(seqPC, len, seqPC, TRUE,FALSE);
             seqPO->len = slen;
             break;
     }
-    if(duPO->do_exi)
-    {
+    if(duPO->do_exi) {
         ExpandSeqSingBaseSNPsI(seqPO);
     }
     /***
     *   Name first token only
     */
-    if(duPO->do_tnb)
-    {
-        FillSeqNameStringI(seqPO,nameS,NSIZE-1);
+    if(duPO->do_tnb) {
+        FillSeqNameStringI(seqPO, nameS, NSIZE-1);
         sscanf(nameS,"%s",tokS);
         SetSeqName(seqPO,tokS); 
     }
+    return(TRUE);
 }
 /**************************************************************************
 *   Handle output for current seq
 */
-int HandleDuOutputI(SEQ *seqPO, int ok, DNA_UTIL *duPO, FILE *outPF)
+int HandleDuOutputI(DNA_UTIL *duPO, SEQ *seqPO, int ok, SEQ *fseqPO, FILE *outPF)
 {
     int slen,snps;
     char nameS[NSIZE],*seqPC;
 
     HAND_NFILE(outPF);
-    FillSeqNameStringI(seqPO,nameS,NSIZE-1);
-    if(!GetSeqSeqI(seqPO,&seqPC))
-    {
-        return(FALSE);
-    }
+    FillSeqNameStringI(seqPO, nameS, NSIZE-1);
+    GetSeqSeqI(seqPO, &seqPC);
     slen = GetSeqLenI(seqPO);
     snps = GetSeqSnpCountI(seqPO);
     switch(duPO->owhat)
     {
         case DNUO_SEQ:  
-            if(slen < 1) {
-                fprintf(outPF,"# %s zero length\n",nameS);
-                break;
-            }
             if(duPO->do_flg) {
                 if( duPO->oform == SEQFM_FASTA) {
                     fprintf(outPF,"# ");
@@ -706,7 +704,12 @@ int HandleDuOutputI(SEQ *seqPO, int ok, DNA_UTIL *duPO, FILE *outPF)
                 WriteSeq(seqPO,duPO->oform,outPF); 
             }
             else if(ok) {
-                WriteSeq(seqPO,duPO->oform,outPF); 
+                if(slen < 1) {
+                    fprintf(outPF,"# %s zero length\n",nameS);
+                }
+                else {
+                    WriteSeq(seqPO, duPO->oform, outPF); 
+                }
             }
             break;
         case DNUO_LIS:
@@ -727,26 +730,29 @@ int HandleDuOutputI(SEQ *seqPO, int ok, DNA_UTIL *duPO, FILE *outPF)
         *   Length, number of ambigs, N's, lowercase, SNPs
         */
         case DNUO_STAT:
-            HandleDnaOstatI(duPO,nameS,seqPC,slen,outPF);
+            if(ok) {
+                HandleDnaOstatI(duPO, nameS, seqPO, fseqPO, outPF);
+            }
             break;
         case DNUO_INFO:
-            if(snps > 0) {
-                fprintf(outPF,"%s\tSNPS so NO INFO\n",nameS);
-            }
-            else {
-                HandleDnaInfoOutI(duPO,outPF);
+            if(ok) {
+                if(snps > 0) {
+                    fprintf(outPF,"%s\tSNPS so NO INFO\n",nameS);
+                }
+                else {
+                    HandleDnaInfoOutI(duPO, duPO->seq, duPO->fseq, outPF);
+                }
             }
             break;
         case DNUO_CSEP:
-            HandleCaSepOutputI(duPO, nameS, seqPC, slen, outPF);
+            if(ok) {
+                HandleCaSepOutputI(duPO, seqPO, outPF);
+            }
             break;
         /***
         *   If not some explicit output, tally stats for final report
         */
         default:
-            if( (duPO->do_flg) && (!ok) ) {
-                break;
-            }
             duPO->len_hi = MAX_NUM(slen,duPO->len_hi);
             duPO->len_lo = MIN_NUM(slen,duPO->len_lo);
             duPO->snp_hi = MAX_NUM(snps,duPO->snp_hi);
@@ -754,7 +760,7 @@ int HandleDuOutputI(SEQ *seqPO, int ok, DNA_UTIL *duPO, FILE *outPF)
             if(snps>0) {
                 duPO->snp_c += 1;
             }
-            if(AnySeqAmbigsI(duPO->seq)) {
+            if(AnySeqAmbigsI(seqPO)) {
                 duPO->amb_c += 1;
             }
     }
@@ -763,18 +769,24 @@ int HandleDuOutputI(SEQ *seqPO, int ok, DNA_UTIL *duPO, FILE *outPF)
 /**************************************************************************
 *   Report stats for given sequence
 */
-int HandleDnaOstatI(DNA_UTIL *duPO, char *nameS, char *seqS, int len, FILE *outPF)
+int HandleDnaOstatI(DNA_UTIL *duPO, char *nameS, SEQ *seqPO, SEQ *fseqPO, FILE *outPF)
 {
-    int na,nn,lc,snp;
+    int na,nn,lc,snp, slen;
+    char *seqPC;
 
+    if(!GetSeqSeqI(seqPO, &seqPC)) {
+        return(FALSE);
+    }
+    slen = GetSeqLenI(seqPO);
     HAND_NFILE(outPF);
-    na = CountSeqAmbigsI(seqS,0,len);
-    nn = CountSeqAmbigDegensI(seqS,0,len,4);
-    CountStringCaseI(seqS,len,&lc,NULL);
-    snp = CountSeqSnpSitesI(seqS,0,len);
-    fprintf(outPF,"%s\t%d\t%d\t%d\t%d\t%d",nameS,len,na,nn,lc,snp);
+    na = CountSeqAmbigsI(seqPC,0,slen);
+    nn = CountSeqAmbigDegensI(seqPC,0,slen,4);
+    CountStringCaseI(seqPC,slen,&lc,NULL);
+    snp = CountSeqSnpSitesI(seqPC,0,slen);
+    fprintf(outPF,"%s\t%d\t%d\t%d\t%d\t%d",nameS,slen,na,nn,lc,snp);
     if(duPO->do_ds) {
-        fprintf(outPF,"\t%s",seqS);
+        GetSeqSeqI(fseqPO, &seqPC);
+        fprintf(outPF,"\t%s",seqPC);
     }
     fprintf(outPF,"\n");
     return(TRUE);
@@ -921,18 +933,16 @@ void HandleDnuInfoHeader(DNA_UTIL *duPO,FILE *outPF)
 /**************************************************************************
 *   Output info indices for sequences
 */
-int HandleDnaInfoOutI(DNA_UTIL *duPO,FILE *outPF)
+int HandleDnaInfoOutI(DNA_UTIL *duPO, SEQ *seqPO, SEQ *fseqPO, FILE *outPF)
 {
     int slen;
     char *seqPC,nameS[NSIZE];
     DOUB dD,d2D,d3D;
 
     HAND_NFILE(outPF);
-    if(!GetSeqSeqI(duPO->seq,&seqPC)) {
-        return(FALSE);
-    }
-    slen = GetSeqLenI(duPO->seq);
-    FillSeqNameStringI(duPO->seq,nameS,NSIZE-1);
+    GetSeqSeqI(seqPO,&seqPC);
+    slen = GetSeqLenI(seqPO);
+    FillSeqNameStringI(seqPO,nameS,NSIZE-1);
     if( (duPO->ifwmin>0) || (duPO->ifwmax>0 ) ) {
         dD = SeqWordFreqInfoD(seqPC, slen, duPO->ifwmin, duPO->ifwmax);
         fprintf(outPF,"%s\t%5.4f",nameS,dD);
@@ -972,6 +982,7 @@ int HandleDnaInfoOutI(DNA_UTIL *duPO,FILE *outPF)
         return(FALSE);
     }
     if(duPO->do_ds) {
+        GetSeqSeqI(fseqPO,&seqPC);
         fprintf(outPF,"\t%s",seqPC);
     }
     fprintf(outPF,"\n");
@@ -980,33 +991,36 @@ int HandleDnaInfoOutI(DNA_UTIL *duPO,FILE *outPF)
 /*************************************************************************
 *
 */
-int HandleCaSepOutputI(DNA_UTIL *duPO, char *nameS, char *seqS, int len, FILE *outPF)
+int HandleCaSepOutputI(DNA_UTIL *duPO, SEQ *seqPO, FILE *outPF)
 {
-    int i,n,s,e,t,u;
+    int i,n,s,e,t,u, slen;
     static int countsIA[4];
-    char baseS[DEF_BS];
+    char baseS[DEF_BS], nameS[NSIZE], *seqPC;
 
     VALIDATE(duPO,DNA_UTIL_ID);
     HAND_NFILE(outPF);
-    if(len<1) {
+    FillSeqNameStringI(seqPO,nameS,NSIZE-1);
+    GetSeqSeqI(seqPO, &seqPC);
+    slen = GetSeqLenI(seqPO);
+    if(slen<1) {
         return(0);
     }
     n = countsIA[1] = countsIA[2] = countsIA[3] = 0;
     /***
     *   Through the sequence, each case-class noted
     */
-    t = CaSepCharClass(seqS[0]);
+    t = CaSepCharClass(seqPC[0]);
     s = e = 1;
-    for(i=1;i<len;i++) 
+    for(i=1;i<slen;i++) 
     {
-        u = CaSepCharClass(seqS[i]);
+        u = CaSepCharClass(seqPC[i]);
         if(u != t) {
             e = i;
             n += UpSepCharCountStory(t, countsIA, baseS);
             /***
             *   Separate seqs or just story
             */
-            HandCaSepOneSeqOut(duPO, seqS, s, e, nameS, baseS, outPF);
+            HandCaSepOneSeqOut(duPO, seqPC, s, e, nameS, baseS, outPF);
             /***
             *   Next char segment initialize...
             */
@@ -1015,7 +1029,7 @@ int HandleCaSepOutputI(DNA_UTIL *duPO, char *nameS, char *seqS, int len, FILE *o
         }
     }
     n += UpSepCharCountStory(t, countsIA, baseS);
-    HandCaSepOneSeqOut(duPO, seqS, s, i, nameS, baseS, outPF);
+    HandCaSepOneSeqOut(duPO, seqPC, s, i, nameS, baseS, outPF);
     return(n);
 }
 /*************************************************************************
