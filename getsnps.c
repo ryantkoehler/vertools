@@ -34,10 +34,11 @@ void GetSnpsIUse(void)
     VersionSplash(NULL,VERSION_S,"#  ",TRUE);
     printf("Use <infile>  [...options]\n");
     printf("   <infile>   SNP fasta file from dbSNP (i.e. rs.fasta)\n");
-    printf("   -out XXX   Set output to XXX\n");
-    printf("   -iraw      Treat input as \"raw\" format: <name> <seq>\n");
-    printf("   -ifas      Treat input as \"fasta\" format\n");
+    printf("   -iraw      Treat input as \"raw\" format; <name> <seq> / line\n");
+    printf("   -iseq      Treat input as simmple sequence; <seq> / line\n");
+    printf("   -ifas      Treat input as fasta format\n");
     printf("   -isdb      Treat input as SNPdb-format fasta file\n");
+    printf("   -out XXX   Set output to XXX\n");
     printf("   -olis      Output list of qualified records\n");
     printf("   -osum      Output summary (dump)\n");
     printf("   -ofas      Output in fasta format\n");
@@ -68,7 +69,7 @@ void GetSnpsIUse(void)
 int GetSnpsI(int argc,char **argv)
 {
     int uwin,dwin,min,max,not,verb,ok,n,nok,class,isdb;
-    int ofas,oraw,header,iraw,ifas,all,c,osum,olis;
+    int ofas,oraw,header,iraw,iseq,ifas,all,c,osum,olis;
     char inS[NSIZE],outS[NSIZE],iubS[NSIZE];
     char vtypeS[DEF_BS], cstatS[DEF_BS], generS[DEF_BS];
     FILE *inPF, *outPF;
@@ -80,7 +81,7 @@ int GetSnpsI(int argc,char **argv)
     class = BOGUS;
     uwin = dwin = -1;
     min = 0; max = TOO_BIG;
-    isdb = ofas = oraw = iraw = ifas = all = osum = olis = FALSE;
+    isdb = ofas = oraw = iraw = iseq = ifas = all = osum = olis = FALSE;
     verb = header = TRUE;
     INIT_S(outS); INIT_S(iubS); 
     INIT_S(vtypeS); INIT_S(cstatS); INIT_S(generS); 
@@ -88,12 +89,12 @@ int GetSnpsI(int argc,char **argv)
         "S -out S -win I2 -iub S -class I -slen I2 -not B -quiet B\
         -isdb B -vtype S -cstat S -gr S -cs B -oexs B\
         -ofas B -oraw B -noh B -iraw B -awin B -nwin I -ifas B\
-        -all B -nal I -twin B -oexd B -osum B -olis B",
+        -all B -nal I -twin B -oexd B -osum B -olis B -iseq B",
         inS, outS, &uwin,&dwin, iubS, &class, &min,&max, &not, &verb,
         &isdb, vtypeS, cstatS, generS, &snPO->do_cs, &snPO->do_oexs,
         &ofas, &oraw, &header, &iraw, &snPO->do_awin, &snPO->do_nwin, &ifas,
         &all, &snPO->nal,
-        &snPO->do_twin, &snPO->do_oexd, &osum, &olis,
+        &snPO->do_twin, &snPO->do_oexd, &osum, &olis, &iseq,
         (int *)NULL))
     {
         GetSnpsIUse();
@@ -106,7 +107,7 @@ int GetSnpsI(int argc,char **argv)
         snPO->in_form = INF_SNPDB;
     }
     else {
-        snPO->in_form =  FigureSeqFileTypeI(iraw,ifas,inS,TRUE);
+        snPO->in_form =  FigureSeqFileTypeI(iraw,iseq,ifas,inS,TRUE);
     }
     if(!snPO->in_form) {
         GetSnpsIUse();
@@ -168,14 +169,13 @@ int GetSnpsI(int argc,char **argv)
                 break;
             case SEQFM_RAW:
             case SEQFM_FASTA:
-                ok = ParseSeqI(inPF,snPO->in_form,FALSE,TRUE,seqPO);
+                ok = ParseSeqI(inPF, snPO->in_form, n+1, FALSE, TRUE, seqPO);
                 if(ok > 0) {
                     ok = ExtractSNPInfoFromSeqI(seqPO,snPO);
                 }
                 else {
                     ok = FALSE;     /* Parse can return TRUE, FALSE or BOGUS */
                 }
-
                 break;
         }
         if(!ok) {

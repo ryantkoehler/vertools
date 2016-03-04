@@ -37,7 +37,9 @@ void TmUtilUse(void)
     VersionSplash(NULL,VERSION_S,"#  ",TRUE);
     printf("Usage: <infile> ['-' for stdin] [...options]\n");
     printf("   <infile>   Sequences file to read in\n");
-    printf("   -iraw -ifas Treat input as \"raw\" / fasta format\n");
+    printf("   -iraw      Treat input as \"raw\" format; <name> <seq> / line\n");
+    printf("   -iseq      Treat input as simmple sequence; <seq> / line\n");
+    printf("   -ifas      Treat input as fasta format\n");
     printf("   -out XXX   Set output to XXX\n");
     printf("   -par XXX   Use parameters in file XXX for Tm\n");
     printf("   -pdc #     Parameter \"default\" column set to # (1-base)\n");
@@ -88,14 +90,14 @@ void TmUtilUse(void)
 */
 int TmUtilI(int argc, char **argv)
 {
-    int tmoli,tmpna,tmelt,tm24,tmgb,tmsl,tmpey,slen,good,ngood;
-    int iraw,ifas;
+    int tmoli,tmpna,tmelt,tm24,tmgb,tmsl,tmpey,slen,good,ngood,n;
+    int iraw,ifas,iseq;
     TM_UTIL *tuPO;
     char *seqPC,nameS[NSIZE];
 
     tuPO = CreateTm_utilPO();
     tmoli = tmpna = tmelt = tm24 = tmgb = tmsl = tmpey = FALSE;
-    iraw = ifas = FALSE;
+    iraw = ifas = iseq = FALSE;
     if(!ParseArgsI(argc,argv,
         "S -out S -par S -con D\
         -sal D -tmoli B -tmelt B -the B -dpar B\
@@ -120,6 +122,7 @@ int TmUtilI(int argc, char **argv)
         &tuPO->pdc,
         &tuPO->do_tab_lo,&tuPO->do_tab_hi,
         &tuPO->do_emin, &tuPO->do_tab_j, &tuPO->do_ds, 
+        &iseq,
         (int *)NULL))
     {
         TmUtilUse();
@@ -137,7 +140,7 @@ int TmUtilI(int argc, char **argv)
     /***
     *   Set input format 
     */
-    tuPO->iform = FigureSeqFileTypeI(iraw,ifas,tuPO->inname,TRUE);
+    tuPO->iform = FigureSeqFileTypeI(iraw, iseq, ifas, tuPO->inname, TRUE);
     if( ! tuPO->iform ) {
         printf("Problem with input seq(s)\n");
         CHECK_TM_UTIL(tuPO);
@@ -181,10 +184,11 @@ int TmUtilI(int argc, char **argv)
     /***
     *   Loop over input until no more
     */
-    ngood = 0; 
+    ngood = n = 0; 
     while(TRUE)
     {
-        slen = LoadTmutilSequenceI(tuPO);
+        n++;
+        slen = LoadTmutilSequenceI(tuPO, n);
         if(slen==BOGUS) {
             break;
         }
@@ -541,7 +545,7 @@ xxx Messy!
 *   Returns length if got sequence
 *   Returns BOGUS if ParseSeq is done
 */
-int LoadTmutilSequenceI(TM_UTIL *tuPO)
+int LoadTmutilSequenceI(TM_UTIL *tuPO, int n)
 {
     int fok,sok;
 
@@ -550,11 +554,11 @@ int LoadTmutilSequenceI(TM_UTIL *tuPO)
     *       Raw format, no cleaning, report errors
     */
     if( (tuPO->do_tes) || (tuPO->do_btes) ) {
-        fok = ParseSeqI(tuPO->in,tuPO->iform,FALSE,TRUE,tuPO->seq);
-        sok = ParseSeqI(tuPO->in,tuPO->iform,FALSE,TRUE,tuPO->sseq);
+        fok = ParseSeqI(tuPO->in, tuPO->iform, n, FALSE, TRUE, tuPO->seq);
+        sok = ParseSeqI(tuPO->in, tuPO->iform, n, FALSE, TRUE, tuPO->sseq);
     }
     else {
-        fok = sok = ParseSeqI(tuPO->in,tuPO->iform,FALSE,TRUE,tuPO->seq);
+        fok = sok = ParseSeqI(tuPO->in, tuPO->iform, n, FALSE, TRUE, tuPO->seq);
     }
     /***
     *   End of file, return BOGUS to break out of loop

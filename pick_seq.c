@@ -37,7 +37,9 @@ void PickSeqUse(void)
     VersionSplash(NULL,VERSION_S,"#  ",TRUE);
     printf("Usage: <infile> ['-' for stdin] [...options]\n");
     printf("   <infile>   Input sequences to pick from\n");
-    printf("   -iraw -ifas Treat input as \"raw\" / fasta format\n");
+    printf("   -iraw      Treat input as \"raw\" format; <name> <seq> / line\n");
+    printf("   -iseq      Treat input as simmple sequence; <seq> / line\n");
+    printf("   -ifas      Treat input as fasta format\n");
     printf("   -out XXX   Send output to file XXX\n");
     printf("   -num #     Pick # sequences\n");
     printf("   -swap      Use the monte carlo swap picking algorithm\n");
@@ -60,20 +62,21 @@ void PickSeqUse(void)
 */
 int PickSeqI(int argc, char **argv)
 {
-    int swap,ifas,iraw;
+    int swap,ifas,iraw,iseq;
     PICKSEQ *psPO;
 
     psPO = CreatePickseqPO();
-    swap = ifas = iraw = FALSE;
+    swap = ifas = iraw = iseq = FALSE;
     if(!ParseArgsI(argc,argv,
         "S -out S -seed I -num I -swap B -cyc I -rep I -sirf I -siru B\
         -smat R2 -scon R2 -scb R2 -mswm B -cswm B -mwf S -ifas B -iraw B\
-        -quiet B -fix S",
+        -quiet B -fix S -iseq B",
         psPO->seqname, psPO->outname, &psPO->rseed, &psPO->num, &swap, 
         &psPO->cyc, &psPO->rep, &psPO->sirf, &psPO->siru,
         &psPO->smat, &psPO->cmat, &psPO->scon, &psPO->ccon, 
         &psPO->scb, &psPO->ccb, &psPO->do_mswm, &psPO->do_cswm, 
         &psPO->mwfname, &ifas, &iraw, &psPO->verbose, &psPO->fixname,
+        &iseq, 
         (int *)NULL))
     {
         PickSeqUse();
@@ -83,7 +86,7 @@ int PickSeqI(int argc, char **argv)
     /***
     *   Set input format 
     */
-    psPO->iform = FigureSeqFileTypeI(iraw,ifas,psPO->seqname,TRUE);
+    psPO->iform = FigureSeqFileTypeI(iraw, iseq, ifas,psPO->seqname,TRUE);
     if(!psPO->iform) {
         printf("Problem with input seq(s)\n");
         CHECK_PICKSEQ(psPO);

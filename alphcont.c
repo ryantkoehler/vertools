@@ -34,9 +34,10 @@ void AlphContUse(void)
     VersionSplash(NULL,VERSION_S,"#  ",TRUE);
     printf("Usage: <infile> ['-' for stdin] [...options]\n");
     printf("   <infile>   Sequence file\n");
-    printf("   -out XXX   Set output to XXX\n");
-    printf("   -iraw      Treat input as \"raw\" format\n");
+    printf("   -iraw      Treat input as \"raw\" format; <name> <seq> / line\n");
+    printf("   -iseq      Treat input as simmple sequence; <seq> / line\n");
     printf("   -ifas      Treat input as fasta format\n");
+    printf("   -out XXX   Set output to XXX\n");
     printf("   -bran # #  Consider base range # to # (i.e. sub-seqs)\n");
     printf("   -rre       Base range relative to end; i.e. Backwards\n");
     printf("   -row XXX   Report (max) row of string XXX\n");
@@ -70,17 +71,17 @@ void AlphContUse(void)
 */
 int AlphContI(int argc,char **argv)
 {
-    int ifas, iraw, dcc, dfs, dfg, dcw, ok, oval, eraw, start,slen;
+    int ifas, iraw, iseq, dcc, dfs, dfg, dcw, ok, oval, eraw, start, slen, n;
     char snameS[NSIZE],winS[NSIZE];
     ALPHCONT *alPO;
 
     alPO = CreateAlphcontPO();
-    iraw = ifas = dcc = dfs = dfg = dcw = oval = eraw = FALSE;
+    iraw = ifas = iseq = dcc = dfs = dfg = dcw = oval = eraw = FALSE;
     if(!ParseArgsI(argc,argv,
         "S -out S -igp B -bran I2 -flg R2 -row S -con S -not B -dnum B\
         -dfs B -dcc B -iraw B -ifas B -cwin I -dfg B -dcw B -rre B\
         -eraw B -oval B -stat B -ecc B -btab B -skew S -cent S\
-        -win I2 -wst I -wen I -ign B -rtab B -dtab B -ds B",
+        -win I2 -wst I -wen I -ign B -rtab B -dtab B -ds B -iseq B",
         alPO->inname, alPO->outname, &alPO->igprob, 
         &alPO->firstb,&alPO->lastb,
         &alPO->min,&alPO->max, alPO->row, alPO->con,
@@ -90,6 +91,7 @@ int AlphContI(int argc,char **argv)
         &alPO->skew, &alPO->cent,
         &alPO->winsize,&alPO->winstep, &alPO->winst, &alPO->winen, 
         &alPO->do_ign, &alPO->do_rtab, &alPO->do_dtab, &alPO->do_ds,
+        &iseq,
         (int *)NULL))
     {
         AlphContUse();
@@ -99,7 +101,7 @@ int AlphContI(int argc,char **argv)
     /***
     *   Set input format to explitly chosen, else guess (if not stdin)
     */
-    alPO->iform = FigureSeqFileTypeI(iraw,ifas,alPO->inname,TRUE);
+    alPO->iform = FigureSeqFileTypeI(iraw, iseq, ifas, alPO->inname, TRUE);
     if(!alPO->iform) {
         printf("Problem with input seq(s)\n");
         CHECK_ALPHCONT(alPO);
@@ -156,11 +158,13 @@ int AlphContI(int argc,char **argv)
     /***
     *   Loop through the collection
     */
+    n = 0;
     while(TRUE) {
         /***
-        *   Parse sequence; FALSE = done
+        *   Parse (full) sequence; FALSE = done
         */
-        ok = ParseSeqI(alPO->in,alPO->iform,alPO->iclean,TRUE,alPO->seq);
+        n++;
+        ok = ParseSeqI(alPO->in, alPO->iform, n, alPO->iclean, TRUE, alPO->fseq);
         if(ok==FALSE) {
             break;
         }
@@ -168,28 +172,28 @@ int AlphContI(int argc,char **argv)
             continue;
         }
         /***
-        *   Whole input or window sampling?
+        *   Single input or window sampling?
         */
-        FillSeqNameStringI(alPO->seq,snameS,NSIZE-1);
-        if(IS_BOG(alPO->winsize)) {
-            CopySeqI(alPO->seq,alPO->fseq,-1,-1);
-            if(!AlphconProcSeqI(alPO, alPO->fseq, snameS)) {
+        FillSeqNameStringI(alPO->fseq, snameS, NSIZE-1);
+        if(alPO->winsize < 1) {
+            CopySeqI(alPO->fseq, alPO->seq, -1, -1);
+            if(!AlphconProcSeqI(alPO, alPO->seq, alPO->fseq, snameS)) {
                 printf("Problem processing seq |%s|\n",snameS);
                 ABORTLINE;
                 return(FALSE);
             }
         }
         else {
-            slen = GetSeqLenI(alPO->seq);
+            slen = GetSeqLenI(alPO->fseq);
             if(!IS_BOG(alPO->winen)) {
                 slen = MIN_NUM(slen,alPO->winen);
             }
             start = alPO->winst - 1;
             while( (start + alPO->winsize) < slen) {
-                CopySeqI(alPO->seq,alPO->fseq,start,alPO->winsize);
+                CopySeqI(alPO->fseq, alPO->seq, start, alPO->winsize);
                 sprintf(winS,"%s_Win-%03d_%03d",snameS, 
                     start+1, start+1+alPO->winsize);
-                if(!AlphconProcSeqI(alPO, alPO->fseq, winS)) {
+                if(!AlphconProcSeqI(alPO, alPO->seq, alPO->fseq, winS)) {
                     printf("Problem processing seq, window size %d |%s|\n", alPO->winsize,snameS);
                     ABORTLINE;
                     return(FALSE);
@@ -207,7 +211,7 @@ int AlphContI(int argc,char **argv)
 /*****************************************************************************
 *   Process passed sequence
 */
-int AlphconProcSeqI(ALPHCONT *alPO, SEQ *seqPO, char *nameS)
+int AlphconProcSeqI(ALPHCONT *alPO, SEQ *seqPO, SEQ *fseqPO, char *nameS)
 {
     int ok;
 
@@ -218,20 +222,20 @@ int AlphconProcSeqI(ALPHCONT *alPO, SEQ *seqPO, char *nameS)
     /***
     *   Trim sequence?
     */
-    if(!HandleAlcoSubseqI(alPO,seqPO)) {
+    if(!HandleAlcoSubseqI(alPO, seqPO, fseqPO)) {
         return(FALSE);
     }
     /***
     *   Get counts 
     */
-    if(!HandleSeqCountsI(alPO,seqPO)) {
+    if(!HandleSeqCountsI(alPO, seqPO)) {
         return(FALSE);
     }
     /***
     *   Output
     */
     ok = IsAlphcontSeqOkI(alPO);
-    HandleAlcoOutputI(alPO,alPO->fseq, nameS, ok, alPO->out);
+    HandleAlcoOutputI(alPO, seqPO, nameS, ok, alPO->out);
     return(TRUE);
 }
 /*****************************************************************************
@@ -288,8 +292,8 @@ void InitAlphcont(ALPHCONT *alPO)
     alPO->do_stat = FALSE;
     alPO->quiet = FALSE;
     alPO->do_not = FALSE;
-    alPO->firstb = -TOO_BIG;    
-    alPO->lastb = TOO_BIG;
+    alPO->firstb = -1;    
+    alPO->lastb = -1;
     alPO->do_rre = FALSE;
     alPO->cwin = 1;
     alPO->do_dfr = TRUE;
@@ -303,8 +307,8 @@ void InitAlphcont(ALPHCONT *alPO)
     INIT_S(alPO->cent);
     alPO->do_uc = FALSE;
     alPO->do_lc = FALSE;
-    alPO->winsize = BOGUS;
-    alPO->winstep = BOGUS;
+    alPO->winsize = -1;
+    alPO->winstep = -1;
     alPO->winst = 1;
     alPO->winen = BOGUS;
     alPO->smask = NULL;
@@ -363,7 +367,7 @@ int CheckAlcoOptionsI(ALPHCONT *alPO)
     /***
     *   Window on counts?
     */
-    if( (alPO->cwin>1) || (alPO->owhat==ALCO_DCW) ) {
+    if( (alPO->cwin>1) || (alPO->owhat == ALCO_DCW) ) {
         if(alPO->rowlen > 0) {
             PROBLINE;
             printf("Window doesn't work with row counts\n");
@@ -375,7 +379,7 @@ int CheckAlcoOptionsI(ALPHCONT *alPO)
             return(FALSE);
         }
     }
-    if( (alPO->firstb>0) && (alPO->owhat==ALCO_DCW) ) {
+    if( (alPO->firstb > 0) && (alPO->owhat == ALCO_DCW) ) {
         PROBLINE;
         printf("Can't dump window counts with restricted base range\n");
         return(FALSE);
@@ -402,8 +406,8 @@ int CheckAlcoOptionsI(ALPHCONT *alPO)
                 return(FALSE);
         }
     }
-    if(!IS_BOG(alPO->winsize)) {
-        if( (alPO->winsize < 1) || (alPO->winstep < 1) || (alPO->winst < 1) || 
+    if(alPO->winsize > 0) {
+        if( (alPO->winstep < 1) || (alPO->winst < 1) || 
             (!IS_BOG(alPO->winen)&&(alPO->winen < alPO->winst)) )
         {
             PROBLINE;
@@ -501,7 +505,7 @@ void HandleAlcoHeader(ALPHCONT *alPO, FILE *outPF)
             fprintf(outPF,"# Degen char matching (e.g. 'S' = 'C' or 'G')\n");
         }
     }
-    if(!IS_BOG(alPO->winsize)) {
+    if(alPO->winsize > 0) {
         fprintf(outPF,"# Window sampling size %d, step %d, starting at %d to",
             alPO->winsize, alPO->winstep, alPO->winst);
         if(!IS_BOG(alPO->winen)) {
@@ -562,17 +566,21 @@ int HandleAlcoSeqCleaningI(SEQ *seqPO, int eec)
 /***************************************************************************
 *   Shrink to range if needed
 */
-int HandleAlcoSubseqI(ALPHCONT *alPO, SEQ *seqPO)
+int HandleAlcoSubseqI(ALPHCONT *alPO, SEQ *seqPO, SEQ *fseqPO)
 {
-    int len;
+    int len, flen;
 
     if(alPO->firstb >= 0) {
         len = alPO->lastb - alPO->firstb + 1;
+        SetCaseSeqSubseqI(fseqPO, FALSE, -1, -1);
         if(alPO->do_rre) {
             NarrowSeqI(seqPO,alPO->firstb-1,len,REVERSE,FALSE);
+            flen = GetSeqLenI(fseqPO);
+            SetCaseSeqSubseqI(fseqPO, TRUE, flen - alPO->lastb, flen - alPO->firstb + 1);
         }
         else {
             NarrowSeqI(seqPO,alPO->firstb-1,len,FORWARD,FALSE);
+            SetCaseSeqSubseqI(fseqPO, TRUE, alPO->firstb-1, alPO->lastb);
         }
     }
     return(TRUE);
@@ -932,20 +940,19 @@ int IsAlphcontSeqOkI(ALPHCONT *alPO)
 /**************************************************************************
 *   Handle output for current seq
 */
-int HandleAlcoOutputI(ALPHCONT *alPO,SEQ *seqPO, char *nameS, int sok,
+int HandleAlcoOutputI(ALPHCONT *alPO, SEQ *seqPO, char *nameS, int sok,
     FILE *outPF)
 {
     int slen,ok,n,i,mat;
-    char forS[DEF_BS],*seqPC;
+    char forS[DEF_BS],*seqPC, *fseqPC;
 
     HAND_NFILE(outPF);
     /***
-    *   Output = full sequence, in case the input one has been trimmed
+    *   alPO->seq = full sequence, in case seqPO has been trimmed
     */
-    if(!GetSeqSeqI(seqPO,&seqPC)) {
-        return(FALSE);
-    }
+    GetSeqSeqI(seqPO,&seqPC);
     slen = GetSeqLenI(seqPO);
+    GetSeqSeqI(alPO->fseq,&fseqPC);
     /***
     *   If simple base table, handle and return
     */
@@ -988,22 +995,23 @@ int HandleAlcoOutputI(ALPHCONT *alPO,SEQ *seqPO, char *nameS, int sok,
                 fprintf(outPF,"%2d",INT(alPO->val));
             }
             if(alPO->do_ds) {
-                fprintf(outPF,"\t%s",seqPC);
+                fprintf(outPF,"\t%s",fseqPC);
             }
             fprintf(outPF,"\n");
             break;
         case ALCO_SEQ:
             ok = TRUE;
-            if( (alPO->val<alPO->min) || (alPO->val>alPO->max) )
-            {   ok = FALSE; }
-            if(alPO->do_not)
-            {   ok = !ok;   }
+            if( (alPO->val<alPO->min) || (alPO->val>alPO->max) ) {   
+                ok = FALSE; 
+            }
+            if(alPO->do_not) {   
+                ok = !ok;   
+            }
             if(ok) {
                 fprintf(outPF,"# %-15s\t",nameS);
                 if(alPO->do_dfr) {
                     fprintf(outPF,"%6.3f",alPO->val);
-                    if(alPO->skewlen>0)
-                    {
+                    if(alPO->skewlen>0) {
                         fprintf(outPF,"\t%6.3f",alPO->val2);
                     }
                     fprintf(outPF,"\n");
@@ -1011,7 +1019,7 @@ int HandleAlcoOutputI(ALPHCONT *alPO,SEQ *seqPO, char *nameS, int sok,
                 else {
                     fprintf(outPF,"%2d\n",INT(alPO->val));
                 }
-                fprintf(outPF,"%s%-15s\t%s\n\n",forS,nameS,seqPC);
+                fprintf(outPF,"%s%-15s\t%s\n\n",forS,nameS,fseqPC);
             }
             break;
         case ALCO_DCC:
@@ -1019,8 +1027,9 @@ int HandleAlcoOutputI(ALPHCONT *alPO,SEQ *seqPO, char *nameS, int sok,
             n = 0;
             for(i=0;i<slen;i++)
             {
-                if(alPO->smask[i]) 
-                {   n++;    }
+                if(alPO->smask[i]) {   
+                    n++;    
+                }
                 fprintf(outPF,"%d ",n);
             }
             fprintf(outPF,"\n");
@@ -1070,7 +1079,7 @@ void DumpAlphconMask(ALPHCONT *alPO, int len, FILE *outPF)
 */
 void ReportAlphcontBaseTables(ALPHCONT *alPO, char *nameS, SEQ *seqPO, SEQCOMP *compPO, FILE *outPF)
 {
-    char *seqPC;
+    char *fseqPC;
 
     VALIDATE(compPO,SEQCOMP_ID);
     HAND_NFILE(outPF);
@@ -1110,9 +1119,9 @@ void ReportAlphcontBaseTables(ALPHCONT *alPO, char *nameS, SEQ *seqPO, SEQCOMP *
                 (compPO->na + compPO->nc), (compPO->ng + compPO->nt) );
         }
     }
-    GetSeqSeqI(seqPO,&seqPC);
+    GetSeqSeqI(alPO->fseq,&fseqPC);
     if(alPO->do_ds) {
-        fprintf(outPF,"\t%s",seqPC);
+        fprintf(outPF,"\t%s",fseqPC);
     }
     fprintf(outPF,"\n");
 }

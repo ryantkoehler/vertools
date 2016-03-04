@@ -36,8 +36,10 @@ void WfUtilUse(void)
     VersionSplash(NULL,VERSION_S,"#  ",TRUE);
     printf("Usage: <infile> ['-' for stdin] [...options]\n");
     printf("   <infile>   Sequence file\n");
+    printf("   -iraw      Treat input as \"raw\" format; <name> <seq> / line\n");
+    printf("   -iseq      Treat input as simmple sequence; <seq> / line\n");
+    printf("   -ifas      Treat input as fasta format\n");
     printf("   -out XXX   Set output file to XXX\n");
-    printf("   -iraw -ifas Treat input as \"raw\" / fasta format\n");
     printf("   -size #    Set word size to # (def = %d)\n",DEF_WSIZE);
     printf("   -range # # Range of reported words # to # only\n");
     printf("   -norm      Normalize output (average word = 1.0)\n");
@@ -58,21 +60,21 @@ void WfUtilUse(void)
 */
 int WfUtilI(int argc, char **argv)
 {
-    int ok,tal,iraw,ifas,quiet;
+    int ok,tal,iraw,iseq,ifas,quiet,n;
     WF_UTIL *wfPO;
 
     wfPO = CreateWf_utilPO();
-    iraw = ifas = quiet = FALSE;
+    iraw = iseq = ifas = quiet = FALSE;
     if(!ParseArgsI(argc,argv,
         "S -out S -iraw B -ifas B -siz I -deg B -bran I2 -rre B\
         -sran I2 -ran I2 -norm B -sif S -pmat I2\
-        -ilc B -iuc B -step I -quiet B -ds B",
+        -ilc B -iuc B -step I -quiet B -ds B -iseq B",
         wfPO->inname, wfPO->outname, &iraw, &ifas, &wfPO->size, 
         &wfPO->do_deg, &wfPO->firstb,&wfPO->lastb, &wfPO->do_rre,
         &wfPO->firsts,&wfPO->lasts, &wfPO->min,&wfPO->max, &wfPO->do_norm,
         &wfPO->lisname, &wfPO->pmat_s,&wfPO->pmat_e,
         &wfPO->do_ilc, &wfPO->do_iuc, &wfPO->step, 
-        &quiet, &wfPO->do_ds,
+        &quiet, &wfPO->do_ds, &iseq,
         (int *)NULL))
     {
         WfUtilUse();
@@ -82,7 +84,7 @@ int WfUtilI(int argc, char **argv)
     /***
     *   Set input format 
     */
-    wfPO->iform = FigureSeqFileTypeI(iraw,ifas,wfPO->inname,TRUE);
+    wfPO->iform = FigureSeqFileTypeI(iraw, iseq, ifas, wfPO->inname, TRUE);
     if(!wfPO->iform) {
         printf("Problem with input seq(s)\n");
         CHECK_WF_UTIL(wfPO);
@@ -120,12 +122,13 @@ int WfUtilI(int argc, char **argv)
     /***
     *   Loop through the input sequence collection
     */
-    wfPO->n = tal = 0;
+    wfPO->n = tal = n = 0;
     while(TRUE) {
         /***
         *   Parse sequence; FALSE = done
         */
-        ok = ParseSeqI(wfPO->in, wfPO->iform, SCLEAN_HI, !quiet, wfPO->fseq);
+        n++;
+        ok = ParseSeqI(wfPO->in, wfPO->iform, n, SCLEAN_HI, !quiet, wfPO->fseq);
         if(ok==FALSE) {
             break;
         }

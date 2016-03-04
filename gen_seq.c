@@ -37,8 +37,9 @@ void GenSeqUse(void)
     printf("   -par XXX   Parameters (intrinsic constraints) from file XXX\n");
     printf("   -dpar      Dump parameter constraints used\n");
     printf("   -filt XXX  Read seqs from XXX and filter on parameters\n");
-    printf("   -iraw      Treat input sequences as 'raw' format\n");
-    printf("   -ifas      Treat input sequences as fasta format\n");
+    printf("   -iraw      Treat input as \"raw\" format; <name> <seq> / line\n");
+    printf("   -iseq      Treat input as simmple sequence; <seq> / line\n");
+    printf("   -ifas      Treat input as fasta format\n");
     printf("   -ran       Random sequences\n");
     printf("   -base XXX  Random base percentages; A,C,G,T in format #,#,#,#\n");
     printf("   -maxt #    Random seq maximum tries before quitting\n");
@@ -83,14 +84,14 @@ int GenSeqI(int argc, char **argv)
         -ofas B -out S -bname S\
         -len I -both B -enu B -seed I -num I -dgb B\
         -ran B -ostat B -filt S -not B -maxt I -quiet B\
-        -base S -iraw B -ifas B",
+        -base S -iraw B -ifas B -iseq B",
         gsPO->parname, &dump, &gsPO->dump_all, &gsPO->do_stat,&gsPO->out_raw,
         &gsPO->out_fasta, gsPO->outfile, bnameS,
         &gsPO->len, &gsPO->do_both, &gsPO->do_enu, &gsPO->rseed, &gsPO->num, 
         &gsPO->dump_ok, &gsPO->do_ran, &gsPO->do_ostat, 
         gsPO->filtname, &gsPO->do_not, &mtry, &quiet,
         &gsPO->baseper, 
-        &gsPO->iraw, &gsPO->ifas, 
+        &gsPO->iraw, &gsPO->ifas, &gsPO->iseq,
         (int *)NULL))
     {
         GenSeqUse();
@@ -135,7 +136,7 @@ int GenSeqI(int argc, char **argv)
             /***
             *   Parse sequence; FALSE = done
             */
-            ok = ParseSeqI(gsPO->filt,gsPO->fform,SCLEAN_HI,TRUE,seqPO);
+            ok = ParseSeqI(gsPO->filt, gsPO->fform, nt+1, SCLEAN_HI, TRUE, seqPO);
             if(ok==FALSE) {
                 break;
             }
@@ -290,7 +291,7 @@ void InitGenseq(GENSEQ *gsPO)
     INIT_S(gsPO->filtname);
     gsPO->filt = NULL;
     gsPO->fform = BOGUS;
-    gsPO->iraw = gsPO->ifas = FALSE;
+    gsPO->iraw = gsPO->ifas = gsPO->iseq = FALSE;
     sprintf(gsPO->bname,"%s_",DEF_BNAME_S);
     gsPO->n_tot = 0;
     gsPO->n_max = 0;
@@ -325,7 +326,7 @@ int SetUpGenSeqI(GENSEQ *gsPO)
             printf("Can't open input to filter!\n");
             return(FALSE);
         }
-        gsPO->fform = FigureSeqFileTypeI(gsPO->iraw,gsPO->ifas,gsPO->filtname,TRUE);
+        gsPO->fform = FigureSeqFileTypeI(gsPO->iraw, gsPO->iseq, gsPO->ifas, gsPO->filtname, TRUE);
         if(!gsPO->fform) {
             printf("Problem with input seq(s)\n");
             return(FALSE);

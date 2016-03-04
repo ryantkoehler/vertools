@@ -14,7 +14,7 @@
 *
 */
 
-#define VERSION_S   "Dna_Util version 0.9"
+#define VERSION_S   "Dna_Util version 0.95"
 
 #define DNA_UTIL_ID     5051
 typedef struct DNA_UTIL

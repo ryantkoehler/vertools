@@ -32,7 +32,9 @@ void SeqTweakUse(void)
     VersionSplash(NULL,VERSION_S,"#  ",TRUE);
     printf("Usage: <infile> ['-' for stdin] [...options]\n");
     printf("   <infile>   Sequence file\n");
-    printf("   -iraw -ifas Treat input as \"raw\" / fasta format\n");
+    printf("   -iraw      Treat input as \"raw\" format; <name> <seq> / line\n");
+    printf("   -iseq      Treat input as simmple sequence; <seq> / line\n");
+    printf("   -ifas      Treat input as fasta format\n");
     printf("   -out XXX   Set output basename to XXX\n");
     printf("   -bran # #  Limit base range # to # for modifications\n");
     printf("   -rre       Base range relative to end; i.e. backwards\n");
@@ -54,23 +56,23 @@ void SeqTweakUse(void)
 /**************************************************************************/
 int SeqTweakI(int argc,char **argv)
 {
-    int ok,iraw,ifas,verb,nseq,n;
+    int ok,iraw,iseq,ifas,verb,nseq,n;
     SEQTWEAK *stPO;
 
     stPO = CreateSeqtweakPO();
     verb = TRUE;
-    iraw = ifas = FALSE;
+    iraw = iseq = ifas = FALSE;
     if(!ParseArgsI(argc,argv,
         "S -out S -iraw B -ifas B -mis I -del I -ins I -ids I -bran I2\
         -seed I -mds I -quiet B -amb B -smm B -cpm B -bname S\
-        -sh B -fsh B -rre B -nsim B -nre B",
+        -sh B -fsh B -rre B -nsim B -nre B -iseq B",
         stPO->inname, stPO->outname, &iraw, &ifas, 
         &stPO->mis, &stPO->del, &stPO->ins, &stPO->ids, 
         &stPO->firstb,&stPO->lastb, &stPO->seed, 
         &stPO->mds, &verb, &stPO->do_amb, &stPO->do_smm, &stPO->do_cpm,
         &stPO->bname,
         &stPO->do_sh, &stPO->do_fsh, &stPO->do_rre,
-        &stPO->do_nsim, &stPO->do_nre,
+        &stPO->do_nsim, &stPO->do_nre, &iseq,
         (int *)NULL))
     {
         SeqTweakUse();
@@ -80,7 +82,7 @@ int SeqTweakI(int argc,char **argv)
     /***
     *   Set input format
     */
-    stPO->iform = FigureSeqFileTypeI(iraw,ifas,stPO->inname,TRUE);
+    stPO->iform = FigureSeqFileTypeI(iraw, iseq, ifas, stPO->inname, TRUE);
     if(!stPO->iform) {
         printf("Problem with input seq(s)\n");
         CHECK_SEQTWEAK(stPO);
@@ -116,7 +118,7 @@ int SeqTweakI(int argc,char **argv)
         /***
         *   Parse sequence; FALSE = done
         */
-        ok = ParseSeqI(stPO->in,stPO->iform,FALSE,TRUE,stPO->seq);
+        ok = ParseSeqI(stPO->in, stPO->iform, n+1, FALSE, TRUE, stPO->seq);
         if(ok==FALSE) {
             break;
         }

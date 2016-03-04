@@ -49,7 +49,7 @@ typedef struct GENSEQ
     char filtname[NSIZE];/* ilename of seqs to filter */
     FILE *filt;         /* File of seqs to filter */
     int fform;          /* Filter file format */
-    int iraw, ifas;     /* ilter input format flags */
+    int iraw, ifas, iseq; /* input format flags */
     int igprob;         /* Flag to ignore input problems */
     int do_ran;         /* Flag to generate random sequences */
     int rseed;          /* Random number seed */

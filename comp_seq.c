@@ -39,7 +39,9 @@ void Comp_seqUse(void)
     VersionSplash(NULL,VERSION_S,"#  ",TRUE);
     printf("Use: <infile> ['-' for stdin] [-sim|-com|-ham|-self|-psel|-loop] [...options]\n");
     printf("   <infile>     Is a sequence file (\"raw\" format)\n");
-    printf("   -iraw -ifas  Treat input as raw / fasta format\n");
+    printf("   -iraw      Treat input as \"raw\" format; <name> <seq> / line\n");
+    printf("   -iseq      Treat input as simmple sequence; <seq> / line\n");
+    printf("   -ifas      Treat input as fasta format\n");
     printf("   -out XXX     Set output to XXX\n");
     printf("   -self -psel  Evaluate for self complimentarity / parallel\n");
     printf("   -loop #      Evaluate hairpin with min \"loop\" size #\n");
@@ -76,7 +78,7 @@ void Comp_seqUse(void)
 */
 int Comp_seqI(int argc, char **argv)
 {
-    int scon,swm,scb,sw32,smat,cl3,cl5,sco3,sco5,iraw,ifas;
+    int scon,swm,scb,sw32,smat,cl3,cl5,sco3,sco5,iraw,ifas,iseq;
     int r_max,r_num,r_tot,mword,quiet,nsco;
     int i,flen,slen;
     char smfS[DEF_BS], *fPC, *sPC, fnameS[DEF_BS];
@@ -86,7 +88,7 @@ int Comp_seqI(int argc, char **argv)
 
     csPO = CreateCompseqPO();
     scon = swm = sw32 = scb = smat = FALSE;
-    sco3 = sco5 = r_tot = r_max = r_num = quiet = iraw = ifas = FALSE;
+    sco3 = sco5 = r_tot = r_max = r_num = quiet = iraw = iseq = ifas = FALSE;
     cl3 = cl5 = 0;
     thR = 0.0;
     partmatR = BAD_R;
@@ -97,7 +99,7 @@ int Comp_seqI(int argc, char **argv)
         -scon B -rm B -swm B -rset S -mwf S -flg R2 -scb B\
         -smat B -loop I -norm B -cl3 I -cl5 I -sco3 B -sco5 B -num B\
         -tot B -th R -mwd I -fmat B -psel B -crs B -not B -eraw B \
-        -iraw B -ifas B -alf R -alp R -sw32 B -ham B",
+        -iraw B -ifas B -alf R -alp R -sw32 B -ham B -iseq B",
         csPO->inname, csPO->outname, &csPO->do_sa, &csPO->do_sim, &csPO->do_com,
         &csPO->do_self, &scon, &csPO->do_rm, &swm, csPO->rinname,
         smfS, &csPO->flo,&csPO->fhi, 
@@ -106,6 +108,7 @@ int Comp_seqI(int argc, char **argv)
         &thR, &mword, &csPO->do_fmat, &csPO->do_pself, &csPO->do_crs, 
         &csPO->do_not, &csPO->do_eraw, &iraw, &ifas,
         &csPO->fullmat, &partmatR, &sw32, &csPO->do_ham,
+        &iseq, 
         (int *)NULL))
     {
         Comp_seqUse();
@@ -225,7 +228,7 @@ int Comp_seqI(int argc, char **argv)
     /***
     *   Get input format; guess then override with command line
     */
-    csPO->iform = FigureSeqFileTypeI(iraw,ifas,csPO->inname,TRUE);
+    csPO->iform = FigureSeqFileTypeI(iraw, iseq, ifas, csPO->inname, TRUE);
     if(!csPO->iform) {
         CHECK_COMPSEQ(csPO);
         ABORTLINE;
@@ -375,7 +378,7 @@ int GetNextSeqI(COMPSEQ *csPO,int s, SEQ **seqPPO)
     SEQ *seqPO;
 
     if(csPO->do_self) {
-        if(!ParseSeqI(csPO->in,csPO->iform,TRUE,TRUE,csPO->seq)) {
+        if(!ParseSeqI(csPO->in, csPO->iform, s+1, TRUE, TRUE, csPO->seq)) {
             return(FALSE);
         }
         seqPO = csPO->seq;

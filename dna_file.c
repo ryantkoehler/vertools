@@ -28,7 +28,7 @@
 *   Figure out sequence type given options and input name
 *   Return format code or false if error
 */
-int FigureSeqFileTypeI(int iraw, int ifas, char *fnameS, int error)
+int FigureSeqFileTypeI(int iraw, int iseq, int ifas, char *fnameS, int error)
 {
     int form;
 
@@ -37,6 +37,9 @@ int FigureSeqFileTypeI(int iraw, int ifas, char *fnameS, int error)
     }
     else if(ifas) {
         form = SEQFM_FASTA;
+    }
+    else if(iseq) {
+        form = SEQFM_SEQ;
     }
     else {
         if( STDIN_STR(fnameS) ) {
@@ -64,9 +67,8 @@ int GuessSeqFileTypeI(char *fnameS, int error)
     INIT_S(extS);
     GetFilePartsI(fnameS,NULL,NULL,extS);
     Upperize(extS);
-    type = ParseSeqTypeI(extS,TRUE);
-    if(IS_BOG(type) && error)
-    {
+    type = ParseSeqTypeI(extS, TRUE);
+    if(IS_BOG(type) && error) {
         PROBLINE;
         printf("Unrecognized sequence file format extension\n");
         printf("    File: %s\n",fnameS);
@@ -81,7 +83,7 @@ int GuessSeqFileTypeI(char *fnameS, int error)
 *
 *   Returns BOGUS for unknown / incomplete file extensions
 */
-int ParseSeqTypeI(char *extS,int exact)
+int ParseSeqTypeI(char *extS, int exact)
 {
     int type;
 
@@ -95,8 +97,11 @@ int ParseSeqTypeI(char *extS,int exact)
         if(EQSTRING(extS,"DNA",3)) { 
             type = SEQFM_RAW;
         }
-        else if(EQSTRING(extS,"FA",2)) {
+        else if(EQSTRING(extS,"FAS",3)) {
             type = SEQFM_FASTA;
+        }
+        else if(EQSTRING(extS,"SEQ",3)) {
+            type = SEQFM_SEQ;
         }
     }
     else {
@@ -104,6 +109,7 @@ int ParseSeqTypeI(char *extS,int exact)
         {
             case 'D':   type = SEQFM_RAW;   break;
             case 'F':   type = SEQFM_FASTA; break;
+            case 'S':   type = SEQFM_SEQ;   break;
         }
     }
     DB_DNA_IO DB_PrI("<< ParseSeqTypeI %d\n",type);
@@ -117,6 +123,7 @@ void FillSeqFtypeExtString(int type,char *typeS)
     switch(type)
     {
         case SEQFM_RAW:     sprintf(typeS,"raw");   break;
+        case SEQFM_SEQ:     sprintf(typeS,"seq");   break;
         case SEQFM_FASTA:   sprintf(typeS,"fas");   break;
         default:            sprintf(typeS,"unk");   break;
     }
@@ -129,6 +136,7 @@ void FillSeqFtypeDescString(int type,char *typeS)
     switch(type)
     {
         case SEQFM_RAW:     sprintf(typeS,"raw / dna"); break;
+        case SEQFM_SEQ:     sprintf(typeS,"seq"); break;
         case SEQFM_FASTA:   sprintf(typeS,"fasta"); break;
         default:            sprintf(typeS,"Unknown??? (%d)",type);  break;
     }
@@ -140,6 +148,7 @@ int OkSeqInFormatI(int type,char *nameS,int error)
 {
     switch(type) {
         case SEQFM_RAW:
+        case SEQFM_SEQ:
         case SEQFM_FASTA:
             return(TRUE);
     }

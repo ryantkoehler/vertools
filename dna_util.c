@@ -35,7 +35,9 @@ void DnaUtilUse(void)
     VersionSplash(NULL,VERSION_S,"#  ",TRUE);
     printf("Usage: <infile> ['-' for stdin] [...options]\n");
     printf("   <infile>   Sequences file to read in\n");
-    printf("   -iraw -ifas Treat input as \"raw\" / fasta format\n");
+    printf("   -iraw      Treat input as \"raw\" format; <name> <seq> / line\n");
+    printf("   -iseq      Treat input as simmple sequence; <seq> / line\n");
+    printf("   -ifas      Treat input as fasta format\n");
     printf("   -out XXX   Set output to XXX\n");
     printf("   -sran # #  Sequence range restricted # to # (1-base count)\n");
     printf("   -com       Reverse Complement: e.g. CCCAT >-> ATGGG \n");
@@ -85,11 +87,11 @@ void DnaUtilUse(void)
 */
 int DnaUtilI(int argc, char **argv)
 {
-    int n,nok,ok,oraw,ofas,nfas,olis,ostat,stat,iraw,ifas,do_cln,do_cls,do_cll;
+    int n,nok,ok,oraw,ofas,nfas,olis,ostat,stat,iraw,iseq,ifas,do_cln,do_cls,do_cll;
     DNA_UTIL *duPO;
 
     duPO = CreateDna_utilPO();
-    oraw = ofas = nfas = ostat = stat = olis = iraw = ifas = FALSE;
+    oraw = ofas = nfas = ostat = stat = olis = iraw = ifas = iseq = FALSE;
     do_cln = do_cls = do_cll = FALSE;
     if(!ParseArgsI(argc,argv,
         "S -out S -oraw B -com B -inv B -rev B -ofas B -nfas B\
@@ -99,7 +101,7 @@ int DnaUtilI(int argc, char **argv)
         -flg B -psj I2 -inwf I2 -insh B -inbr B -inbp B -mran I2 -imask B\
         -cll B -pat I -exi B -tnb B\
         -pco B -pml I2\
-        -cstat B -csep B -wst B -tsub B -nan B -nfl I -nfb I -ds B",
+        -cstat B -csep B -wst B -tsub B -nan B -nfl I -nfb I -ds B -iseq B",
         duPO->inname, duPO->outname, &oraw, &duPO->do_comp, &duPO->do_inv, 
         &duPO->do_rev, &ofas, &nfas, &stat, &duPO->min_len,&duPO->max_len, 
         &duPO->do_famb, &duPO->do_not,  
@@ -117,6 +119,7 @@ int DnaUtilI(int argc, char **argv)
         &duPO->do_cstat, &duPO->do_csep, 
         &duPO->do_wst, &duPO->do_wsub, &duPO->do_nan,
         &duPO->nfline, &duPO->nfblock, &duPO->do_ds,
+        &iseq,
         (int *)NULL))
     {
         DnaUtilUse();
@@ -126,7 +129,7 @@ int DnaUtilI(int argc, char **argv)
     /***
     *   Set input format 
     */
-    duPO->iform = FigureSeqFileTypeI(iraw,ifas,duPO->inname,TRUE);
+    duPO->iform = FigureSeqFileTypeI(iraw, iseq, ifas, duPO->inname, TRUE);
     if(!duPO->iform) {
         printf("Problem with input seq(s)\n");
         CHECK_DNA_UTIL(duPO);
@@ -209,7 +212,7 @@ int DnaUtilI(int argc, char **argv)
         /***
         *   Parse sequence; FALSE = done
         */
-        ok = ParseSeqI(duPO->in, duPO->iform, duPO->iclean, TRUE, duPO->fseq);
+        ok = ParseSeqI(duPO->in, duPO->iform, n+1, duPO->iclean, TRUE, duPO->fseq);
         if(ok==FALSE) {
             break;
         }

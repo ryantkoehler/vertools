@@ -15,7 +15,7 @@
 */
 
 
-#define VERSION_S "Comp_Seq Version 1.45"
+#define VERSION_S "Comp_Seq Version 1.5"
 
 #define MAX_CSL 25000
 

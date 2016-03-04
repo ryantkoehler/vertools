@@ -33,7 +33,9 @@ void VenPipeUse()
     VersionSplash(NULL,VEN_VERSION_S,"#  ",TRUE);
     printf("Usage: <infile> ['-' for stdin] [...options]\n");
     printf("   <input>     Input sequence file (format guessed from .ext)\n");
-    printf("   -iraw -ifas Treat input as \"raw\" / fasta format\n");
+    printf("   -iraw      Treat input as \"raw\" format; <name> <seq> / line\n");
+    printf("   -iseq      Treat input as simmple sequence; <seq> / line\n");
+    printf("   -ifas      Treat input as fasta format\n");
     printf("   -vpar XXX   Parameter file (Vienna energy table)\n");
     printf("   -nosc       No salt correction for vienna parameter file\n");
     printf("   -out XXX    Set output to = XXX\n");
@@ -62,7 +64,7 @@ void VenPipeUse()
 */
 int VenPipeI(int argc, char **argv)
 {
-    int ok,nprob,nseq,iraw,ifas,com;
+    int ok,nprob,nseq,iraw,iseq,ifas,com;
     VENPIPE *vpPO;
 
     if(!(vpPO = CreateVenpipePO()))
@@ -70,19 +72,19 @@ int VenPipeI(int argc, char **argv)
         printf("Failed to allocate venpipe data structure\n");
         ABORTLINE; return(FALSE);
     }
-    iraw = ifas = com = FALSE;
+    iraw = iseq = ifas = com = FALSE;
     if(!ParseArgsI(argc, argv,
         "S -vpar S -out S -temp D -com B -dss B -pfe B -pcon D -tcon D -sal D\
         -ofas B -oraw B -dmb B -bran I2\
         -rre B -mbr I2 -mrre B -melt D2 -mstep D -iraw B -ifas B\
-        -nosc B -ksapar B -mask B -not B -mbtab B -dseq B",
+        -nosc B -ksapar B -mask B -not B -mbtab B -dseq B -iseq B",
         vpPO->inname, vpPO->vparfile, vpPO->outname, &vpPO->temp, &com, 
         &vpPO->do_ss, &vpPO->do_pfe, &vpPO->pcon, &vpPO->tcon, &vpPO->salt,
         &vpPO->ofas, &vpPO->oraw, &vpPO->do_dmb, &vpPO->firstb,&vpPO->lastb,
         &vpPO->rre, &vpPO->dmb_f,&vpPO->dmb_l, &vpPO->mrre, 
         &vpPO->mst,&vpPO->men, &vpPO->mj, &iraw, &ifas, &vpPO->do_saltcorrect,
         &vpPO->do_ksapar, &vpPO->do_mask, &vpPO->do_not, &vpPO->do_mbtab,
-        &vpPO->do_ds,
+        &vpPO->do_ds, &iseq,
         (int *)NULL))
     {
         VenPipeUse();
@@ -92,7 +94,7 @@ int VenPipeI(int argc, char **argv)
     /***
     *   Set intput format
     */
-    vpPO->iform = FigureSeqFileTypeI(iraw,ifas,vpPO->inname,TRUE);
+    vpPO->iform = FigureSeqFileTypeI(iraw, iseq, ifas, vpPO->inname, TRUE);
     if(!vpPO->iform) {
         printf("Problem with input seq(s)\n");
         CHECK_VENPIPE(vpPO);
@@ -121,7 +123,7 @@ int VenPipeI(int argc, char **argv)
         /***
         *   Parse sequence; FALSE = done
         */
-        ok = ParseSeqI(vpPO->in,vpPO->iform,vpPO->cleanseq,TRUE,vpPO->seq);
+        ok = ParseSeqI(vpPO->in, vpPO->iform, nseq+1, vpPO->cleanseq, TRUE, vpPO->seq);
         if(ok==FALSE) {
             break;
         }

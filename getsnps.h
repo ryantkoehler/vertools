@@ -14,7 +14,7 @@
 *
 */
 
-#define VERSION_S   "GetSNPs version 0.51"
+#define VERSION_S   "GetSNPs version 0.6"
 
 #define SUM_FILE    "sum.out"
 #define DIV_CHAR    '|'

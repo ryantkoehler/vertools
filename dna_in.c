@@ -34,7 +34,7 @@ int GuessAndGetSeqsetI(char *fnameS, SEQSET **ssPPO,int clean,int error)
 
     DB_DNA_IO DB_PrI(">> GuessAndGetSeqsetI fname=|%s|\n",fnameS);
     *ssPPO=NULL;
-    type=GuessSeqFileTypeI(fnameS,error);
+    type = GuessSeqFileTypeI(fnameS,error);
     if(IS_BOG(type)) { 
         if(error) {
             PROBLINE;
@@ -43,7 +43,7 @@ int GuessAndGetSeqsetI(char *fnameS, SEQSET **ssPPO,int clean,int error)
         DB_DNA_IO DB_PrI("<< GuessAndGetSeqsetI FALSE\n");
         return(FALSE); 
     }
-    got = ReadInSeqsetI(fnameS,type,clean,&ssPO,error);
+    got = ReadInSeqsetI(fnameS, type, clean, &ssPO, error);
     if(!got) { 
         DB_DNA_IO DB_PrI("<< GuessAndGetSeqsetI FALSE\n");
         return(FALSE); 
@@ -65,18 +65,18 @@ int ReadInSeqsetI(char *fnameS, int type, int clean, SEQSET **ssPPO, int error)
 
     DB_DNA_IO DB_PrI(">> ReadInSeqsetI type=%d name=|%s|\n",type,fnameS);
     *ssPPO = NULL;
-    if(!(fPF=OpenUFilePF(fnameS,"r",NULL))) {
+    if(!(fPF=OpenUFilePF(fnameS, "r", NULL))) {
         DB_DNA_IO DB_PrI("<< ReadInSeqsetI FILE FAIL = FALSE\n");
         return(FALSE);
     }
-    ssPO = GetSeqsetPO(fPF,type,clean,error);
+    ssPO = GetSeqsetPO(fPF, type, clean, error);
     FILECLOSE(fPF);
     if(ssPO == NULL) {
         DB_DNA_IO DB_PrI("<< ReadInSeqsetI failed to get seqset = FALSE\n");
         return(FALSE);
     }
-    SetSeqsetSource(ssPO,fnameS);
-    GetFilePartsI(fnameS,NULL,ssPO->name,NULL);
+    SetSeqsetSource(ssPO, fnameS);
+    GetFilePartsI(fnameS, NULL, ssPO->name, NULL);
     *ssPPO = ssPO;
     DB_DNA_IO DB_PrI("<< ReadInSeqsetI %p TRUE\n",ssPO);
     return(TRUE);
@@ -105,7 +105,7 @@ SEQSET *GetSeqsetPO(FILE *fPF,int type,int clean,int error)
     n = 0;
     while(TRUE)
     {
-        if(!(seqPO=CreateSeqPO(0,NULL,NULL))) {
+        if(!(seqPO=CreateSeqPO(0, NULL, NULL))) {
             printf("Problem allocating sequence to load\n");
             CHECK_SEQSET(ssPO);
             return(NULL);
@@ -113,7 +113,7 @@ SEQSET *GetSeqsetPO(FILE *fPF,int type,int clean,int error)
         /***
         *   Parse sequence
         */
-        ok = ParseSeqI(fPF,type,clean,error,seqPO);
+        ok = ParseSeqI(fPF, type, n+1, clean, error, seqPO);
         if(ok!=TRUE) {
             CHECK_SEQ(seqPO);
             break;
@@ -122,7 +122,7 @@ SEQSET *GetSeqsetPO(FILE *fPF,int type,int clean,int error)
         /***
         *   Add to collection
         */
-        if(!AddSeqToSeqsetI(seqPO,ssPO)) {
+        if(!AddSeqToSeqsetI(seqPO, ssPO)) {
             CHECK_SEQ(seqPO);
             CHECK_SEQSET(ssPO);
             return(NULL);
@@ -131,7 +131,7 @@ SEQSET *GetSeqsetPO(FILE *fPF,int type,int clean,int error)
     }
     DB_DNA_IO DB_PrI("+ n=%d\n",n);
     /***
-    *   If nothing actually read in, kill the shell and return NULL
+    *   If nothing actually read in, kill the holder set and return NULL
     */
     if (n < 1) {
         CHECK_SEQSET(ssPO);
@@ -148,11 +148,12 @@ SEQSET *GetSeqsetPO(FILE *fPF,int type,int clean,int error)
 *   End of file (done) = FALSE
 *   Errors = BOGUS
 */
-int ParseSeqI(FILE *inPF,int iform,int clean,int error,SEQ *seqPO)
+int ParseSeqI(FILE *inPF, int iform, int num, int clean, int error, SEQ *seqPO)
 {
     int ok;
+    char nameS[NSIZE];
 
-    DB_DNA_IO DB_PrI(">> ParseSeqI iform=%d\n",iform);
+    DB_DNA_IO DB_PrI(">> ParseSeqI iform=%d, num=%d\n",iform,num);
     VALIDATE(seqPO,SEQ_ID);
     InitSeq(seqPO,FALSE,FALSE);
     /***
@@ -161,7 +162,12 @@ int ParseSeqI(FILE *inPF,int iform,int clean,int error,SEQ *seqPO)
     switch(iform)
     {
         case SEQFM_RAW:     
-            ok = ParseRawSeqI(inPF,error,seqPO);
+            ok = ParseOneLineSeqI(inPF, TRUE, error, seqPO);
+            break;
+        case SEQFM_SEQ:     
+            ok = ParseOneLineSeqI(inPF, FALSE, error, seqPO);
+            sprintf(nameS, SEQ_NAME_S, num);
+            SetSeqName(seqPO, nameS);
             break;
         case SEQFM_FASTA:   
             ok = ParseFastaSeqI(inPF,error,seqPO);
@@ -181,12 +187,14 @@ int ParseSeqI(FILE *inPF,int iform,int clean,int error,SEQ *seqPO)
     return(ok);
 }
 /*************************************************************************
-*   Raw format = single line, first token = name, rest = sequence 
+*   Single line sequence input.
+*       If has_name is TRUE, then line should include <name> <seq>
+*       Else, only <sequence>
 *   Returns TRUE if got sequence
 *   Returns FALSE if end of file
 *   Returns BOGUS if problem
 */
-int ParseRawSeqI(FILE *fPF,int error,SEQ *seqPO)
+int ParseOneLineSeqI(FILE *fPF, int has_name, int error, SEQ *seqPO)
 {
     int c,t,n,s;
     char nameS[NSIZE];
@@ -194,20 +202,41 @@ int ParseRawSeqI(FILE *fPF,int error,SEQ *seqPO)
 
     VALIDATE(seqPO,SEQ_ID);
     InitSeq(seqPO,FALSE,FALSE);
-    t = n = s = 0;
+    INIT_S(seqS);
+    /***
+    *   Depending on expected name, set name and spacer-token to true at start
+    */
+    s = 0;
+    if( has_name ) {
+        INIT_S(nameS);
+        n = 0;
+    }
+    else {
+        sprintf(nameS, "%s", "no-name");
+        n = 1;
+    }
+    t = n;
     while((c = fgetc(fPF)) != EOF) {
         /***
-        *   End of line. If we've got name & seq, done
+        *   End of line. If we've got any seq, done
         */
-        if(!ISLINE(c)) {
-            if(n || s) {
+        if( !ISLINE(c) ) {
+            if(s) {
                 break;
             }
+            continue;
         }
         /***
-        *   Space, so if already have name we're into next token(s)
+        *   '#' = comment, so ignore rest of line
         */
-        if(!isgraph(INT(c))) {
+        if( c=='#' ) {
+            EatOneLineI(fPF);
+            continue;
+        }
+        /***
+        *   Space; Next token, but ignore
+        */
+        if( !isgraph(INT(c)) ) {
             if(n) {
                 t++;
             }
@@ -216,11 +245,7 @@ int ParseRawSeqI(FILE *fPF,int error,SEQ *seqPO)
         /***
         *   Name = first token; If first char is '#' it's a comment line
         */
-        if(!t) {
-            if( (n==0) && (c=='#') ) {
-                EatOneLineI(fPF);
-                continue;
-            }
+        if( (!t) && has_name ) {
             if(n < NSIZE) {
                 nameS[n++] = c;
             }
@@ -251,15 +276,17 @@ int ParseRawSeqI(FILE *fPF,int error,SEQ *seqPO)
     /***    
     *   Nothing = end of file = FALSE
     */
-    if(!n) {
+    if( !s ) {
         return(FALSE);
     }
     /***
-    *   Finish name & sequence
+    *   Finish name (if has one) & sequence
     */
-    nameS[n] = '\0';
+    if(has_name) {
+        nameS[n] = '\0';
+    }
     if(s) {
-        if(!AppendSeqSequenceI(seqPO,seqS,s)) {
+        if(!AppendSeqSequenceI(seqPO, seqS, s)) {
             return(BOGUS);
         }
     }

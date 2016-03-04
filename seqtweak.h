@@ -15,7 +15,7 @@
 */
 
 
-#define VERSION_S "SeqTweak Version 0.61"
+#define VERSION_S "SeqTweak Version 0.7"
 
 #define SEQTWEAK_ID     5141 
 typedef struct SEQTWEAK
