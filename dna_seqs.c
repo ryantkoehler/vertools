@@ -340,15 +340,12 @@ int AppendSeqSequenceI(SEQ *seqPO,char *seqS,int len)
     int i;
 
     VALIDATE(seqPO,SEQ_ID);
-    if(len < 0) {
-        len = strlen(seqS);
-    }
+    len = (len < 0) ? strlen(seqS) : len;
     if(!AdjustSeqSizeI(seqPO, seqPO->len + len, TRUE)) {
         return(FALSE);
     }
     for(i=0;i<len;i++)
     {
-        BOG_CHECK( (seqPO->len + i) >= seqPO->ssize);
         seqPO->seq[seqPO->len + i] = seqS[i];
     }
     seqPO->len += len;
@@ -420,9 +417,7 @@ int GetSeqSeqI(SEQ *seqPO, char **seqPPC)
 int FillSeqSeqStringI(SEQ *seqPO,char *seqS,int max)
 {
     VALIDATE(seqPO,SEQ_ID);
-    if(max<0) {
-        max = seqPO->len;
-    }
+    max = (max<0) ? seqPO->len : max;
     LIMIT_NUM(max,0,seqPO->len);
     max = MIN_NUM(max,seqPO->len);
     strncpy(seqS,seqPO->seq,max);
@@ -432,12 +427,10 @@ int FillSeqSeqStringI(SEQ *seqPO,char *seqS,int max)
 /*****************************************************************************
 *   Get name of seq to nameS
 */
-int FillSeqNameStringI(SEQ *seqPO,char *nameS,int max)
+int FillSeqNameStringI(SEQ *seqPO, char *nameS, int max)
 {
     VALIDATE(seqPO,SEQ_ID);
-    if(max<0) {
-        max = strlen(seqPO->name);
-    }
+    max = (max<0) ? strlen(seqPO->name) : max;
     LIMIT_NUM(max,0,NSIZE-1);
     if(nameS) {
         strncpy(nameS,seqPO->name,max);
@@ -458,6 +451,22 @@ int SetCaseSeqSubseqI(SEQ *seqPO, int up, int start, int end)
         LowerizeToLen(seqPO->seq, start, end);
     }
     FinishSeqSettingsI(seqPO,FALSE,FALSE);
+    return(TRUE);
+}
+/*****************************************************************************/
+int SetMaskSeqSubseqI(SEQ *seqPO, int start, int end)
+{
+    int i;
+    char *seqPC;
+
+    VALIDATE(seqPO,SEQ_ID);
+    start = (start < 0) ? 0 : start;
+    end = (end < 0) ? GetSeqLenI(seqPO) : end;
+    GetSeqSeqI(seqPO, &seqPC);
+    for(i=start;i<end;i++)
+    {
+        seqPC[i] = 'N';
+    }
     return(TRUE);
 }
 /*****************************************************************************

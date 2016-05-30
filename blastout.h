@@ -15,13 +15,14 @@
 */
 
 
+
 #define VERSION_S   "BlastOut version 0.66"
 
 #define BLASTOUT_ID 5031
 #define BLASTANS_ID 6005
 
-#define BLBSIZE     1000     /* lastout buff size */
-#define HISTDIM     300     /* ax identities to tabulate in hist dim */
+#define BLBSIZE     1000     /* blastout buff size */
+#define HISTDIM     300      /* max identities to tabulate in hist dim */
 
 typedef struct BLASTOUT
 {

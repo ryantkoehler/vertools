@@ -48,6 +48,7 @@ void VersionSplash(FILE *outPF, char *verS, char *preS, int bars)
     if(bars) {  
         fprintf(outPF, LINEBAR_S); 
     }
+    fflush(outPF);
 }
 /*****************************************************************************
 *   Fill passed strings with sysinfo content

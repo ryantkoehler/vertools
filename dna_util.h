@@ -14,7 +14,7 @@
 *
 */
 
-#define VERSION_S   "Dna_Util version 0.95"
+#define VERSION_S   "Dna_Util version 0.96"
 
 #define DNA_UTIL_ID     5051
 typedef struct DNA_UTIL
@@ -49,11 +49,8 @@ typedef struct DNA_UTIL
     int do_num;             /* Report number of seqs */
     struct SEQ *seq;        /* Sequence object */
     struct SEQ *fseq;       /* Full-length sequence object */
-    int first,firstb;       /* First sequence / base */
-    int last,lastb;         /* Last sequence / base */
-    int lo_mran,hi_mran;    /* Mask low and high base bounds */
-    int do_imask;           /* Flag to ivert mask base bounds */
-    int do_rre;             /* Range relative to the end */
+    struct SEQTRIM *subseq; /* Subsequence handling structure */
+    int first, last;        /* First, last sequence */
     int do_famb;            /* Filter any seqs with ambigs */
     int do_fsnp;            /* Filter any seqs with SNPs */
     int min_len,max_len;    /* Filter with this length range */
@@ -73,6 +70,7 @@ typedef struct DNA_UTIL
     int do_inbr;            /* Info brillouin index */
     int do_inbp;            /* Info berger-parker index */
     int do_ds;              /* Flag to dump sequence with reporting numbers */
+    int do_di;              /* Flag to dump input sequence with reporting numbers */
 }DNA_UTIL;
 
 #define CHECK_DNA_UTIL(tu)  if(tu){DestroyDna_utilI(tu); tu=NULL;}

@@ -192,18 +192,16 @@ int CopySeqI(SEQ *fseqPO, SEQ *sseqPO, int st, int len)
 *   dir = direction (end of string) from which to narrow 
 *   fits = flag; if true, dims must fit withing passed seq, else fails
 */
-int NarrowSeqI(SEQ *seqPO,int start,int len,int dir,int fits)
+int NarrowSeqI(SEQ *seqPO, int start, int len, int dir, int fits)
 {
     int i,f,n;
 
     DB_DNA DB_PrI(">> NarrowSeqI %p start=%d len=%d dir=%d fits=%d\n",seqPO,
         start,len,dir,fits);
     VALIDATE(seqPO,SEQ_ID);
-    if( (start<0) || (len<0) || (start>=seqPO->len) || (len>seqPO->len) ) 
-    {
+    if( (start<0) || (len<0) || (start>=seqPO->len) || (len>seqPO->len) ) {
         DB_DNA DB_PrI("+ out of bounds; seq-len=%d\n",seqPO->len);
-        if(fits==TRUE)
-        {
+        if(fits==TRUE) {
             DB_DNA DB_PrI("<< NarrowSeqI FALSE\n");
             return(FALSE);
         }
@@ -314,8 +312,7 @@ void DumpSeqset(SEQSET *ssPO,int all,FILE *outPF)
     fprintf(outPF,"Type      %d\n",ssPO->type);
     fprintf(outPF,"N         %d\n",ssPO->n);
     fprintf(outPF,"Mask @    %p\n",ssPO->mask);
-    if(all)
-    {
+    if(all) {
         for(i=0;i<ssPO->n;i++)
         {
             DumpSeq(ssPO->seqs[i],outPF);
@@ -333,8 +330,7 @@ int AddNamedSequenceToSeqsetI(char *seqS, char *nameS, SEQSET *ssPO,
     SEQ *seqPO;
 
     VALIDATE(ssPO,SEQSET_ID);
-    if(!(seqPO=CreateSeqPO(-1, seqS, nameS)) )
-    {
+    if(!(seqPO=CreateSeqPO(-1, seqS, nameS)) ) {
         return(FALSE);
     }
     /***
@@ -345,13 +341,11 @@ int AddNamedSequenceToSeqsetI(char *seqS, char *nameS, SEQSET *ssPO,
     /***
     *   Stick this guy into the set
     */
-    if(!AddSeqToSeqsetI(seqPO,ssPO))
-    {
+    if(!AddSeqToSeqsetI(seqPO,ssPO)) {
         CHECK_SEQ(seqPO);
         return(FALSE);
     }
-    if(indPI)
-    {
+    if(indPI) {
         *indPI = seqPO->ind;
     }
     return(TRUE);
@@ -431,20 +425,16 @@ void SeqsetUnmaskDims(SEQSET *ssPO,int *nPI,int *sPI,int *mPI, int *snPI)
 *   FALSE if problem (warnings)
 *   BOGUS if problem (error)
 */
-int FinishSeqSettingsI(SEQ *seqPO,int clean,int error)
+int FinishSeqSettingsI(SEQ *seqPO, int clean, int error)
 {
     int i,j,nsnp,ok,insnp;
-    char nameS[NSIZE],nS[NSIZE];
 
     VALIDATE(seqPO,SEQ_ID);
     ok = TRUE;
     /***
     *   If no name, set default
     */
-    FillSeqNameStringI(seqPO,nameS,NSIZE-1);
-    INIT_S(nS);
-    sscanf(nameS,"%s",nS);
-    if(NO_S(nS)) {
+    if(FillSeqNameStringI(seqPO,NULL,-1) < 1) {
         SetSeqName(seqPO,DEF_SEQ_NAME_S);
     }
     /***
@@ -457,53 +447,35 @@ int FinishSeqSettingsI(SEQ *seqPO,int clean,int error)
     insnp = nsnp = j = 0;
     for(i=0;i<seqPO->len;i++)
     {
-        if(isalpha(INT(seqPO->seq[i]))) {
-            switch(BaseDegeneracyI(seqPO->seq[i]))
-            {
-                /***
-                *    Normal ACGT & U
-                */
-                case 1:
-                    if( (seqPO->seq[i]=='U') || (seqPO->seq[i]=='u') ) {
-                        SET_SEQ_HASU(seqPO->flag);
-                    }
-                    break;
-                /***
-                *   2-fold degen; i.e. S = G/C, W = A/T
-                *   3-fold degen; i.e. B= not A = C/G/T
-                *   4 = N
-                */
-                case 2:
-                case 3:
-                    SET_SEQ_AMB(seqPO->flag);
-                    if (clean > SCLEAN_MID) {
-                        if(error) {
-                            printf("\n");
-                            printf("# WARNING: Bad seq char |%c| @%d in %s\n",
-                                seqPO->seq[i],i+1,seqPO->name);
-                            printf("#   Setting to \"N\"\n");
-                        }
-                        seqPO->seq[i] = 'N';
-                    }
-                    else {
-                        SET_SEQ_DEG(seqPO->flag);
-                    }
-                    break;
-                /***
-                *   4 = N
-                */
-                case 4:
-                    SET_SEQ_AMB(seqPO->flag);
-                    break;
-                /***
-                *   Default = some bogus letter?
-                */
-                default:
-                    SET_SEQ_AMB(seqPO->flag);
-                    if ( clean < SCLEAN_MID) {
-                        SET_SEQ_NS(seqPO->flag);
-                        break;
-                    }
+        switch(seqPO->seq[i]) {
+            /***
+            *    Normal ACGT & U
+            */
+            case 'A': case 'a':
+            case 'C': case 'c':
+            case 'G': case 'g':
+            case 'T': case 't':
+            case 'U': case 'u':
+                if( (seqPO->seq[i]=='U') || (seqPO->seq[i]=='u') ) {
+                    SET_SEQ_HASU(seqPO->flag);
+                }
+                break;
+            /***
+            *   2-fold degen; i.e. S = G/C, W = A/T
+            *   3-fold degen; i.e. B= not A = C/G/T
+            */
+            case 'S': case 's':
+            case 'W': case 'w':
+            case 'M': case 'm':
+            case 'K': case 'k':
+            case 'R': case 'r':
+            case 'Y': case 'y':
+            case 'B': case 'b':
+            case 'D': case 'd':
+            case 'H': case 'h':
+            case 'V': case 'v':
+                SET_SEQ_AMB(seqPO->flag);
+                if (clean > SCLEAN_MID) {
                     if(error) {
                         printf("\n");
                         printf("# WARNING: Bad seq char |%c| @%d in %s\n",
@@ -511,62 +483,77 @@ int FinishSeqSettingsI(SEQ *seqPO,int clean,int error)
                         printf("#   Setting to \"N\"\n");
                     }
                     seqPO->seq[i] = 'N';
+                }
+                else {
+                    SET_SEQ_DEG(seqPO->flag);
+                }
+                break;
+            /***
+            *   4 = N
+            */
+            case 'N': case 'n':
+                SET_SEQ_AMB(seqPO->flag);
+                break;
+            /***
+            *   Special annotations; SNPs, deletions ...
+            */
+            case '[': 
+                if(insnp) {
+                    if(error) {
+                        printf("\n");
+                        printf("# WARNING: second \"[\" in SNP @%d in %s\n",
+                            i+1,seqPO->name);
+                    }
                     ok = FALSE;
-                    break;
-            }
-            if(islower(INT(seqPO->seq[i]))) {
-                SET_SEQ_LC(seqPO->flag);
-            }
-        }
-        /* ot alphbetic */
-        else {      
-            switch(seqPO->seq[i])
-            {
-                case '[': 
-                    if(insnp) {
-                        if(error) {
-                            printf("\n");
-                            printf("# WARNING: second \"[\" in SNP @%d in %s\n",
-                                i+1,seqPO->name);
-                        }
-                        ok = BOGUS;
+                }
+                insnp = TRUE; 
+                break;
+            case ']': 
+                if(!insnp) {
+                    if(error) {
+                        printf("\n");
+                        printf("# WARNING: \"]\" outside of SNP @%d in %s\n",
+                            i+1,seqPO->name);
                     }
-                    insnp = TRUE; 
+                    ok = FALSE;
+                }
+                insnp = FALSE; 
+                nsnp++;
+                break;
+            case '/': 
+                if(!insnp) {
+                    SET_SEQ_COAX(seqPO->flag);
+                }
+                break;
+            case '*':
+                SET_SEQ_DEL(seqPO->flag);
+                break;
+            case '-':
+                SET_SEQ_INS(seqPO->flag);
+                break;
+            /***
+            *   Default = some bogus letter?
+            */
+            default:
+                SET_SEQ_AMB(seqPO->flag);
+                if ( clean < SCLEAN_MID) {
+                    SET_SEQ_NS(seqPO->flag);
                     break;
-                case ']': 
-                    if(!insnp) {
-                        if(error) {
-                            printf("\n");
-                            printf("# WARNING: \"]\" outside of SNP @%d in %s\n",
-                                i+1,seqPO->name);
-                        }
-                        ok = BOGUS;
-                    }
-                    insnp = FALSE; 
-                    nsnp++;
-                    break;
-                case '/': 
-                    if(!insnp) {
-                        SET_SEQ_COAX(seqPO->flag);
-                    }
-                    break;
-                case '*':
-                    SET_SEQ_DEL(seqPO->flag);
-                    break;
-                case '-':
-                    SET_SEQ_INS(seqPO->flag);
-                    break;
-                default:
-                    printf("Bogus sequence character: |%c| @%d in %s\n",
+                }
+                if(error) {
+                    printf("\n");
+                    printf("# WARNING: Bad seq char |%c| @%d in %s\n",
                         seqPO->seq[i],i+1,seqPO->name);
-                    ERR("FinishSeqSettingsI","Bogus char parsed in");
-                    return(FALSE);
-            }
+                    printf("#   Setting to \"N\"\n");
+                }
+                seqPO->seq[i] = 'N';
+                ok = FALSE;
+                break;
         }
         /***
         *   Already a problem, so don't keep checking
         */
-        if(ok!=TRUE) {
+        if(!ok) {
             break;
         }
     }
@@ -642,4 +629,49 @@ void DumpSeqcomp(SEQCOMP *scPO,FILE *outPF)
     }
     fprintf(outPF,"\n");
     fprintf(outPF, LINEBAR_S);
+}
+/**************************************************************************
+*   Allocate SEQTRIM
+*/
+SEQTRIM *CreateSeqtrimPO()
+{
+    SEQTRIM *stPO;
+
+    if(! (stPO = (SEQTRIM *)ALLOC(1,sizeof(SEQTRIM)))) {
+        printf("Failed to allocate SEQTRIM\n");
+        return(NULL);
+    }
+    stPO->ID = SEQTRIM_ID;
+    InitSeqtrim(stPO);
+    return(stPO);
+}
+/***************************************************************************
+*   Free one SEQCOMP data structure
+*/
+int DestroySeqtrimI(SEQTRIM *stPO)
+{
+    VALIDATE(stPO,SEQTRIM_ID);
+    FREE(stPO);
+    return(TRUE);
+}
+/***************************************************************************
+*   Init SEQTRIM
+*/
+void InitSeqtrim(SEQTRIM *stPO)
+{
+    VALIDATE(stPO,SEQTRIM_ID);
+    stPO->base_s = stPO->base_e = -1;
+    stPO->basf_s = stPO->basf_e = -1.0;
+    stPO->trim_s = stPO->trim_e = -1;
+    stPO->wind = -1;
+    stPO->winf = -1.0;
+    stPO->wcent = -1;
+    stPO->wcenf = -1.0;
+    stPO->rre = FALSE;
+    stPO->nmask = FALSE;
+    stPO->umask = FALSE;
+    stPO->lcase = FALSE;
+    stPO->ucase = FALSE;
+    stPO->one_base = TRUE;
+    stPO->end_in = TRUE;
 }

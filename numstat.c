@@ -41,8 +41,9 @@ void NumstatUse()
     printf("    -out XXX   Output file XXX\n");
     printf("    -col #     Take data from column #; Default is column %d\n",DEF_COL);
     printf("    -scol #    Second data col #\n");
+    printf("    -dif       Report difference [scol] - [col]\n");
     printf("    -ic #      Ignore characters up to position # on data lines\n");
-    printf("    -sk        Skip bogus / missing data; Default is to abort\n");
+    printf("    -sk        Skip bogus / missing data; Default is abort\n");
     printf("    -hb #      Histogram data in bins of #\n");
     printf("    -his # #   Histogram data in bins of # starting at #\n");
     printf("    -hlr # #   Histogram limit reported range # to #\n");
@@ -72,13 +73,13 @@ int NumstatI(int argc, char **argv)
     if(!ParseArgsI(argc,argv,
         "S -sl B -his D2 -echo S -efi B -col I -out S -hlr D2\
         -sk B -ic I -hp B -pi B -hb D -prs D\
-        -prl S -hmb I -hwd I -hne B -scol I -sp B -hntb B -htxf D",
+        -prl S -hmb I -hwd I -hne B -scol I -sp B -hntb B -htxf D -dif B",
         nsPO->inname, &nsPO->do_sl, &nsPO->h_bin,&nsPO->h_lo, nsPO->echo, 
         &nsPO->do_efi, &nsPO->col,
         nsPO->outname, &nsPO->h_lo,&nsPO->h_hi, &nsPO->do_sk, &nsPO->do_ic, 
         &nsPO->do_hplot, &nsPO->do_ploti, &nsPO->h_bin, &nsPO->prsd, nsPO->prls, 
         &nsPO->h_maxbin, &nsPO->h_pwide, &nsPO->do_hends, 
-        &nsPO->scol, &nsPO->do_splot, &nsPO->do_hntb, &nsPO->htb_xfold,
+        &nsPO->scol, &nsPO->do_splot, &nsPO->do_hntb, &nsPO->htb_xfold, &nsPO->do_dif,
         (int *)NULL))
     {
         NumstatUse();
@@ -112,6 +113,12 @@ int NumstatI(int argc, char **argv)
         fprintf(nsPO->out,"%s# (column %d)\n",nsPO->echo, nsPO->col);
     }
     /***
+    *   Doing difference? Set these values
+    */
+    if(nsPO->do_dif) {
+        CalcColDifsI(nsPO);
+    }
+    /***
     *   Get pointer to raw double array and length. 
     *   This is easier to use with array functions; Also sort for percentile
     */
@@ -122,8 +129,7 @@ int NumstatI(int argc, char **argv)
     */
     NumlistStatsI(nsPO->vals, -1, -1, &nsPO->min,&nsPO->max,&nsPO->av,&nsPO->sd);
     NumlistSumI(nsPO->vals, -1, -1, &nsPO->sum);
-    if( (nsPO->do_sl) && (!nsPO->do_perc) )
-    {
+    if( (nsPO->do_sl) && (!nsPO->do_perc) ) {
         NumstatOneLineOut(nsPO);
         CHECK_NUMSTAT(nsPO); 
         return(TRUE);
@@ -339,9 +345,6 @@ int NumstatHandleSplotI(NUMSTAT *nsPO)
     NumlistToHistogramI(nsPO->svals, -1.0, BAD_D, BAD_D, &shisPO);
     ncol = GetHistogramNumBinsI(fhisPO);
     nrow = GetHistogramNumBinsI(shisPO);
-/* HAM? why -1 needed ? *
-    tabPO = CreateTablePO(nrow-1, ncol-1);
-*/
     tabPO = CreateTablePO(nrow, ncol);
     if(!tabPO) {
         CHECK_HISTOGRAM(fhisPO); CHECK_HISTOGRAM(shisPO);
@@ -374,7 +377,7 @@ int NumstatHandleSplotI(NUMSTAT *nsPO)
     /***
     *   Fill table values
     */
-    for(i=0;i<nsPO->num;i++)
+    for(i=0; i<nsPO->num; i++)
     {
         GetNumlistDoubI(nsPO->vals,i,&fD);
         GetNumlistDoubI(nsPO->svals,i,&sD);
@@ -457,6 +460,7 @@ void InitNumstat(NUMSTAT *nsPO)
     nsPO->do_hends = TRUE;
     nsPO->do_hist = FALSE;
     nsPO->do_hntb = FALSE;
+    nsPO->do_dif = FALSE;
     nsPO->htb_xfold = HIS_BTR_XFOLD;
     strcpy(nsPO->h_pfmt,DEF_H_PTMF_S);
     strcpy(nsPO->hvsep,DEF_H_SEP_S);
@@ -530,7 +534,9 @@ int OpenNumstatFilesI(NUMSTAT *nsPO)
     HAND_NFILE(nsPO->out);
     return(TRUE);
 }
-/*****************************************************************************/
+/*****************************************************************************
+*
+*/
 int CheckNumstatOptionsI(NUMSTAT *nsPO)
 {
     if(!BAD_DOUB(nsPO->h_bin)) {    
@@ -601,6 +607,13 @@ int CheckNumstatOptionsI(NUMSTAT *nsPO)
         printf("Scatter plot needs second column\n");
         return(FALSE);
     }
+    /***
+    *   Difference between cols
+    */
+    if( nsPO->do_dif && (!nsPO->svals) ) {
+        printf("Difference needs second column\n");
+        return(FALSE);
+    }
     return(TRUE);
 }
 /*****************************************************************************/
@@ -633,7 +646,8 @@ int GetLineDataValI(NUMSTAT *nsPO, char *bufS, DOUB *rPD, DOUB *sPD)
         return(FALSE);
     }
     cPC = bufS;
-    for(j=0;j<nsPO->do_ic;j++)
+    /* Ignore chars up to? */
+    for(j=0; j<nsPO->do_ic; j++)
     {
         if(!ISLINE(*cPC)) {
             break;
@@ -722,7 +736,10 @@ void NumstatHandleHeader(NUMSTAT *nsPO)
         sprintf(sS,"Col_%d ",nsPO->scol);
     }
     NumstatReportStats(nsPO, FALSE, fS, nsPO->out);
-    if(nsPO->svals) {
+    /***
+    *   If not doing diff, report second column story
+    */
+    if( (nsPO->svals) && (!nsPO->do_dif) ) {
         fprintf(nsPO->out,"%s#\n",nsPO->echo);
         NumstatReportStats(nsPO, TRUE, sS, nsPO->out);
     }
@@ -874,4 +891,24 @@ void ReportSingPercentile(NUMSTAT *nsPO, int p, DOUB vD, int num, FILE *outPF)
                 vD, PERCENT_R(p,num));
     }
     return;
+}
+/**************************************************************************
+*   Replace values with differences between col 2 and 1
+*/
+int CalcColDifsI(NUMSTAT *nsPO)
+{
+    int i;
+    DOUB fD, sD;
+
+    /***
+    *   Fill table values
+    */
+    for(i=0; i<nsPO->num; i++)
+    {
+        GetNumlistDoubI(nsPO->vals,i,&fD);
+        GetNumlistDoubI(nsPO->svals,i,&sD);
+        fD = sD - fD;
+        SetNumlistDoubI(nsPO->vals,i,fD);
+    }
+    return(TRUE);
 }

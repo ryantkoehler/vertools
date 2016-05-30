@@ -17,6 +17,7 @@ dna_out.c
 dna_seqs.c
 dna_snp.c
 dna_splc.c
+dna_trim.c
 seq_info.c
 snp_char.c
 dna_util.c

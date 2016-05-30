@@ -107,7 +107,7 @@ int TmUtilI(int argc, char **argv)
         -tmsl B -tmpey B -scon D -rsd B -tem D -fds B\
         -tlmin B -tes B -btes B -den B\
         -tcon D -eraw B -bran I2 -rre B -otls B\
-        -iraw B -ifas B -dthe B -cmb B -pdc I -tab I2 -emin B -tbj I -ds B",
+        -iraw B -ifas B -dthe B -cmb B -pdc I -tab I2 -emin B -tbj I -ds B -iseq B",
         tuPO->inname, tuPO->outname, tuPO->parname, &tuPO->con1, 
         &tuPO->salt, &tmoli, &tmelt, &tuPO->do_therm, &tuPO->do_dpar,
         &tuPO->do_tmpro, &tm24, &tmgb, &tuPO->mg, &tuPO->quiet, 

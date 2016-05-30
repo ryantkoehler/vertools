@@ -58,11 +58,17 @@ void DnaUtilUse(void)
     printf("   -flg       Flag output status; i.e. 1=in, 0=out\n");
     printf("   -ostat     Output sequences stats (Length Amb N LC [SNP])\n");
     printf("   -stat      Report overall stats for input file\n");
-    printf("   -ds        Dump (report) sequences appended as last column\n");
-    printf("   -bran # #  Base range cut to # to # (1-base coords)\n");
+    printf("   -ds -di    Dump modified / input sequences appended as last column\n");
+    printf("   -bran # #  Base range # to # (1-base coords)\n");
+    printf("   -braf # #  Fractional base range # to # (0-1)\n");
     printf("   -rre       Base range relative to end; i.e. backwards\n");
-    printf("   -mran # #  Mask range bases # to #; i.e. set to N's\n");
-    printf("   -imask     Mask range inversion; out>-->in & in>-->out\n");
+    printf("   -trim # #  Trim # and # from ends\n");
+    printf("   -win #     Window of # bases; Default centered\n");
+    printf("   -wif #     Fraction window of # (0-1)\n");
+    printf("   -wcp #     Window center postion\n");
+    printf("   -wcf #     Fractional window center postion\n");
+    printf("   -msk -imsk Mask / Invert mask selected range with N\n");
+    printf("   -muc -mlc  Mark selected range Upper / Lower case\n");
     printf("   -wlis XXX  Qualify with words (first token) listed in XXX\n");
     printf("   -kc        Keep case for token comparison (default ignore)\n");
     printf("   -wst       Word start only needs to match line (not full token)\n");
@@ -89,36 +95,43 @@ int DnaUtilI(int argc, char **argv)
 {
     int n,nok,ok,oraw,ofas,nfas,olis,ostat,stat,iraw,iseq,ifas,do_cln,do_cls,do_cll;
     DNA_UTIL *duPO;
+    SEQTRIM *stPO;
 
     duPO = CreateDna_utilPO();
+    stPO = duPO->subseq;
     oraw = ofas = nfas = ostat = stat = olis = iraw = ifas = iseq = FALSE;
     do_cln = do_cls = do_cll = FALSE;
     if(!ParseArgsI(argc,argv,
         "S -out S -oraw B -com B -inv B -rev B -ofas B -nfas B\
         -stat B -flen I2 -famb B -not B\
-        -bran I2 -rre B -sran I2 -wlis S -kc B -olis B -fsnp B\
+        -bran I2 -braf D2 -rre B -trim I2\
+        -win I -wif D -wcp I -wcf D\
+        -msk B -imsk B -muc B -mlc B\
+        -sran I2 -wlis S -kc B -olis B -fsnp B\
         -iraw B -ifas B -ostat B -plp S -pew I2 -cln B -cls B -pol I -igp B\
-        -flg B -psj I2 -inwf I2 -insh B -inbr B -inbp B -mran I2 -imask B\
+        -flg B -psj I2 -inwf I2 -insh B -inbr B -inbp B\
         -cll B -pat I -exi B -tnb B\
         -pco B -pml I2\
-        -cstat B -csep B -wst B -tsub B -nan B -nfl I -nfb I -ds B -iseq B",
+        -cstat B -csep B -wst B -tsub B -nan B -nfl I -nfb I -ds B -di B -iseq B",
         duPO->inname, duPO->outname, &oraw, &duPO->do_comp, &duPO->do_inv, 
         &duPO->do_rev, &ofas, &nfas, &stat, &duPO->min_len,&duPO->max_len, 
         &duPO->do_famb, &duPO->do_not,  
-        &duPO->firstb,&duPO->lastb, &duPO->do_rre, &duPO->first,&duPO->last, 
+        &stPO->base_s,&stPO->base_e, &stPO->basf_s,&stPO->basf_e, &stPO->rre, 
+        &stPO->trim_s,&stPO->trim_e, 
+        &stPO->wind, &stPO->winf, &stPO->wcent, &stPO->wcenf,
+        &stPO->nmask, &stPO->umask, &stPO->ucase, &stPO->lcase,
+        &duPO->first,&duPO->last, 
         duPO->wlisname, &duPO->do_kc, &olis, 
         &duPO->do_fsnp, &iraw, &ifas, &ostat, duPO->olpname,
         &duPO->olp_up,&duPO->olp_dn, &do_cln, &do_cls, &duPO->do_pol,
         &duPO->igprob, &duPO->do_flg, &duPO->opl_st,&duPO->opl_j,
         &duPO->ifwmin,&duPO->ifwmax,
         &duPO->do_insh, &duPO->do_inbr, &duPO->do_inbp,
-        &duPO->lo_mran,&duPO->hi_mran, &duPO->do_imask, &do_cll,
-        &duPO->do_pat, 
-        &duPO->do_exi,
+        &do_cll, &duPO->do_pat, &duPO->do_exi,
         &duPO->do_tnb, &duPO->do_pco, &duPO->do_pol,&duPO->do_pml,
         &duPO->do_cstat, &duPO->do_csep, 
         &duPO->do_wst, &duPO->do_wsub, &duPO->do_nan,
-        &duPO->nfline, &duPO->nfblock, &duPO->do_ds,
+        &duPO->nfline, &duPO->nfblock, &duPO->do_ds, &duPO->do_di,
         &iseq,
         (int *)NULL))
     {
@@ -237,8 +250,7 @@ int DnaUtilI(int argc, char **argv)
             /***
             *   Do any masking, trim subseqs, sequence flips
             */
-            HandleDuSeqMaskingI(duPO, duPO->seq);
-            if(!HandleDuSubseqI(duPO, duPO->seq, duPO->fseq)) {
+            if(!DnaTrimSeqI(duPO->subseq, duPO->seq)) {
                 ABORTLINE;
                 break;
             }
@@ -288,6 +300,7 @@ DNA_UTIL *CreateDna_utilPO()
     duPO->ID = DNA_UTIL_ID;
     duPO->seq = CreateSeqPO(0,NULL,NULL);
     duPO->fseq = CreateSeqPO(0,NULL,NULL);
+    duPO->subseq = CreateSeqtrimPO();
     InitDna_util(duPO);
     return(duPO);
 }
@@ -303,6 +316,7 @@ int DestroyDna_utilI(DNA_UTIL *duPO)
     CHECK_NFILE(duPO->out,duPO->outname);
     CHECK_SEQ(duPO->seq);
     CHECK_SEQ(duPO->fseq);
+    CHECK_SEQTRIM(duPO->subseq);
     FREE(duPO);
     return(TRUE);
 }
@@ -337,8 +351,6 @@ void InitDna_util(DNA_UTIL *duPO)
     duPO->first = BOGUS;
     duPO->last = BOGUS;
     duPO->n_flags = 0;
-    duPO->firstb = -1;   
-    duPO->lastb = -1;    
     duPO->min_len = BOGUS; 
     duPO->max_len = BOGUS;
     duPO->len_hi = duPO->snp_hi = -TOO_BIG;
@@ -354,9 +366,7 @@ void InitDna_util(DNA_UTIL *duPO)
     duPO->olp_up = duPO->olp_dn = 0;
     duPO->do_insh = duPO->do_inbr = duPO->do_inbp = FALSE;
     duPO->ifwmin = duPO->ifwmax = 0;
-    duPO->lo_mran = duPO->hi_mran = BOGUS;
-    duPO->do_imask = FALSE;
-    duPO->do_ds = FALSE;
+    duPO->do_ds = duPO->do_di = FALSE;
 }
 /**************************************************************************
 *   Information indices set?
@@ -372,7 +382,7 @@ int AnyInfoSettingsI(DNA_UTIL *duPO)
     return(FALSE);
 }
 /*************************************************************************
-*   Check for option consistency
+*   Check for (some) option consistency
 */
 int CheckDnuOptionsI(DNA_UTIL *duPO)
 {
@@ -384,14 +394,6 @@ int CheckDnuOptionsI(DNA_UTIL *duPO)
             PROBLINE;
             printf("Bad word sizes for -inwf: %d %d\n",
                 duPO->ifwmin, duPO->ifwmax);
-            return(FALSE);
-        }
-    }
-    if(duPO->firstb > 0) {
-        if( duPO->lastb < duPO->firstb ) {
-            PROBLINE;
-            printf("Bad base range specified: %d to %d\n",
-                duPO->firstb,duPO->lastb);
             return(FALSE);
         }
     }
@@ -503,67 +505,6 @@ int HandleDuSeqFlipsI(DNA_UTIL *duPO, SEQ *seqPO)
         SetSeqName(seqPO,nameS);
     }
     return(any);
-}
-/***************************************************************************
-*   Possibly mask portions of current sequence 
-*/
-int HandleDuSeqMaskingI(DNA_UTIL *duPO, SEQ *seqPO)
-{
-    int i,n,len;
-    char *seqPC;
-
-    if(IS_BOG(duPO->lo_mran)) {
-        return(FALSE);
-    }
-    len = GetSeqLenI(seqPO);
-    GetSeqSeqI(seqPO, &seqPC);
-    for(i=0;i<len;i++)
-    {
-        n = 0;
-        if( ((i+1) >= duPO->lo_mran) && ((i+1) <= duPO->hi_mran) ) {    
-            n++; 
-        }
-        if(duPO->do_imask) {    
-            n = !n; 
-        }
-        if(n) { 
-            if(duPO->do_rre) {
-                seqPC[len - i - 1] = 'N';   
-            }
-            else {
-                seqPC[i] = 'N';    
-            }
-        }
-    }
-    return(TRUE);
-}
-/***************************************************************************
-*   Possibly shrink current sequence, seqPO
-*   Also set case on full sequence fseqPO to reflect subseq seleciton
-*/
-int HandleDuSubseqI(DNA_UTIL *duPO, SEQ *seqPO, SEQ *fseqPO)
-{
-    int len,flen,start;
-
-    /***
-    *   Shrink?
-    *   First base, firstb, is 1-based coord
-    */
-    if( duPO->firstb > 0) {
-        SetCaseSeqSubseqI(fseqPO, FALSE, -1, -1);
-        start = duPO->firstb - 1;
-        len = duPO->lastb - duPO->firstb + 1;
-        if(duPO->do_rre) {
-            NarrowSeqI(seqPO, start, len, REVERSE, FALSE);
-            flen = GetSeqLenI(fseqPO);
-            SetCaseSeqSubseqI(fseqPO, TRUE, flen - duPO->lastb, flen - duPO->firstb + 1);
-        }
-        else {
-            NarrowSeqI(seqPO, start, len, FORWARD, FALSE);
-            SetCaseSeqSubseqI(fseqPO, TRUE, duPO->firstb-1, duPO->lastb);
-        }
-    }
-    return(TRUE);
 }
 /**************************************************************************
 *   Screen current seq against filters
@@ -788,6 +729,10 @@ int HandleDnaOstatI(DNA_UTIL *duPO, char *nameS, SEQ *seqPO, SEQ *fseqPO, FILE *
     snp = CountSeqSnpSitesI(seqPC,0,slen);
     fprintf(outPF,"%s\t%d\t%d\t%d\t%d\t%d",nameS,slen,na,nn,lc,snp);
     if(duPO->do_ds) {
+        GetSeqSeqI(seqPO, &seqPC);
+        fprintf(outPF,"\t%s",seqPC);
+    }
+    if(duPO->do_di) {
         GetSeqSeqI(fseqPO, &seqPC);
         fprintf(outPF,"\t%s",seqPC);
     }
@@ -985,6 +930,10 @@ int HandleDnaInfoOutI(DNA_UTIL *duPO, SEQ *seqPO, SEQ *fseqPO, FILE *outPF)
         return(FALSE);
     }
     if(duPO->do_ds) {
+        GetSeqSeqI(seqPO,&seqPC);
+        fprintf(outPF,"\t%s",seqPC);
+    }
+    if(duPO->do_di) {
         GetSeqSeqI(fseqPO,&seqPC);
         fprintf(outPF,"\t%s",seqPC);
     }

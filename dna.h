@@ -25,37 +25,39 @@
 #define SEQ_ID          4052
 #define SEQSET_ID       4054
 #define SEQCOMP_ID      4056
+#define SEQTRIM_ID      4058
 
 #define SSIZE_MIN       100     /* String size (allocated) min size */
 #define SSN_BLOCK       100     /* SEQSET nsize (allocated) block increment */
 #define SEQ_BLOCK       1000    /* SEQ allocate block increment */
 
-typedef struct SEQ      /* Sequence datatype */
+
+typedef struct SEQ          /* Sequence datatype */
 {
     int ID;
-    int ind;            /* Index if in set */
-    struct SEQSET *par; /* Possible parent sequence set */
-    char name[NSIZE];   /* Name string */
-    char *seq;          /* Sequence string */
-    int ssize;          /* Allocated sequence string length */
-    int len;            /* Sequence length */
-    int nsnp;           /* Number of SNP records */
-    int flag;           /* Sequence bitfield */
+    int ind;                /* Index if in set */
+    struct SEQSET *par;     /* Possible parent sequence set */
+    char name[NSIZE];       /* Name string */
+    char *seq;              /* Sequence string */
+    int ssize;              /* Allocated sequence string length */
+    int len;                /* Sequence length */
+    int nsnp;               /* Number of SNP records */
+    int flag;               /* Sequence bitfield */
 }SEQ;
 
-typedef struct SEQSET   /* Sequence set datatype */
+typedef struct SEQSET       /* Sequence set datatype */
 {
     int ID;
-    int type;           /* Type flag */
-    int ambigs;         /* Flag for inclusion of any ambiguous bases */
-    char name[NSIZE];   /* Name of whole set */
-    char source[NSIZE]; /* Filename */
-    int n,nsize;        /* Number of seqs, Allocated array length */
-    struct SEQ **seqs;  /* Array of SEQ structures */
-    char *mask;         /* Sequence masking field [n] */
+    int type;               /* Type flag */
+    int ambigs;             /* Flag for inclusion of any ambiguous bases */
+    char name[NSIZE];       /* Name of whole set */
+    char source[NSIZE];     /* Filename */
+    int n,nsize;            /* Number of seqs, Allocated array length */
+    struct SEQ **seqs;      /* Array of SEQ structures */
+    char *mask;             /* Sequence masking field [n] */
 }SEQSET;
 
-typedef struct SEQCOMP
+typedef struct SEQCOMP      /* Sequence composition holder */
 {
     int ID;
     int slen,nbase;         /* Seq length, number of non-ambig bases */
@@ -64,12 +66,33 @@ typedef struct SEQCOMP
     int na,nc,ng,nt;        /* Number of bases */
     int dinuc[16];          /* inucleotide numbers */
     int n_dinuc;            /* umber of dinucleotides */
-    REAL fa,fc,fg,ft;       /* raction of bases */
+    DOUB fa,fc,fg,ft;       /* raction of bases */
 }SEQCOMP;
+
+typedef struct SEQTRIM      /* Sequence trimming settings holder */
+{
+    int ID;
+    int base_s, base_e;     /* Base start and end; Relative to start / end */
+    DOUB basf_s, basf_e;    /* Fractional base start and end; Relative to start / end */
+    int trim_s, trim_e;     /* Trim start and end bases; Relative to center */
+    int wind;               /* Bases for window; Relative to center */
+    DOUB winf;              /* Fractional bases for window; Relative to center */
+    int wcent;              /* Window center base position; Relative to start / end */
+    DOUB wcenf;             /* Fractional window center base position; Relative to start / end */
+    int rre;                /* Flag to base range relative to end; backwards */
+    int nmask;              /* Flag to mask range with N */
+    int umask;              /* Flag to mask non-range with N */
+    int ucase;              /* Flag to set range uppercase; else lower */
+    int lcase;              /* Flag to set range lowercase; else upper */
+    int one_base;           /* Flag for 1-base coords */
+    int end_in;             /* Flag to include end in range */
+}SEQTRIM;
 
 #define CHECK_SEQ(ob)       if(ob){DestroySeqI(ob);ob=NULL;}
 #define CHECK_SEQSET(ob)    if(ob){DestroySeqsetI(ob);ob=NULL;}
-#define CHECK_SEQCOMP(ps) if(ps){DestroySeqcompI(ps);ps=NULL;} 
+#define CHECK_SEQCOMP(ob)   if(ob){DestroySeqcompI(ob);ob=NULL;} 
+#define CHECK_SEQTRIM(ob)   if(ob){DestroySeqtrimI(ob);ob=NULL;} 
+
 
 /***
 *   Bit field flags for seqs
@@ -77,7 +100,6 @@ typedef struct SEQCOMP
 #define SEQ_SNP (1<<1)      /* Seq has explicit SNP(s) */
 #define SEQ_AMB (1<<2)      /* Seq has ambiguous bases; N */
 #define SEQ_DEG (1<<3)      /* Seq has degenerate bases; SW,RY... */
-#define SEQ_LC  (1<<4)      /* Seq has lower case */
 #define SEQ_NS  (1<<5)      /* Seq has non-standard bases; X,L... */
 #define SEQ_INS (1<<6)      /* Seq has insertion (-) indicated */
 #define SEQ_DEL (1<<7)      /* Seq has deletion (*) indicated */
@@ -97,7 +119,6 @@ typedef struct SEQCOMP
 #define SET_SEQ_SNP(v)  ((v) |= SEQ_SNP)
 #define SET_SEQ_AMB(v)  ((v) |= SEQ_AMB)
 #define SET_SEQ_DEG(v)  ((v) |= SEQ_DEG)
-#define SET_SEQ_LC(v)   ((v) |= SEQ_LC)
 #define SET_SEQ_NS(v)   ((v) |= SEQ_NS)
 #define SET_SEQ_INS(v)  ((v) |= SEQ_INS)
 #define SET_SEQ_DEL(v)  ((v) |= SEQ_DEL)
@@ -171,7 +192,7 @@ typedef struct SEQCOMP
 
 /*********************** ppp ********************
 * C function listing generated by gen_prot
-* Thu Mar  3 15:58:00 2016
+* Sat May 28 22:06:00 2016
 */
 /****************************************************************
 * dna.c
@@ -182,7 +203,7 @@ int AdjustSeqSizeI(SEQ *seqPO, int len, int error);
 void DumpSeq(SEQ *seqPO,FILE *outPF);
 void InitSeq(SEQ *seqPO,int par,int mem);
 int CopySeqI(SEQ *fseqPO, SEQ *sseqPO, int st, int len);
-int NarrowSeqI(SEQ *seqPO,int start,int len,int dir,int fits);
+int NarrowSeqI(SEQ *seqPO, int start, int len, int dir, int fits);
 SEQSET *CreateSeqsetPO(int n);
 int DestroySeqsetI(SEQSET *ssPO);
 int AdjustSeqsetSizeI(SEQSET *ssPO,int size);
@@ -192,11 +213,14 @@ int AddNamedSequenceToSeqsetI(char *seqS, char *nameS, SEQSET *ssPO,
 int AddSeqToSeqsetI(SEQ *seqPO,SEQSET *ssPO);
 void InitSeqset(SEQSET *ssPO);
 void SeqsetUnmaskDims(SEQSET *ssPO,int *nPI,int *sPI,int *mPI, int *snPI);
-int FinishSeqSettingsI(SEQ *seqPO,int clean,int error);
+int FinishSeqSettingsI(SEQ *seqPO, int clean, int error);
 SEQCOMP *CreateSeqcompPO(void);
 int DestroySeqcompI(SEQCOMP *scPO);
 void InitSeqcomp(SEQCOMP *scPO);
 void DumpSeqcomp(SEQCOMP *scPO,FILE *outPF);
+SEQTRIM *CreateSeqtrimPO(void);
+int DestroySeqtrimI(SEQTRIM *stPO);
+void InitSeqtrim(SEQTRIM *stPO);
 
 /****************************************************************
 * dna_char.c
@@ -285,8 +309,9 @@ int GetSeqSnpCountI(SEQ *seqPO);
 int AnySeqAmbigsI(SEQ *seqPO);
 int GetSeqSeqI(SEQ *seqPO, char **seqPPC);
 int FillSeqSeqStringI(SEQ *seqPO,char *seqS,int max);
-int FillSeqNameStringI(SEQ *seqPO,char *nameS,int max);
+int FillSeqNameStringI(SEQ *seqPO, char *nameS, int max);
 int SetCaseSeqSubseqI(SEQ *seqPO, int up, int start, int end);
+int SetMaskSeqSubseqI(SEQ *seqPO, int start, int end);
 int UppercaseSeqSeqI(SEQ *seqPO);
 int UppercaseSeqsetSeqsI(SEQSET *ssPO);
 int ReverseCompSeqSeqI(SEQ *seqPO);
@@ -316,6 +341,12 @@ int NeedExtensionI(char *seqS,int ov, char *upS, int dir, int ext);
 int GetExtensionSeqI(char *upS,int dir,int ext,char *inS);
 int ProbeTargOverlapI(char *probS,int plen,char *targS,int tlen,int dir);
 int MergeSeqsI(SEQ *seqPO,SEQ *addPO,int how);
+
+/****************************************************************
+* dna_trim.c
+*/
+int DnaTrimSeqI(SEQTRIM *stPO, SEQ *seqPO);
+int AnySeqTrimmingI(SEQTRIM *stPO);
 
 /****************************************************************
 * snp_char.c
