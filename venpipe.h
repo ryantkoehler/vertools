@@ -17,8 +17,8 @@
 
 #include "dna.h"
 
-#define VEN_VERSION_S   "VenPipe Version 0.95"
-#define VLIB_VERSION_S  "Vienna Library: ViennaRNA-2.1.6"
+#define VEN_VERSION_S   "VenPipe Version 1.0"
+#define VLIB_VERSION_S  "Vienna Library: ViennaRNA-2.2.5"
 
 #define MAX_VSLEN   10000   /* Sequence buffer size; Max seq len */
 
