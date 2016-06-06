@@ -31,11 +31,13 @@ int main(int argc, char **argv)
 void VenPipeUse()
 {
     VersionSplash(NULL,VEN_VERSION_S,"#  ",TRUE);
+    printf("# %s\n",VLIB_VERSION_S);
+    printf("#\n");
     printf("Usage: <infile> ['-' for stdin] [...options]\n");
     printf("   <input>     Input sequence file (format guessed from .ext)\n");
-    printf("   -iraw      Treat input as \"raw\" format; <name> <seq> / line\n");
-    printf("   -iseq      Treat input as simmple sequence; <seq> / line\n");
-    printf("   -ifas      Treat input as fasta format\n");
+    printf("   -iraw       Treat input as \"raw\" format; <name> <seq> / line\n");
+    printf("   -iseq       Treat input as simmple sequence; <seq> / line\n");
+    printf("   -ifas       Treat input as fasta format\n");
     printf("   -vpar XXX   Parameter file (Vienna energy table)\n");
     printf("   -nosc       No salt correction for vienna parameter file\n");
     printf("   -out XXX    Set output to = XXX\n");
