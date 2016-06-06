@@ -2,7 +2,9 @@
 1/4/15 RTK; Update with cleaned code (tabs to space, etc)
 9/27/15 RTK; V1.1
 1/4/16 RTK; V1.2; Update scoretab and tm_utl (and score, numlist stuff)
-6/2/16 RTK; V1.3; Update dna_util windows (and generally -ds)
+6/2/16 RTK; V1.3; Update dna_util windows (and generally -ds); Also tested
+    this code on both Linux (Ubuntu 14.04) and Mac (El Capitan; Darwin Kernel 
+    Version 15.4.0) and outcomes agree (except lassoo ???)
 
 VerTools 1.3
 
