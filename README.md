@@ -11,3 +11,6 @@ More info is in other README files (in docs directory):
 * [README_versions.md](docs/README_versions.md) Original version numbers 
 * [README_todo.md](docs/README_todo.md) List of things to do!
 * [README_ViennaRNA_RTK.md](docs/README_ViennaRNA_RTK.md) Need to build Vienna library for folding (venpipe)
+
+[My Awesome Wiki](../../wiki)
+

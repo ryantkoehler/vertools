@@ -16,7 +16,6 @@ VerTools 1.3
 Source files for vertools collection; 
 This package has only source (no examples, tests, etc)
 
-[My Awesome Wiki](../../wiki)
 
 
 -----------------------------------------------------------------------------
