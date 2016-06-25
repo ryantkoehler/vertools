@@ -12,5 +12,5 @@ More info is in other README files (in docs directory):
 * [README_todo.md](docs/README_todo.md) List of things to do!
 * [README_ViennaRNA_RTK.md](docs/README_ViennaRNA_RTK.md) Need to build Vienna library for folding (venpipe)
 
-[My Awesome Wiki](../../wiki)
+[Relative path to vertools wiki](../../wiki)
 
