@@ -7,7 +7,7 @@ vertools
 
 More info is in other README files:
 
-* [README](/README) Build instructions and brief description of tools
-* [README.versions](/README.versions) Original version numbers 
-* [README.todo](/README.todo) List of things to do!
-* [README.ViennaRNA.RTK](/README.ViennaRNA.RTK) Need to build Vienna library for folding (venpipe)
+* [README_vertools.md](/README_vertools.md) Build instructions and brief description of tools
+* [README_versions.md](/README_versions.md) Original version numbers 
+* [README_todo.md](/README_todo.md) List of things to do!
+* [README_ViennaRNA_RTK.md](/README_ViennaRNA_RTK.md) Need to build Vienna library for folding (venpipe)
