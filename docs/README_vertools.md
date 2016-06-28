@@ -47,22 +47,22 @@ Also see [README_ViennaRNA_RTK.md](/README_ViennaRNA_RTK.md)
 * ***alphcont*** Alphabet content. Used to calculate fraction of bases, base types, max runs, etc.
 * ***bit_util*** Bit utility. Used to manipulate bitfield files
 * ***blastout*** BLAST output parser. Used to summarize BLAST hits, get stats, etc.
-* ***bpaste*** Big paste. Legacy (may be in scripts?) ... TODO: retire
-* ***ccase*** Change case. Legacy (may be in scripts?) ... TODO: retire
+* ***bpaste*** Big paste. *Legacy (may be in scripts?)* ... TODO: retire
+* ***ccase*** Change case. *Legacy (may be in scripts?)* ... TODO: retire
 * ***chardump*** Character dump. Reports / cleans 'weird' characters in text files (like dos end-of-line)
 * ***cmake*** C makefile generator. Given list of C files, create makefile (Build tool only)
 * ***comp_seq*** Compare sequences. Calculate, display various alignments; Similarity, complimentarity, 3'end, etc... TODO: Replace alignment code (e.g. Smith-waterman)
 * ***dna_util*** DNA utility. Sequence file manipulations and stats. Also calculates sequence complexity.
 * ***filepick*** File pick. Select subsection(s) of file based on keywords (may be in scripts)
 * ***filter*** Filter file. Select lines based on numbers, random sample.
-* ***fname*** File name. Legacy (may be in scripts?) ... TODO: retire
+* ***fname*** File name. *Legacy (may be in scripts?)* ... TODO: retire
 * ***gen_clis*** Generate C file list. This generates separate C lists suitable for cmake (Build tool only)
 * ***gen_nums*** Generate numbers. Generate numbers with various patterns, including random.
 * ***gen_prot*** Generate C function prototypes (Build tool only)
 * ***gen_seq*** Generate sequences. Random or systematic sequence generation with various constraints.
 * ***getsnps*** Get SNPs. Extract SNP sequences annotated in various ways.
 * ***lassoo*** Lassoo. Diversity library tool updated since publication. Uses bitwise item representations.
-* ***num*** Number tool. Legacy (may be in scripts?) ... TODO: retire
+* ***num*** Number tool. *Legacy (may be in scripts?)* ... TODO: retire
 * ***numstat*** Number stats. Summary stats and histograms from numbers.
 * ***pick_seq*** Pick sequences. Tool to pick diverse sequences, for example different barcodes.
 * ***plotmat*** Plot matrix. Heatmat jpg file from number data file.
