@@ -84,11 +84,12 @@ typedef unsigned int *OBJPTR;
 #define CAP_CASE        4
 #define INIT_S(st)      st[0] = '\0'
 #define NO_S(st)        (st[0] == '\0')
-#define DEF_BS          255         /* Default buffer size */
+#define DEF_BS          255             /* Default buffer size */
 #define LINEGRAB        (DEF_BS-1)  
-#define BBUFF_SIZE      2000        /* Big buffer size */
+#define BBUFF_SIZE      2000            /* Big buffer size */
 #define BLINEGRAB       (BBUFF_SIZE-1)  
-#define NSIZE           1000        /* Name buffer size */
+#define NSIZE           1000            /* Name buffer size */
+#define NSIZEB          (NSIZE+1)       /* Name buffer size + 1*/
 #define COM_LINE(bf)    ((bf[0] == '!')||(bf[0] == '#'))
 #define EQSTRING(sa,sb,sz) (strncmp((sa),(sb),(sz))==0)
 #define STDIN_STR(sa)   (strcmp((sa),"-")==0)

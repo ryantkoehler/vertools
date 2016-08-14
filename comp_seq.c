@@ -39,9 +39,9 @@ void Comp_seqUse(void)
     VersionSplash(NULL,VERSION_S,"#  ",TRUE);
     printf("Use: <infile> ['-' for stdin] [-sim|-com|-ham|-self|-psel|-loop] [...options]\n");
     printf("   <infile>     Is a sequence file (\"raw\" format)\n");
-    printf("   -iraw      Treat input as \"raw\" format; <name> <seq> / line\n");
-    printf("   -iseq      Treat input as simmple sequence; <seq> / line\n");
-    printf("   -ifas      Treat input as fasta format\n");
+    printf("   -iraw        Treat input as \"raw\" format; <name> <seq> / line\n");
+    printf("   -iseq        Treat input as simmple sequence; <seq> / line\n");
+    printf("   -ifas        Treat input as fasta format\n");
     printf("   -out XXX     Set output to XXX\n");
     printf("   -self -psel  Evaluate for self complimentarity / parallel\n");
     printf("   -loop #      Evaluate hairpin with min \"loop\" size #\n");
@@ -59,12 +59,10 @@ void Comp_seqUse(void)
     printf("   -cl3 -cl5 #  Force 3' / 5' end \"clamps\" in matches\n");
     printf("   -mwd # -th # Set minimum word size / threshold to #\n");
     printf("   -tot -num    Report over-thresh Total / Number as score\n");
-/*
-    printf("   -ostat       Report ONLY stats (low av high scores)\n");
-*/
     printf("   -fmat        Report full pair-wise score matrix\n");
     printf("   -rm          Report matches (high score with position offset)\n");
     printf("   -sa          Show alignments (of high score match)\n");
+    printf("   -ds          Dump (report) sequences appended as last column\n");
     printf("   -alf #       Set threhold for full alignment display\n");
     printf("   -alp #       Set threhold for partial alignment display\n");
     printf("   -norm        Normalize scores by maximum possible\n");
@@ -81,7 +79,7 @@ int Comp_seqI(int argc, char **argv)
     int scon,swm,scb,sw32,smat,cl3,cl5,sco3,sco5,iraw,ifas,iseq;
     int r_max,r_num,r_tot,mword,quiet,nsco;
     int i,flen,slen;
-    char smfS[DEF_BS], *fPC, *sPC, fnameS[DEF_BS];
+    char smfS[DEF_BS], *fPC, *sPC, fnameS[NSIZEB];
     COMPSEQ *csPO;
     SEQ *seqPO, *sseqPO;
     REAL scR,thR,partmatR;
@@ -99,7 +97,7 @@ int Comp_seqI(int argc, char **argv)
         -scon B -rm B -swm B -rset S -mwf S -flg R2 -scb B\
         -smat B -loop I -norm B -cl3 I -cl5 I -sco3 B -sco5 B -num B\
         -tot B -th R -mwd I -fmat B -psel B -crs B -not B -eraw B \
-        -iraw B -ifas B -alf R -alp R -sw32 B -ham B -iseq B",
+        -iraw B -ifas B -alf R -alp R -sw32 B -ham B -iseq B -ds B",
         csPO->inname, csPO->outname, &csPO->do_sa, &csPO->do_sim, &csPO->do_com,
         &csPO->do_self, &scon, &csPO->do_rm, &swm, csPO->rinname,
         smfS, &csPO->flo,&csPO->fhi, 
@@ -108,7 +106,7 @@ int Comp_seqI(int argc, char **argv)
         &thR, &mword, &csPO->do_fmat, &csPO->do_pself, &csPO->do_crs, 
         &csPO->do_not, &csPO->do_eraw, &iraw, &ifas,
         &csPO->fullmat, &partmatR, &sw32, &csPO->do_ham,
-        &iseq, 
+        &iseq, &csPO->do_ds,
         (int *)NULL))
     {
         Comp_seqUse();
@@ -287,7 +285,7 @@ int Comp_seqI(int argc, char **argv)
         }
 */
         GetSeqSeqI(seqPO,&fPC);
-        FillSeqNameStringI(seqPO,fnameS,30);
+        FillSeqNameStringI(seqPO,fnameS,-1);
         /***
         *   Get pair-wise scores
         */
@@ -302,35 +300,30 @@ int Comp_seqI(int argc, char **argv)
             case CSO_SELF:
             case CSO_PSELF:
                 DB_COMSEQ DB_PrI(" [p]self\n");
-                csPO->offs[0] = ScoreSeqCompareI(fPC,flen,fPC,flen,
-                    csPO->pp,&scR);
+                csPO->offs[0] = ScoreSeqCompareI(fPC,flen,fPC,flen, csPO->pp,&scR);
                 csPO->scores[0] = scR;
                 break;
             case CSO_RSER:
                 DB_COMSEQ DB_PrI(" rser\n");
                 GetSeqsetSeqStringI(csPO->target,i,&sPC);               
                 slen = GetSeqsetSeqLenI(csPO->target,i);
-                csPO->offs[0] = ScoreSeqCompareI(fPC,flen,sPC,slen,
-                    csPO->pp,&scR);
+                csPO->offs[0] = ScoreSeqCompareI(fPC,flen,sPC,slen, csPO->pp,&scR);
                 csPO->scores[0] = scR;
                 break;
             case CSO_FULL:
                 DB_COMSEQ DB_PrI(" full\n");
-                CompareSeqToSeqsetI(seqPO, csPO->target, csPO->pp, csPO->scores, 
-                    csPO->offs);
+                CompareSeqToSeqsetI(seqPO, csPO->target, csPO->pp, csPO->scores, csPO->offs);
                 break;
         }
         /***
         *   Process score collection and different outputs
         */
         nsco = ProcessScoresI(csPO,i,fPC,flen);
-        if(HandleSeqFlaggingI(csPO,seqPO,csPO->out))
-        {   
+        if(HandleSeqFlaggingI(csPO,seqPO,csPO->out)) {   
             i++;
             continue;   
         }
-        if(HandleMatrixOutI(csPO,fnameS,csPO->out))
-        {   
+        if(HandleMatrixOutI(csPO,fnameS,csPO->out)) {   
             i++;
             continue;   
         }
@@ -347,12 +340,10 @@ int Comp_seqI(int argc, char **argv)
                 break;
             case CSO_RSER:
                 GetSeqsetSeqI(csPO->target,i,&sseqPO);
-                if(csPO->do_com) 
-                {
+                if(csPO->do_com) {
                     HandleSeqPairOut(csPO,seqPO,sseqPO,0,TRUE,FALSE);
                 }
-                else
-                {
+                else {
                     HandleSeqPairOut(csPO,seqPO,sseqPO,0,FALSE,FALSE);
                 }
                 break;
@@ -394,10 +385,15 @@ int GetNextSeqI(COMPSEQ *csPO,int s, SEQ **seqPPO)
 /*****************************************************************************/
 void HandleNoScoreOut(COMPSEQ *csPO,SEQ *seqPO)
 {
-    char fnameS[NSIZE];
+    char fnameS[NSIZEB], *fPC;
 
-    FillSeqNameStringI(seqPO,fnameS,25);
-    fprintf(csPO->out,"%-10s = 0 (NO SCORE)\n",fnameS); 
+    FillSeqNameStringI(seqPO,fnameS,-1);
+    fprintf(csPO->out,"%-10s = 0 (NO SCORE)",fnameS); 
+    if(csPO->do_ds) {
+        GetSeqSeqI(seqPO, &fPC);
+        fprintf(csPO->out,"\t%s",fPC);
+    }
+    fprintf(csPO->out,"\n");
 }
 /*****************************************************************************
 *   Output sequence pair info
@@ -406,7 +402,7 @@ void HandleSeqPairOut(COMPSEQ *csPO, SEQ *fseqPO, SEQ *sseqPO, int sc, int
     comp, int antip)
 {
     char fseqS[MAX_CSL],sseqS[MAX_CSL],pS[MAX_CSL],compS[MAX_CSL];
-    char *fPC,*sPC,fnameS[NSIZE],snameS[NSIZE],formS[DEF_BS];
+    char *fPC,*sPC,fnameS[NSIZEB],snameS[NSIZEB],formS[DEF_BS];
     int i,n,fi,si,p,flen,slen,off;
     REAL scR,alscR;
 
@@ -418,33 +414,41 @@ void HandleSeqPairOut(COMPSEQ *csPO, SEQ *fseqPO, SEQ *sseqPO, int sc, int
     /***
     *   Get names, lens, seq pointers
     */
-    FillSeqNameStringI(fseqPO,fnameS,30);
-    if(csPO->ostat)
-    {
-        fprintf(csPO->out,"%-14s %7.3f\n",fnameS,scR);
+    FillSeqNameStringI(fseqPO,fnameS,-1);
+    flen = GetSeqLenI(fseqPO);
+    GetSeqSeqI(fseqPO, &fPC);
+    if(csPO->ostat) {
+        fprintf(csPO->out,"%-20s %6.2f",fnameS,scR);
+        if(csPO->do_ds) {
+            fprintf(csPO->out,"\t%s",fPC);
+        }
+        fprintf(csPO->out,"\n");
         return;
     }
-    flen = GetSeqLenI(fseqPO);
-    GetSeqSeqI(fseqPO,&fPC);
-    if(sseqPO!=NULL) {
-        FillSeqNameStringI(sseqPO,snameS,30);
+    /***
+    *   Secondary sequence set? Otherwise, set secondary things to first sequence
+    */
+    if( sseqPO != NULL) {
+        FillSeqNameStringI(sseqPO,snameS,-1);
         slen = GetSeqLenI(sseqPO);
         GetSeqSeqI(sseqPO,&sPC);
     }
     else {
-        FillSeqNameStringI(fseqPO,snameS,30);
-        slen = GetSeqLenI(fseqPO);
-        GetSeqSeqI(fseqPO,&sPC);
+        strcpy(snameS,fnameS);
+        slen = flen;
+        sPC = fPC;
     }
     /***
     *   If failing / bogus score then don't draw anything
     */
-    if(scR < 0.0)
-    {
+    if(scR < 0.0) {
         if(csPO->do_rm) {
-            fprintf(csPO->out,"%-10s -vs- %-10s = 0 (NO SCORE)\n",
-                fnameS,snameS); 
+            fprintf(csPO->out,"%-10s -vs- %-10s = 0 (NO SCORE)", fnameS,snameS); 
         }
+        if(csPO->do_ds) {
+            fprintf(csPO->out,"\t%s\t%s",fPC,sPC);
+        }
+        fprintf(csPO->out,"\n");
         return;
     }
     /***
@@ -486,23 +490,19 @@ void HandleSeqPairOut(COMPSEQ *csPO, SEQ *fseqPO, SEQ *sseqPO, int sc, int
         sseqS[p] = compS[si];
         if(GetPair_parMatchScoreI(csPO->pp,fseqS[p],sseqS[p],&alscR))
         {
-            if(alscR >= csPO->fullmat)
-            {
+            if(alscR >= csPO->fullmat) {
                 pS[p] = '|';
                 n++;
             }
-            else if(alscR >= csPO->partmat)
-            {
+            else if(alscR >= csPO->partmat) {
                 pS[p] = ':';
                 n++;
             }
-            else
-            {
+            else {
                 pS[p] = ' ';
             }
         }
-        else
-        {
+        else {
             pS[p] = 'X';
         }
         fi++;
@@ -515,12 +515,10 @@ void HandleSeqPairOut(COMPSEQ *csPO, SEQ *fseqPO, SEQ *sseqPO, int sc, int
     while( (fi < flen) || (si < slen) )
     {
         fseqS[p] = sseqS[p] = ' ';
-        if(fi < flen)
-        {
+        if(fi < flen) {
             fseqS[p] = fPC[fi];
         }
-        if(si < slen)
-        {
+        if(si < slen) {
             sseqS[p] = compS[si];
         }
         pS[p] = ' ';
@@ -532,30 +530,31 @@ void HandleSeqPairOut(COMPSEQ *csPO, SEQ *fseqPO, SEQ *sseqPO, int sc, int
     /***
     *   Summary statement?
     */
-    if(csPO->do_rm)
-    {
-        fprintf(csPO->out,"%-10s -vs- %-10s = %6.4f",fnameS,snameS,scR); 
+    if(csPO->do_rm) {
+        fprintf(csPO->out,"%-10s -vs- %-10s = %6.2f",fnameS,snameS,scR); 
         fprintf(csPO->out," @[%d]",off);
-        fprintf(csPO->out," %5d/%d\n",n,flen);
+        fprintf(csPO->out," %5d/%d",n,flen);
+        if(csPO->do_ds) {
+            fprintf(csPO->out,"\t%s\t%s",fPC,sPC);
+        }
+        fprintf(csPO->out,"\n");
     }
     /***
     *   If not actually showing alignment, bail
     */
-    if(!csPO->do_sa)
-    {
+    if(!csPO->do_sa) {
         return;
     }
     /***
     *   Ajdustable format string for different name lengths
     */
     n = MAX_NUM(strlen(fnameS),strlen(snameS));
-    LIMIT_NUM(n,10,40);
+    LIMIT_NUM(n,10,60);
     sprintf(formS,"%%-%ds",n);
     /***
     *   Report the match
     */
-    if(comp)
-    {
+    if(comp) {
         fprintf(csPO->out,formS,fnameS);
         fprintf(csPO->out," >5' %s\n",fseqS);
         fprintf(csPO->out,formS,"matching:");
@@ -563,8 +562,7 @@ void HandleSeqPairOut(COMPSEQ *csPO, SEQ *fseqPO, SEQ *sseqPO, int sc, int
         fprintf(csPO->out,formS,snameS);
         fprintf(csPO->out," <3' %s\n",sseqS);
     }
-    else
-    {
+    else {
         fprintf(csPO->out,formS,fnameS);
         fprintf(csPO->out," >5' %s\n",fseqS);
         fprintf(csPO->out,formS,"matching:");
@@ -582,7 +580,7 @@ void HandleSeqLoopOut(COMPSEQ *csPO, SEQ *seqPO, int sc)
 {
     int i,p,n,ls,fi,si,len,off;
     char startS[MAX_CSL],endS[MAX_CSL],pS[MAX_CSL];
-    char nameS[DEF_BS], *sPC;
+    char nameS[NSIZEB], *sPC;
     REAL scR; 
 
     off = csPO->offs[sc];
@@ -593,13 +591,16 @@ void HandleSeqLoopOut(COMPSEQ *csPO, SEQ *seqPO, int sc)
     */
     len = GetSeqLenI(seqPO);
     GetSeqSeqI(seqPO,&sPC);
-    FillSeqNameStringI(seqPO,nameS,30);
+    FillSeqNameStringI(seqPO,nameS,-1);
     /***
     *   If only stats, report name and score
     */
-    if(csPO->ostat)
-    {
-        fprintf(csPO->out,"%-14s %7.3f\n",nameS,scR);
+    if(csPO->ostat) {
+        fprintf(csPO->out,"%-20s %6.2f",nameS,scR);
+        if(csPO->do_ds) {
+            fprintf(csPO->out,"\t%s",sPC);
+        }
+        fprintf(csPO->out,"\n");
         return;
     }
     /***
@@ -609,13 +610,11 @@ void HandleSeqLoopOut(COMPSEQ *csPO, SEQ *seqPO, int sc)
     p = fi = 0;
     for(i=0;i<ABS_VAL(off);i++)
     {
-        if(off < 0)
-        {
+        if(off < 0) {
             startS[p] = ' ';
             endS[p] = sPC[si--];
         }
-        else
-        {
+        else {
             startS[p] = sPC[fi++];
             endS[p] = ' ';
         }
@@ -631,13 +630,11 @@ void HandleSeqLoopOut(COMPSEQ *csPO, SEQ *seqPO, int sc)
     {
         startS[p] = sPC[fi++];
         endS[p] = sPC[si--];
-        if(GoodDNACompBasesI(startS[p],endS[p]))
-        {
+        if(GoodDNACompBasesI(startS[p],endS[p])) {
             pS[p] = '|';
             n++;
         }
-        else
-        {
+        else {
             pS[p] = ' ';
         }
         p++;
@@ -651,14 +648,13 @@ void HandleSeqLoopOut(COMPSEQ *csPO, SEQ *seqPO, int sc)
     for(i=0;i<ls; i++)
     {
         startS[p] = sPC[fi++];
-        if((ABS_VAL(off + len) % 2)>0)
-        {
-            if(i==0)
+        if((ABS_VAL(off + len) % 2)>0) {
+            if(i==0) {
                 endS[p] = '-';
+            }
             endS[p+1] = sPC[si--];
         }
-        else
-        {
+        else {
             endS[p] = sPC[si--];
         }
         pS[p] = ' ';
@@ -670,24 +666,22 @@ void HandleSeqLoopOut(COMPSEQ *csPO, SEQ *seqPO, int sc)
     */
     startS[p] = endS[p] = pS[p] = '\0';
     p = 0;
-    if(csPO->do_rm)
-    {
-        fprintf(csPO->out,"%s LoopScore = %6.4f",nameS,scR); 
-/** SHAM
-        fprintf(csPO->out," %4d/%d",n,len);
-**/
-        fprintf(csPO->out," @[%d]\n",off);
+    if(csPO->do_rm) {
+        fprintf(csPO->out,"%s LoopScore = %6.2f",nameS,scR); 
+        fprintf(csPO->out," @[%d]",off);
+        if(csPO->do_ds) {
+            fprintf(csPO->out,"\t%s",sPC);
+        }
+        fprintf(csPO->out,"\n");
         p++;
     }
-    if(csPO->do_sa)
-    {
-        fprintf(csPO->out,"%-12s 5'> %s\n",nameS,startS);
-        fprintf(csPO->out,"%-12s     %s\n",nameS,pS);
-        fprintf(csPO->out,"%-12s 3'< %s\n",nameS,endS);
+    if(csPO->do_sa) {
+        fprintf(csPO->out,"%-20s 5'> %s\n",nameS,startS);
+        fprintf(csPO->out,"%-20s     %s\n",nameS,pS);
+        fprintf(csPO->out,"%-20s 3'< %s\n",nameS,endS);
         p++;
     }
-    if(p)
-    {
+    if(p) {
         fprintf(csPO->out,"\n");
     }
 }
@@ -819,8 +813,7 @@ void WriteCompseqHeader(COMPSEQ *csPO,FILE *outPF)
             fprintf(outPF,"# Name         Score\n");
         }
         else {
-            /* HAM formatting should be dynamic? */
-            fprintf(outPF,"# %-18s\t%s\t%s\t%s\t%s\n",
+            fprintf(outPF,"# %-20s\t%s\t%s\t%s\t%s\n",
                 "Name", "Min", "Ave", "Max", "N-Max");
         }
     }
@@ -847,7 +840,7 @@ void FillCompseqOutWhatString(int owhat,char *bufS)
 void WriteHeaderForFmat(COMPSEQ *csPO,FILE *outPF)
 {
     int i,j;
-    char snameS[NSIZE];
+    char snameS[NSIZEB];
 
     HAND_NFILE(outPF);
     fprintf(outPF,"Name");
@@ -859,7 +852,7 @@ void WriteHeaderForFmat(COMPSEQ *csPO,FILE *outPF)
         else {
             j = i;
         }
-        FillSeqsetSeqNameI(csPO->target,j,snameS,NSIZE); 
+        FillSeqsetSeqNameI(csPO->target,j,snameS,-1); 
         fprintf(outPF,"\t%s",snameS);
     }
     fprintf(outPF,"\n");
@@ -946,8 +939,7 @@ void InitCompseq(COMPSEQ *csPO)
     INIT_S(csPO->rinname);
     INIT_S(csPO->outname);
     INIT_S(csPO->com);
-    csPO->do_sa = FALSE;
-    csPO->do_rm = FALSE;
+    csPO->do_ds = csPO->do_sa = csPO->do_rm = FALSE;
     csPO->do_norm = FALSE;
     csPO->do_flag = csPO->do_eraw = FALSE;
     csPO->flo = csPO->fhi = BAD_R;
@@ -1016,13 +1008,11 @@ int ProcessScoresI(COMPSEQ *csPO,int cur,char *seqPC,int len)
     /***
     *   Normalize by length?
     */
-    if(csPO->do_norm)
-    {
+    if(csPO->do_norm) {
         maxR = MaxSeqCompareScoreR(csPO->pp,seqPC,len);
         for(j=0;j<csPO->ntarg;j++)
         {
-            if(csPO->scores[j] > 0.0)
-            {
+            if(csPO->scores[j] > 0.0) {
                 csPO->scores[j] /= RNUM(maxR);
             }
         }
@@ -1042,13 +1032,11 @@ int ProcessScoresI(COMPSEQ *csPO,int cur,char *seqPC,int len)
         /***
         *   Don't include self-similarity (ident) in score tally
         */
-        if( (cur==j) && (csPO->do_sim) && (csPO->rseqs==NULL) )
-        {
+        if( (cur==j) && (csPO->do_sim) && (csPO->rseqs==NULL) ) {
             DB_COMSEQ DB_PrI("ignore self\n");
             continue;
         }
-        if(csPO->scores[j] < 0.0)
-        {
+        if(csPO->scores[j] < 0.0) {
             continue;
         }
         csPO->max_sc = MAX_NUM(csPO->scores[j],csPO->max_sc);
@@ -1059,8 +1047,7 @@ int ProcessScoresI(COMPSEQ *csPO,int cur,char *seqPC,int len)
                 csPO->max_sc,csPO->av_sc);
         nave++;
     }
-    if(nave>0)
-    {   
+    if(nave>0) {   
         csPO->av_sc /= RNUM(nave); 
     }
     return(nave);
@@ -1071,10 +1058,9 @@ int ProcessScoresI(COMPSEQ *csPO,int cur,char *seqPC,int len)
 int HandleSeqFlaggingI(COMPSEQ *csPO,SEQ *seqPO,FILE *outPF)
 {
     int ok;
-    char fnameS[NSIZE];
+    char fnameS[NSIZEB];
 
-    if(!csPO->do_flag) 
-    {
+    if(!csPO->do_flag) {
         return(FALSE);
     }
     /***
@@ -1082,29 +1068,24 @@ int HandleSeqFlaggingI(COMPSEQ *csPO,SEQ *seqPO,FILE *outPF)
     */
     HAND_NFILE(outPF);
     ok = TRUE;
-    if( (csPO->max_sc<csPO->flo) || (csPO->max_sc>csPO->fhi) ) 
-    {
+    if( (csPO->max_sc<csPO->flo) || (csPO->max_sc>csPO->fhi) ) {
         ok = FALSE;
     }
-    if(csPO->do_not)
-    {
+    if(csPO->do_not) {
         ok = !ok;
     }
     /***
     *   Extracting raw seq or simply flagging?
     */
-    FillSeqNameStringI(seqPO,fnameS,25);
-    if(csPO->do_eraw)
-    {
-        if(ok)
-        {
-            fprintf(outPF,"# %-20s\t%3.2f\n",fnameS,csPO->max_sc);
+    FillSeqNameStringI(seqPO,fnameS,-1);
+    if(csPO->do_eraw) {
+        if(ok) {
+            fprintf(outPF,"# %-20s\t%6.2f\n",fnameS,csPO->max_sc);
             WriteSeq(seqPO,SEQFM_RAW,outPF);
         }
     }
-    else
-    {
-        fprintf(outPF,"%d\t%-20s\t%3.2f\n",ok,fnameS,csPO->max_sc);
+    else {
+        fprintf(outPF,"%d\t%-20s\t%6.2f\n",ok,fnameS,csPO->max_sc);
     }
     return(TRUE);
 }
@@ -1124,7 +1105,7 @@ int HandleMatrixOutI(COMPSEQ *csPO,char *fnameS,FILE *outPF)
         for(j=0;j<csPO->ntarg;j++)
         {
             scR = (csPO->scores[j] < 0.0) ? 0.0 : csPO->scores[j];
-            fprintf(outPF,"\t%4.2f",scR);
+            fprintf(outPF,"\t%6.2f",scR);
         }
         fprintf(outPF,"\n");
         return(TRUE);
@@ -1137,14 +1118,13 @@ int HandleMatrixOutI(COMPSEQ *csPO,char *fnameS,FILE *outPF)
 int HandleFullScoreOut(COMPSEQ *csPO,int nsco,int cur,SEQ *seqPO)
 {
     int j,nns,nok,ok;
-    char fnameS[NSIZE];
+    char fnameS[NSIZEB], *fPC;
     SEQ *sseqPO;
 
     /***
     *   If already no there are no scores, handle here and bail
     */
-    if(nsco<1)
-    {
+    if(nsco<1) {
         HandleNoScoreOut(csPO,seqPO);
         return(TRUE);
     }
@@ -1158,8 +1138,7 @@ int HandleFullScoreOut(COMPSEQ *csPO,int nsco,int cur,SEQ *seqPO)
         *   Ignore self similarity
         *   Set value to average in case computing stats at end
         */
-        if( (j==cur) && (csPO->do_sim) && (csPO->rseqs==NULL) )
-        {
+        if( (j==cur) && (csPO->do_sim) && (csPO->rseqs==NULL) ) {
             csPO->scores[j] = csPO->av_sc;
             continue;
         }
@@ -1167,44 +1146,35 @@ int HandleFullScoreOut(COMPSEQ *csPO,int nsco,int cur,SEQ *seqPO)
         *   Check against any score range specified
         */
         ok = FALSE;
-        if(!BAD_REAL(csPO->flo))
-        {
-            if( (csPO->scores[j]>=csPO->flo) && (csPO->scores[j]<=csPO->fhi) )
-            {
+        if(!BAD_REAL(csPO->flo)) {
+            if( (csPO->scores[j] >= csPO->flo) && (csPO->scores[j] <= csPO->fhi) ) {
                 ok++;   
             }
         }
-        else if(csPO->scores[j]==csPO->max_sc)
-        {   
+        else if(csPO->scores[j] == csPO->max_sc) {   
             ok++;   
         }
-        if(ok)
-        {
+        if(ok) {
             nok += ok;
         }
         /***
-        *   If ok handle the match
+        *   If ok handle the match; XXX TODO messy sham...
         */
         if( ok && (!csPO->ostat) )
         {       
-            if(csPO->max_sc<0.0)
-            {
+            if(csPO->max_sc<0.0) {
                 nns++;
             }
-            if(j>=csPO->ntargseqs)
-            {
+            if(j>=csPO->ntargseqs) {
                 GetSeqsetSeqI(csPO->target,j - csPO->ntargseqs, &sseqPO);
             }
-            else
-            {
+            else {
                 GetSeqsetSeqI(csPO->target, j, &sseqPO);
             }
-            if( (csPO->do_com) && (!nns) )  
-            {
+            if( (csPO->do_com) && (!nns) )  {
                 HandleSeqPairOut(csPO,seqPO,sseqPO,j,TRUE,FALSE);
             }
-            else if(!nns)
-            {
+            else if(!nns) {
                 HandleSeqPairOut(csPO,seqPO,sseqPO,j,FALSE,FALSE);
             }
         }
@@ -1212,15 +1182,18 @@ int HandleFullScoreOut(COMPSEQ *csPO,int nsco,int cur,SEQ *seqPO)
     /***
     *   End of comparisions for current record
     */  
-    if(csPO->ostat)
-    {
-        FillSeqsetSeqNameI(csPO->seqs,cur,fnameS,25);
+    if(csPO->ostat) {
+        FillSeqsetSeqNameI(csPO->seqs,cur,fnameS,-1);
         /* SHAM should be dynamic formatting */
-        fprintf(csPO->out,"%-20s\t%6.2f\t%6.2f\t%6.2f\t%d\n", 
+        fprintf(csPO->out,"%-20s\t%6.2f\t%6.2f\t%6.2f\t%d", 
             fnameS, csPO->min_sc, csPO->av_sc, csPO->max_sc, nok);
+        if(csPO->do_ds) {
+            GetSeqSeqI(seqPO, &fPC);
+            fprintf(csPO->out,"\t%s",fPC);
+        }
+        fprintf(csPO->out,"\n");
     }
-    else if( (csPO->do_sa || csPO->do_rm) && (nok>0) )
-    {
+    else if( (csPO->do_sa || csPO->do_rm) && (nok>0) ) {
         fprintf(csPO->out,"\n");
     }
     return(TRUE);

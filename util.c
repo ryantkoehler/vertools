@@ -55,7 +55,9 @@ void Init(int argc, char **argv)
     DBComlineCheck(argc,argv);
     return;
 }
-/*************************************************************************/
+/*************************************************************************
+*   Init globals
+*/
 void InitGvars(void)
 {
     filecountGI = numblockGI = 0;
@@ -78,15 +80,15 @@ int AllDoneI(int status,char *progS)
     switch(status)
     {
         case TRUE:
-            /* k = OK; */
+            /* ok = OK; */
             ok = EXIT_SUCCESS;
             break;
         case FALSE:
-            /* k = NOT_OK; */
+            /* ok = NOT_OK; */
             ok = EXIT_FAILURE;
             break;
         default:
-            /* k = NOT_OK; */
+            /* ok = NOT_OK; */
             ok = EXIT_FAILURE;
             fprintf(stdout," TERMINATING with error status: %d\n",status);
     }
@@ -392,14 +394,15 @@ FILE *FileOpenPF(char *nameS, char *modeS, int error)
 {
     FILE *fPF;
     
-    if(!strcmp(nameS,"-")) {
+    if( (!strcmp(nameS,"-")) || (!strcmp(nameS,"stdin")) ) {
         fPF = stdin;
     }
     else {
         fPF = fopen(nameS,modeS);
     }
-    if(fPF != NULL)
-    {   filecountGI++;  }
+    if(fPF != NULL) {   
+        filecountGI++;  
+    }
     else {  
         if(error) {
             PROBLINE;
@@ -426,15 +429,21 @@ int IsFileStdinI(FILE *fPF)
 void FileClose(FILE *fPF)
 {
     BOG_CHECK(fPF == NULL);
-    fclose(fPF);    
+    if(! IsFileStdinI(fPF) ){
+        fclose(fPF);    
+    }
     filecountGI--;
     return;
 }
-/*****************************************************************************/
-void NewFileClose(FILE *fPF,char *nameS)
+/*****************************************************************************
+*   Close file (if real) and report name
+*/
+void NewFileClose(FILE *fPF, char *nameS)
 {
-    FileClose(fPF); 
-    printf("NEW FILE: %s\n",nameS); 
+    if(fPF) {
+        FileClose(fPF); 
+        printf("NEW FILE: %s\n",nameS); 
+    }
     return;
 }
 /************************************************************************

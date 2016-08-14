@@ -15,7 +15,7 @@
 */
 
 
-#define VERSION_S "Comp_Seq Version 1.5"
+#define VERSION_S "Comp_Seq Version 1.6"
 
 #define MAX_CSL 25000
 
@@ -65,6 +65,7 @@ typedef struct COMPSEQ
     int do_flag;            /* Flag to indicate if in bounds */
     int do_not;             /* Invert flagging criteria */
     int do_eraw;            /* Extract flagged seq subset in raw format */
+    int do_ds;              /* Flat to dump sequence (append to rows) */
     /***
     *   Run-time values and allocated sub structs
     */

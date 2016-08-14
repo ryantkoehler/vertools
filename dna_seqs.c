@@ -24,7 +24,7 @@
 
 
 /****************************************************************************
-*   Sets a pointer to sequence in seq set ssPO[ind]
+*   Sets a pointer to sequence structure in seq set ssPO[ind]
 */
 int GetSeqsetSeqI(SEQSET *ssPO,int ind, SEQ **seqPPO)
 {
@@ -39,7 +39,7 @@ int GetSeqsetSeqI(SEQSET *ssPO,int ind, SEQ **seqPPO)
     return(TRUE);
 }
 /****************************************************************************
-*   Sets a pointer to sequence in seq set ssPO[ind]
+*   Sets a pointer to sequence string in seq set ssPO[ind]
 */
 int GetSeqsetSeqStringI(SEQSET *ssPO,int ind, char **seqPPC)
 {
@@ -50,9 +50,7 @@ int GetSeqsetSeqStringI(SEQSET *ssPO,int ind, char **seqPPC)
         return(FALSE);
     }
     seqPO = ssPO->seqs[ind];
-    VALIDATE(seqPO,SEQ_ID);
-    *seqPPC = seqPO->seq;
-    return(TRUE);
+    return(GetSeqSeqI(seqPO, seqPPC));
 }
 /****************************************************************************
 *   Copies sequence from seq ind in set ssPO into seqS up to max chars
@@ -66,14 +64,8 @@ int FillSeqsetSeqStringI(SEQSET *ssPO,int ind,char *seqS,int max)
     if( (ind < 0) || (ind >= ssPO->n) ) {
         return(BOGUS);
     }
-
     seqPO = ssPO->seqs[ind];
-/* XX sham? */
-    LIMIT_NUM(max,0,seqPO->len);
-    max = MIN_NUM(max,seqPO->len);
-    strncpy(seqS,seqPO->seq,max);
-    seqS[max] = '\0';
-    return(max);
+    return(FillSeqSeqStringI(seqPO, seqS, max));
 }
 /****************************************************************************
 *   Set the name of sequence in seq set ssPO[ind] to name nS[n]
@@ -88,26 +80,8 @@ int SetSeqsetSeqNameI(SEQSET *ssPO,int ind, char *nS, int nlen)
     if( (ind < 0) || (ind >= ssPO->n) ) {
         return(FALSE);
     }
-    LIMIT_NUM(nlen,0,NSIZE-1);
     seqPO = ssPO->seqs[ind];
-    VALIDATE(seqPO,SEQ_ID);
-    strncpy(seqPO->name, nS, nlen);
-    return(TRUE);
-}
-/****************************************************************************
-*   Sets a pointer to name of sequence in seq set ssPO[ind]
-*/
-int GetSeqsetSeqNameI(SEQSET *ssPO,int ind, char **namePPC)
-{
-    SEQ *seqPO;
-
-    VALIDATE(ssPO,SEQSET_ID);
-    if( (ind < 0) || (ind >= ssPO->n) ) {
-        return(FALSE);
-    }
-    seqPO = ssPO->seqs[ind];
-    VALIDATE(seqPO,SEQ_ID);
-    *namePPC = seqPO->name;
+    SetSeqName(seqPO, nS);
     return(TRUE);
 }
 /****************************************************************************
@@ -124,15 +98,10 @@ int FillSeqsetSeqNameI(SEQSET *ssPO,int ind,char *nS,int max)
         return(FALSE);
     }
     seqPO = ssPO->seqs[ind];
-    VALIDATE(seqPO,SEQ_ID);
-    LIMIT_NUM(max,0,NSIZE-1);
-    strncpy(nS,seqPO->name,max);
-    nS[max] = '\0';
-    return(TRUE);
+    return(FillSeqNameStringI(seqPO, nS, max));
 }
 /****************************************************************************
 *   Returns the length of sequence in seq set ssPO[ind]
-*
 *   returns BOGUS is index is bad
 */
 int GetSeqsetSeqLenI(SEQSET *ssPO,int ind)
@@ -144,8 +113,7 @@ int GetSeqsetSeqLenI(SEQSET *ssPO,int ind)
         return(BOGUS);
     }
     seqPO = ssPO->seqs[ind];
-    VALIDATE(seqPO,SEQ_ID);
-    return(seqPO->len);
+    return(GetSeqLenI(seqPO));
 }
 /****************************************************************************
 *   Returns the number of SNPs in seq set ssPO[ind]
@@ -178,7 +146,6 @@ int SeqsetMinLenI(SEQSET *ssPO)
 {
     int min;
 
-    VALIDATE(ssPO,SEQSET_ID);
     SeqsetMinMaxLenI(ssPO,&min,NULL);
     return(min);
 }
@@ -189,7 +156,6 @@ int SeqsetMaxLenI(SEQSET *ssPO)
 {
     int max;
 
-    VALIDATE(ssPO,SEQSET_ID);
     SeqsetMinMaxLenI(ssPO,NULL,&max);
     return(max);
 }
@@ -198,8 +164,7 @@ int SeqsetMaxLenI(SEQSET *ssPO)
 */
 int SeqsetMinMaxLenI(SEQSET *ssPO,int *minPI,int *maxPI)
 {
-    int i,n,min,max;
-    SEQ *seqPO;
+    int i,n,min,max,len;
 
     VALIDATE(ssPO,SEQSET_ID);
     if(minPI) {   
@@ -214,9 +179,9 @@ int SeqsetMinMaxLenI(SEQSET *ssPO,int *minPI,int *maxPI)
     for(i=0;i<ssPO->n;i++)
     {
         if(ssPO->mask[i]) {
-            seqPO = ssPO->seqs[i];
-            min = MIN_NUM(seqPO->len,min);
-            max = MAX_NUM(seqPO->len,max);
+            len = GetSeqsetSeqLenI(ssPO, i);
+            min = MIN_NUM(len,min);
+            max = MAX_NUM(len,max);
             n++;
         }
     }
@@ -277,6 +242,8 @@ int FillSeqsetSourceStringI(SEQSET *ssPO,char *nameS,int max)
 *   If seqPPO is real, pointer to the (found) SEQ is set
 *
 *   Returns the index to found sequence, or BOGUS if not found
+*
+* XXX SHAM TODO should index, something else if this is actually used for big sets
 */
 int FindNamedSeqInSeqsetI(SEQSET *ssPO, char *nameS, int kc, char *tPC,
     SEQ **seqPPO)

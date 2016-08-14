@@ -94,10 +94,13 @@ int Gen_numsI(int argc, char **argv)
     *   Check if can do anything before starting
     */
     if(num < 1) {
+        /*
         PROBLINE;
         printf(" Can't enumerate %d items!\n",num);     
         ABORTLINE;
         return(FALSE);
+        */
+        return(TRUE);
     }
     /***
     *   Initialize
