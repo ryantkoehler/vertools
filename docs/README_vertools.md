@@ -1,6 +1,7 @@
 ### README
 VerTools 1.3
 6/24/16 RTK
+11/4/16 RTK; Add scripts (get_build_Vienna.sh, mv_binaries.sh), update READMEs
 
 * Copyright 2016 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
 *
@@ -26,10 +27,16 @@ or call the script that calls *make* in a loop:
     scripts/make_all_makes.sh
 
 To copy / move resulting binaries to some directory (e.g. "~/vertools/"):
-    
+
     find . -maxdepth 1 -type f -perm -100 -exec cp {} ~/vertools/ \;
 
     find . -maxdepth 1 -type f -perm -100 -exec mv {} ~/vertools/ \;
+
+A script that does the same (maybe easier to call?) is this "mv_binaries.sh".
+This finds binaries in the current directory and moves them to a specified
+output dir. For example (from top level vertools dir after make_all_makes.sh):
+
+    mv_binaries.sh ~/vertools/
     
 
 **Note** that some programs will FAIL TO BUILD unless depencencies are met; These require extra libraries to link.
@@ -37,6 +44,12 @@ To copy / move resulting binaries to some directory (e.g. "~/vertools/"):
 ***venpipe*** needs the Vienna RNA library; Download this from here: https://www.tbi.univie.ac.at/RNA/
 
 Also see [README_ViennaRNA_RTK.md](/README_ViennaRNA_RTK.md)
+
+A script to download Vienna, build the (whole) package, then copy the library
+to link with vertools "get_build_Vienna.sh". This should be run from the top
+level vertools dir like this:
+
+    scripts/get_build_Vienna.sh
 
 ***plotmat*** needs the gd graphics library; Download this from wherever...  depending on platform?
 
