@@ -1,7 +1,7 @@
 /*
 * numstat.h
 *
-* Copyright 2016 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
+* Copyright 2017 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
 *
 * The programs and source code of the vertools collection are free software.
 * They are distributed in the hope that they will be useful,
@@ -15,16 +15,16 @@
 */
 
 
-#define VERSION_S "NumStat Version 2.2"
+#define VERSION_S "NumStat Version 2.3"
 
 
-#define MAX_WIDTH       5000    /* Size of lines to eat */
+#define MAX_WIDTH       10000   /* Size of lines to eat */
 #define HPLOT_SLEN      40      /* Width of histogram plotting space */
 #define MIN_HIS_BIN     0.00001 /* Minimum histogram bin size */
 #define DEF_HMB         20      /* Default max number of histogram bins */
-#define TRUNC_FOLD      2.0     /* runcate single bins if it's X-fold > than next */
+#define TRUNC_FOLD      2.0     /* truncate single bins if it's X-fold > than next */
 
-#define DEF_COL         2       /* efault column */
+#define DEF_COL         2       /* default column */
 
 /* Percentile reporting format string */
 #define PERCENTILE_FORM_S   "perc_%02d \t%8.4f\t%6.2f\n" 

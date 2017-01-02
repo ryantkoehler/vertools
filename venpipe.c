@@ -1,7 +1,7 @@
 /*
 * venpipe.c
 *
-* Copyright 2016 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
+* Copyright 2017 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
 *
 * The programs and source code of the vertools collection are free software.
 * They are distributed in the hope that they will be useful,
@@ -51,12 +51,12 @@ void VenPipeUse()
     printf("   -sal #      Set salt to # (Molar)\n");
     printf("   -ksapar     Keep salt-corrected parameter file\n");
     printf("   -pfe        Partition Free Energy; Default is Min Free Eng\n");
-    printf("   -dss        Dump sequence structure\n");
+    printf("   -ddb        Dump dot-bracket sequence structure\n");
     printf("   -dmb        Dump matching (paired) base counts\n");
     printf("   -mbtab      Dump matching base table (0 = free; >0 = matching)\n");
     printf("   -mbr # #    Matching base count range from # to #\n");
     printf("   -mrre       Matching base count range relative to end\n");
-    printf("   -dseq       Dump (report) sequences appended as last column\n");
+    printf("   -ds         Dump (report) sequences appended as last column\n");
     printf("   -melt # #   Dump melting profile from temp # to #\n");
     printf("   -mstep #    Set melting profile step to # (default %4.2f)\n",
         DEF_MELT_JUMP_D);
@@ -76,12 +76,12 @@ int VenPipeI(int argc, char **argv)
     }
     iraw = iseq = ifas = com = FALSE;
     if(!ParseArgsI(argc, argv,
-        "S -vpar S -out S -temp D -com B -dss B -pfe B -pcon D -tcon D -sal D\
+        "S -vpar S -out S -temp D -com B -ddb B -pfe B -pcon D -tcon D -sal D\
         -ofas B -oraw B -dmb B -bran I2\
         -rre B -mbr I2 -mrre B -melt D2 -mstep D -iraw B -ifas B\
-        -nosc B -ksapar B -mask B -not B -mbtab B -dseq B -iseq B",
+        -nosc B -ksapar B -mask B -not B -mbtab B -ds B -iseq B",
         vpPO->inname, vpPO->vparfile, vpPO->outname, &vpPO->temp, &com, 
-        &vpPO->do_ss, &vpPO->do_pfe, &vpPO->pcon, &vpPO->tcon, &vpPO->salt,
+        &vpPO->do_ddb, &vpPO->do_pfe, &vpPO->pcon, &vpPO->tcon, &vpPO->salt,
         &vpPO->ofas, &vpPO->oraw, &vpPO->do_dmb, &vpPO->firstb,&vpPO->lastb,
         &vpPO->rre, &vpPO->dmb_f,&vpPO->dmb_l, &vpPO->mrre, 
         &vpPO->mst,&vpPO->men, &vpPO->mj, &iraw, &ifas, &vpPO->do_saltcorrect,

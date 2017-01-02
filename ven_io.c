@@ -1,7 +1,7 @@
 /*
 * ven_io.c
 *
-* Copyright 2016 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
+* Copyright 2017 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
 *
 * The programs and source code of the vertools collection are free software.
 * They are distributed in the hope that they will be useful,
@@ -146,7 +146,7 @@ void HandleVenpipeOut(VENPIPE *venPO, FILE *outPF)
     *   What to dump?
     */
     GetSeqSeqI(venPO->seq,&fseqPC);
-    if( (venPO->do_ss) || (venPO->do_mbtab) ) {
+    if( (venPO->do_ddb) || (venPO->do_mbtab) ) {
         fprintf(outPF,"# %-15s\t%s",nameS,enS);
         if(venPO->do_dmb) {
             fprintf(outPF,"\t%s",matS);
@@ -156,7 +156,7 @@ void HandleVenpipeOut(VENPIPE *venPO, FILE *outPF)
         }
         fprintf(outPF,"\n");
         fprintf(outPF,"# Sequence  %s\n",seqPC);
-        if(venPO->do_ss) {
+        if(venPO->do_ddb) {
             fprintf(outPF,"  MFE_Strc  %s\n",ssPC);
             if(venPO->do_pfe) {
                 fprintf(outPF,"  PFE_Strc  %s\n",pssPC);

@@ -1,7 +1,7 @@
 /*
 * table_io.c
 *
-* Copyright 2016 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
+* Copyright 2017 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
 *
 * The programs and source code of the vertools collection are free software.
 * They are distributed in the hope that they will be useful,
@@ -305,14 +305,14 @@ int WriteTableFileI(TABLE *tabPO, int head, int mask, char *nameS)
     if(!(outPF=OpenUFilePF(nameS,"w",NULL))) {
         return(FALSE);
     }
-    DumpTable(tabPO,head,mask,outPF);
+    DumpTable(tabPO, head, mask, outPF);
     CHECK_NFILE(outPF,nameS);
     return(TRUE);
 }
 /**************************************************************************
 *   Write out table contents to file outPF
 */
-void DumpTable(TABLE *tabPO,int settings,int mask,FILE *outPF)
+void DumpTable(TABLE *tabPO, int settings, int mask, FILE *outPF)
 {
     int r,c;
     char nameS[NSIZE];
@@ -320,8 +320,10 @@ void DumpTable(TABLE *tabPO,int settings,int mask,FILE *outPF)
 
     VALIDATE(tabPO,TABLE_ID);
     HAND_NFILE(outPF);
-    DumpTableDescription(tabPO,mask,"# ",outPF);
-    if(settings) {
+    if(settings > 0) {
+        DumpTableDescription(tabPO, mask,"# ",outPF);
+    }
+    if(settings > 1) {
         DumpTableSettings(tabPO,mask,outPF);
     }
     DumpTableColHeadings(tabPO,mask,outPF);
@@ -410,7 +412,7 @@ void DumpTableSettings(TABLE *tabPO,int mask,FILE *outPF)
 /**************************************************************************
 *   Description about table
 */
-void DumpTableDescription(TABLE *tabPO,int mask,char *preS,FILE *outPF)
+void DumpTableDescription(TABLE *tabPO, int mask, char *preS, FILE *outPF)
 {
     int r,c;
     char nameS[NSIZE],fnameS[NSIZE];

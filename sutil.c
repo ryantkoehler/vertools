@@ -1,7 +1,7 @@
 /*
 * sutil.c
 *
-* Copyright 2016 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
+* Copyright 2017 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
 *
 * The programs and source code of the vertools collection are free software.
 * They are distributed in the hope that they will be useful,
@@ -645,8 +645,9 @@ int CopyNthWordI(char *bufS,int n,char *wordS,int max)
     int i;
     char *cPC;
     
-    if(wordS)
-    {   INIT_S(wordS);  }
+    if(wordS) {   
+        INIT_S(wordS);  
+    }
     cPC = bufS;
     PASS_BLANK(cPC);
     i = 1;

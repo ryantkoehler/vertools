@@ -1,7 +1,7 @@
 /*
 * venpipe.h
 *
-* Copyright 2016 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
+* Copyright 2017 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
 *
 * The programs and source code of the vertools collection are free software.
 * They are distributed in the hope that they will be useful,
@@ -17,8 +17,8 @@
 
 #include "dna.h"
 
-#define VEN_VERSION_S   "VenPipe Version 1.0"
-#define VLIB_VERSION_S  "Vienna Library: ViennaRNA-2.2.5"
+#define VEN_VERSION_S   "VenPipe Version 1.1"
+#define VLIB_VERSION_S  "Vienna Library: ViennaRNA-2.3.1"
 
 #define MAX_VSLEN   10000   /* Sequence buffer size; Max seq len */
 
@@ -36,7 +36,7 @@ typedef struct VENPIPE
     int ofas;               /* Flag to output sequence */
     int oraw;               /* Flag to output sequence */
     int do_pfe;             /* Flag to calculate partition free energy; not min */
-    int do_ss;              /* Flag to dump seq structrure */
+    int do_ddb;             /* Flag to dump dot-bracket seq structrure */
     int do_dmb;             /* Flag to dump number of matching bases */
     int do_ksapar;          /* Flag to keep salt adjusted parameter file */
     int firstb,lastb;       /* Base restrictions? */

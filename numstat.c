@@ -1,7 +1,7 @@
 /*
 * numstat.c
 *
-* Copyright 2016 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
+* Copyright 2017 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
 *
 * The programs and source code of the vertools collection are free software.
 * They are distributed in the hope that they will be useful,
@@ -690,11 +690,12 @@ int GetLineDataValI(NUMSTAT *nsPO, char *bufS, DOUB *rPD, DOUB *sPD)
 }
 /**************************************************************************
 *   Try to get value from word in col
+*   skip makes this permissive of missing values, extra chars: ([,])
 */
 int GetWordDataValI(char *linePC, int col, int skip, DOUB *vPD)
 {
     DOUB vD;
-    char wordS[DEF_BS];
+    char wordS[DEF_BS],cwordS[DEF_BS];
 
     if(!GetNthWordI(linePC,col,wordS)) {
         if(skip) {
@@ -702,8 +703,17 @@ int GetWordDataValI(char *linePC, int col, int skip, DOUB *vPD)
         }
         return(BOGUS);
     }
+    /***
+    *   Possibly clean up extra chars in / around number
+    */
     vD = BAD_D;
-    sscanf(wordS,"%lf",&vD);
+    if(skip) {
+        RemoveChars("[(,)]", wordS, cwordS);
+        sscanf(cwordS,"%lf",&vD);
+    }
+    else {
+        sscanf(wordS,"%lf",&vD);
+    }
     if(BAD_DOUB(vD)) {  
         if(skip) {
             return(FALSE);

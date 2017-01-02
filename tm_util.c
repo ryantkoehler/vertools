@@ -1,7 +1,7 @@
 /*
 * tm_util.c
 *
-* Copyright 2016 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
+* Copyright 2017 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
 *
 * The programs and source code of the vertools collection are free software.
 * They are distributed in the hope that they will be useful,
@@ -22,6 +22,7 @@
 #define __MAIN__
 #include "prim.h"
 #include "dna.h"
+#include "table.h"
 #include "fbound.h"
 #include "tm_pars.h"
 #include "dset_tm.h"
@@ -72,7 +73,9 @@ void TmUtilUse(void)
     printf("   -tbj #     Table option jump between starting bases (i.e. step)\n");
     printf("   -not       Flagging logical not; out>-->in & in>-->out\n");
     printf("   -eraw      Extract flagged sequences in raw format (with extra info / line)\n");
-    printf("   -emin      Extract min-length flagged sequences (for with -tab and -flg\n");
+    printf("   -emin      Extract min-length sequences (with -tab and -flg)\n");
+    printf("   -emid      Extract mid-length sequences (with -tab and -flg)\n");
+    printf("   -emax      Extract max-length sequences (with -tab and -flg)\n");
     printf("   -tes       Two explicit seqs (alternating lines), 5'-3' and 3'-5'\n");
     printf("   -btes      Two explicit seqs (e.g. Blast output), both 5'-3'\n");
     printf("   -dthe      Report Delta thermodynamic quantities (-tes -btes)\n");
@@ -82,7 +85,7 @@ void TmUtilUse(void)
     printf("   -cmb       Competitive miss-match binding (Peyret algorithm)\n");
     printf("\n");
     printf("NOTE: To extract seqs of lengths L1 to L2 with Tm vals T1 to T2:\n");
-    printf("   -tab L1 L2 -flg T1 T2 -eraw (or -emin)\n");
+    printf("   -tab L1 L2 -flg T1 T2 -eraw (or -emin, -emid, -emax)\n");
     printf("\n");
 }
 /**************************************************************************
@@ -107,7 +110,8 @@ int TmUtilI(int argc, char **argv)
         -tmsl B -tmpey B -scon D -rsd B -tem D -fds B\
         -tlmin B -tes B -btes B -den B\
         -tcon D -eraw B -bran I2 -rre B -otls B\
-        -iraw B -ifas B -dthe B -cmb B -pdc I -tab I2 -emin B -tbj I -ds B -iseq B",
+        -iraw B -ifas B -dthe B -cmb B -pdc I -tab I2\
+        -emin B -emid B -emax B -tbj I -ds B -iseq B",
         tuPO->inname, tuPO->outname, tuPO->parname, &tuPO->con1, 
         &tuPO->salt, &tmoli, &tmelt, &tuPO->do_therm, &tuPO->do_dpar,
         &tuPO->do_tmpro, &tm24, &tmgb, &tuPO->mg, &tuPO->quiet, 
@@ -121,7 +125,8 @@ int TmUtilI(int argc, char **argv)
         &tuPO->do_dtherm, &tuPO->do_cmb, 
         &tuPO->pdc,
         &tuPO->do_tab_lo,&tuPO->do_tab_hi,
-        &tuPO->do_emin, &tuPO->do_tab_j, &tuPO->do_ds, 
+        &tuPO->do_emin, &tuPO->do_emid, &tuPO->do_emax, 
+        &tuPO->do_tab_j, &tuPO->do_ds, 
         &iseq,
         (int *)NULL))
     {
@@ -282,13 +287,15 @@ TM_UTIL *CreateTm_utilPO()
     }
     tuPO->ID = TM_UTIL_ID;
     tuPO->tm = CreateTm_parsPO();
-    tuPO->seq = CreateSeqPO(MAX_TM_LEN,NULL,NULL);
-    tuPO->sseq = CreateSeqPO(MAX_TM_LEN,NULL,NULL);
-    tuPO->fseq = CreateSeqPO(MAX_TM_LEN,NULL,NULL);
-    if( (!tuPO->tm) || (!tuPO->seq) || (!tuPO->sseq) || (!tuPO->fseq) ) {
+    tuPO->seq = CreateSeqPO(MAX_TM_LEN, NULL, NULL);
+    tuPO->sseq = CreateSeqPO(MAX_TM_LEN, NULL, NULL);
+    tuPO->fseq = CreateSeqPO(MAX_TM_LEN, NULL, NULL);
+    tuPO->ltm_tab = CreateTablePO(DEF_LTM_ROWS, DEF_LTM_COLS);
+    if( (!tuPO->tm) || (!tuPO->seq) || (!tuPO->sseq) || (!tuPO->fseq) || (!tuPO->ltm_tab) ) {
         CHECK_TM_UTIL(tuPO);
         return(NULL);
     }
+    SetTablePrintformI(tuPO->ltm_tab, TM_UTIL_PFMT, NULL, "\t", NULL, NULL); 
     InitTm_utilI(tuPO);
     return(tuPO);
 }
@@ -302,6 +309,7 @@ int DestroyTm_utilI(TM_UTIL *tuPO)
     CHECK_SEQ(tuPO->seq);
     CHECK_SEQ(tuPO->sseq);
     CHECK_SEQ(tuPO->fseq);
+    CHECK_TABLE(tuPO->ltm_tab);
     CHECK_FILE(tuPO->in);
     CHECK_NFILE(tuPO->out,tuPO->outname);
     CHECK_FREE(tuPO);
@@ -341,7 +349,7 @@ int InitTm_utilI(TM_UTIL *tuPO)
     tuPO->do_flag = FALSE;
     tuPO->do_not = FALSE;
     tuPO->do_eraw = FALSE;
-    tuPO->do_emin = FALSE;
+    tuPO->do_emin = tuPO->do_emid = tuPO->do_emax = FALSE;
     tuPO->do_padbad = TRUE;
     tuPO->firstb = tuPO->lastb = -1;
     tuPO->do_rre = FALSE;
@@ -466,13 +474,13 @@ int HandleTmProfileI(TM_UTIL *tuPO, FILE *outPF)
     return(TRUE);
 }
 /**************************************************************************
-*   Check matrix table of thermo values Start-pos X Len
+*   Matrix of sequence offsets (starting pos) X min-to-max lengths
 */
 int HandleThermoSampleTableI(TM_UTIL *tuPO, FILE *outPF)
 {
-    int i,j,slen,end;
+    int i,j,slen,end,row,col,nok,fok,lok;
     DOUB vD;
-    char *seqPC, nameS[NSIZE],seqS[MAX_TM_LEN + 1];
+    char *seqPC, nameS[NSIZE], rowS[NSIZE], seqS[MAX_TM_LEN + 1];
 
     HAND_NFILE(outPF);
     FillSeqNameStringI(tuPO->seq,nameS,NSIZE);
@@ -484,64 +492,129 @@ int HandleThermoSampleTableI(TM_UTIL *tuPO, FILE *outPF)
     if(end < 1) {
         return(FALSE);
     }
-    /***
-    *   Either regular matrix dump, or special case with table-sampling + flagging + extract
-xxx Messy!
-    */
     fprintf(outPF,"# %s\n",nameS);
+    /***
+    *   Fill up table with thermo vals; First clear values and masks
+    */
+    InitTableValsI(tuPO->ltm_tab, BAD_D, FALSE);
+    SetTableMasks(tuPO->ltm_tab, FALSE);
+    row = 0;
     for(i=0; i<end; i += tuPO->do_tab_j) 
     {
-        if(! tuPO->do_tabex) {
-            fprintf(outPF,"%s__%02d\t",nameS,i+1);
-        }
+        sprintf(rowS,"%s__%02d\t",nameS,i+1);
+        SetTableRowLabI(tuPO->ltm_tab, row, rowS);
+        col = 0;
         for(j = tuPO->do_tab_lo; j <= tuPO->do_tab_hi; j += tuPO->do_tab_j) 
         {
             ClearTm_utilThermoVals(tuPO);
             if(j<slen) {
-                SeqTmThermI(tuPO->tm, seqPC, j, &tuPO->Tm, &tuPO->dG,
-                    &tuPO->dH, &tuPO->dS);
+                SeqTmThermI(tuPO->tm, seqPC, j, &tuPO->Tm, &tuPO->dG, &tuPO->dH, &tuPO->dS);
                 if(tuPO->do_fds) {
-                    tuPO->fds = Fraction2D(
-                        tuPO->con1, tuPO->con2, tuPO->temp, tuPO->dG);
+                    tuPO->fds = Fraction2D(tuPO->con1, tuPO->con2, tuPO->temp, tuPO->dG);
                     vD = tuPO->fds;
                 }
                 else {
                     vD = tuPO->Tm;
                 }
+                AddTableValI(tuPO->ltm_tab, row, col, vD);
             }
-            else {
-                vD = -1.0;
-            }
-            /***    
-            *   Simple number or maybe sequence story
-            */
-            if(! tuPO->do_tabex) {
-                fprintf(outPF,"%3.3f ",vD); 
-            }
-            else {
-                if(SeqFlaggingValI(tuPO,&vD)) {
-                    strncpy(seqS,seqPC,j);
-                    seqS[j] = '\0';
-                    fprintf(outPF,"%s__%02d_%02d\t%s\t%3.3f\t%d\n",nameS,i+1,i+j+1,seqS,vD,j);
-                    /*** 
-                    * If only min-len, bail on this loop
-                    */
-                    if(tuPO->do_emin) {
-                        j = tuPO->do_tab_hi;
-                    }
-                }
-            }
+            col++;
         }
-        if(! tuPO->do_tabex) {
-            fprintf(outPF,"\n");
-        }
+        row++;
         seqPC++;
         slen--;
+    }
+    /***
+    *   Not extracting seq = Dump the table
+    */
+    if(! tuPO->do_tabex) {
+        /* Only actually dump used rows and columns; mask those */
+        SetTableRowRangeMaskI(tuPO->ltm_tab, 0, row, TRUE);
+        SetTableColRangeMaskI(tuPO->ltm_tab, 0, col, TRUE);
+        /* Set name; Replace BAD_D with pretty-print number */
+        SetTableNamesI(tuPO->ltm_tab, nameS, NULL, -1);
+        InitTableMatchingValsI(tuPO->ltm_tab, BAD_D, -1.0, TRUE);
+        /* Args: 0 = no header info; TRUE = use masking */
+        DumpTable(tuPO->ltm_tab, 0, TRUE, outPF);
+        return(TRUE);
+    }
+    /***
+    *   Extracting seq(s) per row
+    */ 
+    GetSeqSeqI(tuPO->seq, &seqPC);
+    row = 0;
+    for(i=0; i<end; i += tuPO->do_tab_j) 
+    {
+        nok = GetTableRowFlagValIndicesI(tuPO, row, &fok, &lok);
+        if(nok > 0) {
+            /***
+            *   Single special picks? If so, 'tighten loop', else given range 
+            */
+            if(tuPO->do_emin) {
+                lok = fok+1;
+            }
+            else if(tuPO->do_emid) {
+                fok = (fok + lok -1) / 2;
+                lok = fok+1;
+            }
+            else if(tuPO->do_emax) {
+                fok = lok-1;
+            }
+            for(col=fok; col<lok; col++) 
+            {
+                /***
+                *   It's possible that values are bad; i.e. shorter seq has higher Tm
+                */
+                GetTableValI(tuPO->ltm_tab, row, col, &vD);
+                if(BAD_DOUB(vD)) {
+                    continue;
+                }
+                j = tuPO->do_tab_lo + col;
+                strncpy(seqS, seqPC, j);
+                seqS[j] = '\0';
+                fprintf(outPF,"%s__%02d_%02d\t%s\t%3.3f\t%d\n",nameS,i+1,i+j+1,seqS,vD,j);
+            }
+        }
+        row++;
+        seqPC++;
     }
     return(TRUE);
 }
 /***************************************************************************
-*   SHAM; hardcode raw-format input
+*   Find first, last and count of row elements with values in min-max bounds
+*   Also sets out-of-bound values in table to bad
+*/
+int GetTableRowFlagValIndicesI(TM_UTIL *tuPO, int row, int *fPI, int *lPI)
+{
+    int n,col,first,last,ncol;
+    DOUB vD;
+
+    ncol = GetTableColsI(tuPO->ltm_tab, FALSE);
+    n = 0;
+    first = last = -1;
+    for(col=0; col<ncol; col++)
+    {
+        GetTableValI(tuPO->ltm_tab, row, col, &vD);
+        if( (vD >= tuPO->minv) && (vD <= tuPO->maxv) ){
+            n++;
+            if(n == 1){
+                first = col;
+            }
+            last = col;
+        }
+        else {
+            SetTableValI(tuPO->ltm_tab, row, col, BAD_D);
+        }
+    }
+    if(n > 0) {
+        *fPI = first;
+        last = (last<0) ? first+1 : last+1;
+        *lPI = last;
+    }
+    return(n);
+}
+/***************************************************************************
+*   TODO SHAM; hardcode raw-format input
 *   Returns length if got sequence
 *   Returns BOGUS if ParseSeq is done
 */
@@ -828,10 +901,11 @@ int CheckTmutilOptionsI(TM_UTIL *tuPO)
     LIMIT_NUM(tuPO->do_tab_j, 1, 100);
     /***
     *   Special case with table-sampling + flagging + extract
-    *   First, special case to make sure do_eraw is set if do_emin is set
+    *   First, special case to make sure do_eraw is set if do_emin, mid, max ard set
     */
-    if(tuPO->do_emin) {
+    if(tuPO->do_emin || tuPO->do_emid || tuPO->do_emax) {
         tuPO->do_eraw = TRUE;
+        tuPO->do_not = FALSE;
     }
     if( (tuPO->do_tab_lo) && (! BAD_REAL(tuPO->minv)) && (tuPO->do_eraw) ) {
         tuPO->do_tabex = TRUE;

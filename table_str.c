@@ -1,7 +1,7 @@
 /*
 * table_str.c
 *
-* Copyright 2016 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
+* Copyright 2017 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
 *
 * The programs and source code of the vertools collection are free software.
 * They are distributed in the hope that they will be useful,
@@ -134,8 +134,7 @@ int InitTableI(TABLE *tabPO, int vals)
     strcpy(tabPO->pvform,DEF_TAB_PVFORM_S);
     strcpy(tabPO->prlform,DEF_TAB_PRLFORM_S);
     strcpy(tabPO->pvsep,DEF_TAB_PVSEP_S);
-    InitArrayI(tabPO->cmask,IS_CHAR,0,tabPO->ncol,TRUE);
-    InitArrayI(tabPO->rmask,IS_CHAR,0,tabPO->nrow,TRUE);
+    SetTableMasks(tabPO, TRUE);
     tabPO->prefac = 1.0;
     if(vals) {
         InitTableValsI(tabPO, 0.0, FALSE);
@@ -144,6 +143,22 @@ int InitTableI(TABLE *tabPO, int vals)
     SetNumlistNamesI(tabPO->vals, "Table_values", NULL, NSIZE);
     DB_TAB DB_PrI("<< InitTableI\n");
     return(TRUE);
+}
+/*************************************************************************
+*   Set row / col masks to 'what' 
+*/
+void SetTableMasks(TABLE *tabPO, int what)
+{
+    InitArrayI(tabPO->rmask,IS_CHAR,0,tabPO->nrow,what);
+    InitArrayI(tabPO->cmask,IS_CHAR,0,tabPO->ncol,what);
+}
+void SetTableRowMask(TABLE *tabPO, int what)
+{
+    InitArrayI(tabPO->rmask,IS_CHAR,0,tabPO->nrow,what);
+}
+void SetTableColMask(TABLE *tabPO, int what)
+{
+    InitArrayI(tabPO->cmask,IS_CHAR,0,tabPO->ncol,what);
 }
 /*************************************************************************
 *   Initialize table values
@@ -164,6 +179,34 @@ int InitTableValsI(TABLE *tabPO, DOUB vD, int mask)
                 continue;
             }
             SetTableValI(tabPO,r,c,vD);
+        }
+    }
+    DB_TAB DB_PrI("<< InitTableValsI TRUE\n");
+    return(TRUE);
+}
+/*************************************************************************
+*   Reset table values ONLY if they match target value
+*   If mask is TRUE, only masked ROWS/COLS are set
+*/
+int InitTableMatchingValsI(TABLE *tabPO, DOUB targD, DOUB newD, int mask)
+{
+    int r,c;
+    DOUB vD;
+
+    DB_TAB DB_PrI(">> InitTableValsI %p targD=%f new=%f mask=%d\n",tabPO,targD,newD,mask);
+    VALIDATE(tabPO,TABLE_ID);
+    for(r=0;r<tabPO->nrow;r++) {
+        if( (mask) && (!tabPO->rmask[r]) ) {
+            continue;
+        }
+        for(c=0;c<tabPO->ncol;c++) {
+            if( (mask) && (!tabPO->cmask[c]) ) {
+                continue;
+            }
+            GetTableValI(tabPO,r,c,&vD);
+            if(vD == targD) {
+                SetTableValI(tabPO,r,c,newD);
+            }
         }
     }
     DB_TAB DB_PrI("<< InitTableValsI TRUE\n");

@@ -1,7 +1,7 @@
 /*
 * table.c
 *
-* Copyright 2016 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
+* Copyright 2017 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
 *
 * The programs and source code of the vertools collection are free software.
 * They are distributed in the hope that they will be useful,
@@ -174,6 +174,38 @@ int SetTableColMaskI(TABLE *tabPO,int col,int what)
         return(TRUE);
     }
     return(FALSE);
+}
+/**************************************************************************
+*   Set masking for range of rows, start to end (exclusive)
+*/
+int SetTableRowRangeMaskI(TABLE *tabPO,int srow, int erow, int what)
+{
+    int i,any;
+    
+    any = 0;
+    for(i=srow; i<erow; i++)
+    {
+        if(SetTableRowMaskI(tabPO,i,what)) {
+            any++;
+        }
+    }
+    return(any);
+}
+/**************************************************************************
+*   Set masking for range of cols, start to end (exclusive)
+*/
+int SetTableColRangeMaskI(TABLE *tabPO,int scol, int ecol, int what)
+{
+    int i,any;
+    
+    any = 0;
+    for(i=scol; i<ecol; i++)
+    {
+        if(SetTableColMaskI(tabPO,i,what)) {
+            any++;
+        }
+    }
+    return(any);
 }
 /**************************************************************************
 *   Get masking status for row in table 
