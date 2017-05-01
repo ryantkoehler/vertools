@@ -15,7 +15,7 @@
 */
 
 
-#define VERSION_S "NumStat Version 2.3"
+#define VERSION_S "NumStat Version 2.31"
 
 
 #define MAX_WIDTH       10000   /* Size of lines to eat */

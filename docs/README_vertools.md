@@ -1,9 +1,8 @@
 ### README
-VerTools 1.3
-6/24/16 RTK
-11/4/16 RTK; Add scripts (get_build_Vienna.sh, mv_binaries.sh), update READMEs
+VerTools 1.4
+4/30/17 RTK
 
-* Copyright 2016 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
+* Copyright 2017 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
 *
 * The programs and source code of the vertools collection are free software.
 * They are distributed in the hope that they will be useful,

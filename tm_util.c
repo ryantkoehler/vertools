@@ -614,7 +614,6 @@ int GetTableRowFlagValIndicesI(TM_UTIL *tuPO, int row, int *fPI, int *lPI)
     return(n);
 }
 /***************************************************************************
-*   TODO SHAM; hardcode raw-format input
 *   Returns length if got sequence
 *   Returns BOGUS if ParseSeq is done
 */

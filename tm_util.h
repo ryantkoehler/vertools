@@ -14,7 +14,7 @@
 *
 */
 
-#define VERSION_S   "Tm_Util Version 1.2"
+#define VERSION_S   "Tm_Util Version 1.21"
 
 #define TMU_NLEN        255
 

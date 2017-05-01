@@ -15,7 +15,7 @@
 */
 
 
-#define VERSION_S "Pick_Seq Version 0.8"
+#define VERSION_S "Pick_Seq Version 0.81"
 
 
 /***

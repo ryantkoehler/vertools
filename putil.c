@@ -27,13 +27,13 @@
 /** input parser **/
 #define BOOL_TYPE   0
 #define INT_TYPE    1
-#define REAL_TYPE   2       /* Now treated as double; 11/10/04 RTK */
+#define REAL_TYPE   2           /* Now treated as double; 11/10/04 RTK */
 #define STR_TYPE    3
 #define DOUB_TYPE   4
 #define CHAR_TYPE   5
 
 #define MAX_ARGS        200     /* Max supported command line args */
-#define MAX_ARG_OPT     5       /* Max values associated with one arg key */
+#define MAX_ARG_OPT     4       /* Max values associated with one arg key */
 
 typedef struct V_ARG
 {
@@ -50,7 +50,9 @@ typedef struct V_ARG
 
 #define NEG_NUM(bu) ((bu[0]=='-')&&(isdigit(INT(bu[1]))))
 
-PRIV_V CleanV_arg(V_ARG *vargPO);
+PRIV_I GivenListedKeysMatchI(char *inkeyS, char *argkeyS);
+PRIV_V ReportAmbigArgs(char *inkeyS, int n_mat, int *mats, V_ARG *varglisPO);
+PRIV_V CleanV_argList(V_ARG *varglisPO, int num);
 PRIV_I ParseSingVargArgI(V_ARG *vargPO,char *bufS,int j);
 
 /*************************************************************************
@@ -65,6 +67,7 @@ PRIV_I ParseSingVargArgI(V_ARG *vargPO,char *bufS,int j);
 int ParseArgsI(int argc, char **argv, char *formPC, ...)
 {
     int i, j, comarg, n_pvarg, n_argblock, n_mand, cur_mand, *vPI;
+    int n_mat, matches[MAX_ARGS];
     char bufS[255], *cPC, *vPC;
     REAL *vPR;
     double *vPD;
@@ -85,11 +88,7 @@ int ParseArgsI(int argc, char **argv, char *formPC, ...)
     *   n_argblock = number of argument blocks,
     *   n_pvarg = number of actual (variable length) arguments passed here
     */
-    for(i=0; i<MAX_ARGS; i++)
-    {
-        v_argsOA[i].index = i;
-        CleanV_arg(&v_argsOA[i]);
-    }
+    CleanV_argList(v_argsOA, MAX_ARGS);
     DB_PARS DB_PrI("+ varg structs initilized\n");
     n_argblock = n_pvarg = 0;
     va_start(ap,formPC);
@@ -99,8 +98,7 @@ int ParseArgsI(int argc, char **argv, char *formPC, ...)
     cPC = formPC;
     while(*cPC != '\0')
     {
-        if(n_argblock >= MAX_ARGS)
-        {
+        if(n_argblock >= MAX_ARGS) {
             printf("Parsing problem with variable argument format\n");
             printf("|%s|\n",formPC);
             printf("TOO MANY ARGUMENTS, %d max\n",MAX_ARGS);
@@ -116,8 +114,7 @@ int ParseArgsI(int argc, char **argv, char *formPC, ...)
         /***
         *   Optional argument starts with "-"
         */
-        if(*bufS == '-') 
-        {
+        if(*bufS == '-') {
             DB_PARS DB_PrI("optional ");
             vargPO->opt = TRUE;
             sprintf(vargPO->key,"%s",bufS);
@@ -132,8 +129,7 @@ int ParseArgsI(int argc, char **argv, char *formPC, ...)
                 return(FALSE);
             }
         }
-        else 
-        {
+        else {
             DB_PARS DB_PrI("manditory ");
         }
         /***
@@ -163,6 +159,14 @@ int ParseArgsI(int argc, char **argv, char *formPC, ...)
                 sscanf(cPC,"%d",&vargPO->nvic);
             }
         }
+        if(vargPO->nvic > MAX_ARG_OPT) {
+            printf("Parsing problem with variable argument format\n");
+            printf("|%s|\n",formPC);
+            printf("ARGUMENT %d has lists %d values but %d max |%c|\n",
+                n_argblock, vargPO->nvic, MAX_ARG_OPT, *cPC);
+            ERR("ParseArgsI","bad parse-specifying argument var count");
+            return(FALSE);
+        }
         DB_PARS DB_PrI("type %d, nvic %d\n",vargPO->type,vargPO->nvic);
         /***
         *   Attach the actuall passed variable argument(s) to the key vargPO
@@ -181,8 +185,7 @@ int ParseArgsI(int argc, char **argv, char *formPC, ...)
                 default:        vPI = va_arg(ap,int*);
             }
             DB_PARS DB_PrI("+    vi_arg...[%d], %d\n",i,n_pvarg);
-            if((vPI == NULL)&&(vPR == NULL)&&(vPD == NULL)&&(vPC==NULL))
-            {
+            if( (vPI == NULL) && (vPR == NULL) && (vPD == NULL) && (vPC==NULL)) {
                 printf("Bad variable argument for format\n");
                 printf(" vic[%d], type=%d\n",i,vargPO->type);
                 printf("|%s|\n",formPC);
@@ -205,8 +208,7 @@ int ParseArgsI(int argc, char **argv, char *formPC, ...)
     /***
     *   Nothing read in?
     */
-    if(n_argblock == 0)
-    {
+    if(n_argblock == 0) {
         printf("Parsing problem with variable argument format\n");
         printf("|%s|\n",formPC);
         printf("NO ARGUMENTS READ\n");
@@ -230,8 +232,7 @@ int ParseArgsI(int argc, char **argv, char *formPC, ...)
         j += vargPO->nvic;
     }
     DB_PARS DB_PrI("+ n_mand=%d  j=%d, argc = %d\n",n_mand,j,argc);
-    if(j > (argc -1))
-    {
+    if(j > (argc -1)) {
         printf("\n");
         printf("Missing manditory command line arguments;\n");
         printf("    %d non-optional argument(s) expected\n",n_mand);
@@ -247,56 +248,63 @@ int ParseArgsI(int argc, char **argv, char *formPC, ...)
     comarg = 1;
     while(comarg < argc)
     {
-        sprintf(bufS,"%s",argv[comarg]);
+        sprintf(bufS,"%s", argv[comarg]);
         DB_PARS DB_PrI("+ [%2d] |%s|\n",comarg,bufS);
         comarg++;
+        /***
+        *   Special debug things (parsed elsewhere at init)
+        */
         if( EQSTRING(bufS,"-noDB",5) || EQSTRING(bufS,"-nodb",5) ) {
             continue;
         }
-        if(EQSTRING(bufS,"-dumpDB",7)) {
+        if( EQSTRING(bufS,"-dumpDB",7) ) {
             continue;
         }
         /***
-        *   Search collection of arguments for matching keyword
+        *   Search collection of arguments for matching keyword(s) if starts with '-'
+        *   Don't consider '-' only (i.e. stdin) or neg number cases
         */
-        vargPO = NULL;
-        for(j = 0; j < n_argblock; j++)
-        {
-            tvargPO = &v_argsOA[j];
-            DB_PARS DB_PrI("+  checking [%2d] key|%s|\n",tvargPO->index,tvargPO->key);
-            /***
-            *   If not optional or has empty key don't get this guy
-            */
-            if( (!tvargPO->opt) || NO_S(tvargPO->key) ) {
-                continue;
-            }
-            /***
-            *   Passed command line switch matches 
-            */
-            if(EQSTRING(bufS,tvargPO->key,strlen(tvargPO->key))) {
-                vargPO = tvargPO;
-                break;
+        n_mat = 0;
+        if( (bufS[0] == '-') && (strlen(bufS) > 1) && (!NEG_NUM(bufS)) ) {
+            for(j = 0; j < n_argblock; j++)
+            {
+                tvargPO = &v_argsOA[j];
+                DB_PARS DB_PrI("+  checking [%2d] key|%s|\n",tvargPO->index,tvargPO->key);
+                /***
+                *   If not optional, has empty key, or is only '-', ignore 
+                */
+                if( (!tvargPO->opt) || NO_S(tvargPO->key) ) {
+                    continue;
+                }
+                if(GivenListedKeysMatchI(bufS, tvargPO->key)) {
+                    matches[n_mat] = j;
+                    n_mat++;
+                }
             }
         }
         /***
-        *   if vargPO != NULL, then this is an optional argument
+        *   Ambiguous match?
         */
-        if(vargPO != NULL)
-        {
+        if(n_mat > 1) {
+            ReportAmbigArgs(bufS, n_mat, matches, v_argsOA);
+            return(FALSE);
+        }
+        /***
+        *   if one argument match then this is an optional argument
+        */
+        if(n_mat == 1) {
+            vargPO = &v_argsOA[matches[0]];
             DB_PARS DB_PrI("+  Found varg[%d]  key |%s| ",vargPO->index,vargPO->key);
-            if(vargPO->type == BOOL_TYPE)
-            {
+            if(vargPO->type == BOOL_TYPE) {
                 *vargPO->vics[0] = !(*vargPO->vics[0]);
                 DB_PARS DB_PrI("= bool toggle (%p = %d)\n",
                     vargPO->vics[0],*vargPO->vics[0]);
             }
-            else
-            {
+            else {
                 DB_PARS DB_PrI("= eat %d args\n",vargPO->nvic);
                 for(j= 0; j<vargPO->nvic; j++)
                 {
-                    if(comarg >= argc)
-                    {
+                    if(comarg >= argc) {
                         printf("\n");
                         printf(
                             "Option \"%s\" is missing arguments; %d required\n",
@@ -306,8 +314,7 @@ int ParseArgsI(int argc, char **argv, char *formPC, ...)
                     }
                     sprintf(bufS,"%s",argv[comarg++]);
                     DB_PARS DB_PrI("+    %4d |%s|\n",j,bufS);
-                    if(!ParseSingVargArgI(vargPO,bufS,j))
-                    {
+                    if(!ParseSingVargArgI(vargPO,bufS,j)) {
                         printf("    Problem with \"%s\"\n", bufS);
                         printf("\n");
                         return(FALSE);
@@ -322,7 +329,7 @@ int ParseArgsI(int argc, char **argv, char *formPC, ...)
         {
             if(cur_mand >= n_mand) {
                 printf("\n");
-                printf("Invalid or unreconized option: \"%s\"\n",bufS);
+                printf("Invalid or unrecognized option: \"%s\"\n",bufS);
                 printf("\n");
                 return(FALSE);
             }
@@ -342,8 +349,7 @@ int ParseArgsI(int argc, char **argv, char *formPC, ...)
                 }
                 i++;
             }
-            if(vargPO == NULL)
-            {
+            if(vargPO == NULL) {
                 DB_PARS DB_PrI("<< ParseArgsI FALSE, missing mand command\n");
                 return(FALSE);
             }
@@ -351,10 +357,8 @@ int ParseArgsI(int argc, char **argv, char *formPC, ...)
                 cur_mand,vargPO->type,vargPO->nvic);
             for(j= 0; j<vargPO->nvic; j++)
             {
-                if(j > 0)
-                {
-                    if(comarg >= argc)
-                    {
+                if(j > 0) {
+                    if(comarg >= argc) {
                         printf("\n");
                         printf("Manditory input parameters are missing\n");
                         printf("\n");
@@ -363,8 +367,7 @@ int ParseArgsI(int argc, char **argv, char *formPC, ...)
                     sprintf(bufS,"%s",argv[comarg++]);
                 }
                 DB_PARS DB_PrI("+    %4d |%s|\n",j,bufS);
-                if(!ParseSingVargArgI(vargPO,bufS,j))
-                {
+                if(!ParseSingVargArgI(vargPO,bufS,j)) {
                     printf("    Problem with \"%s\"\n", bufS);
                     printf("\n");
                     return(FALSE);
@@ -390,15 +393,46 @@ int ParseArgsI(int argc, char **argv, char *formPC, ...)
     return(TRUE);
 }
 /*************************************************************************/
-PRIV_V CleanV_arg(V_ARG *vargPO)
+PRIV_I GivenListedKeysMatchI(char *inkeyS, char *argkeyS)
 {
-    vargPO->key[0] = '\0';
-    vargPO->type = STR_TYPE;
-    vargPO->opt = FALSE;
-    vargPO->nvic = 1;
+    int len;
+
+    len = MIN_NUM(strlen(inkeyS), strlen(argkeyS));
+    return EQSTRING(inkeyS,argkeyS,len);
 }
 /*************************************************************************/
-PRIV_I ParseSingVargArgI(V_ARG *vargPO,char *bufS,int j)
+PRIV_V ReportAmbigArgs(char *inkeyS, int n_mat, int *mats, V_ARG *varglisPO)
+{
+    int i;
+    V_ARG *vargPO;
+
+    printf("\n");
+    printf("Ambiguous keyword argument\n");
+    printf("    %s matches %d options:\n", inkeyS, n_mat);
+    for(i=0; i<n_mat; i++)
+    {
+        vargPO = &varglisPO[mats[i]];
+        printf("    %s ?\n", vargPO->key);
+    }
+    printf("\n");
+}
+/*************************************************************************/
+PRIV_V CleanV_argList(V_ARG *varglisPO, int num)
+{
+    int i;
+    V_ARG *vargPO;
+
+    for(i=0; i<num; i++)
+    {
+        vargPO = &varglisPO[i];
+        vargPO->key[0] = '\0';
+        vargPO->type = STR_TYPE;
+        vargPO->opt = FALSE;
+        vargPO->nvic = 1;
+    }
+}
+/*************************************************************************/
+PRIV_I ParseSingVargArgI(V_ARG *vargPO, char *bufS, int j)
 {
     int ival;
     REAL rvalR;
@@ -407,7 +441,7 @@ PRIV_I ParseSingVargArgI(V_ARG *vargPO,char *bufS,int j)
 
     DB_PARS DB_PrI(">> ParseSingVargArgI |%s| setting in [%d][%d]\n",
         bufS,vargPO->index,j);
-    if(j>=vargPO->nvic) {
+    if(j >= vargPO->nvic) {
         printf("\n nvic = %d, j = %d\n",vargPO->nvic,j);
         ERR("ParseSingVargArgI","bad argument index");
     }
@@ -424,7 +458,7 @@ PRIV_I ParseSingVargArgI(V_ARG *vargPO,char *bufS,int j)
     switch(vargPO->type)
     {
         case INT_TYPE: 
-            if((!isdigit(INT(bufS[0])))&&(!NEG_NUM(bufS)))
+            if( (!isdigit(INT(bufS[0]))) && (!NEG_NUM(bufS)) )
             {
                 printf("\n missing int argument (%s # %d)\n",vargPO->key,j+1);
                 return(FALSE);
@@ -433,7 +467,7 @@ PRIV_I ParseSingVargArgI(V_ARG *vargPO,char *bufS,int j)
             *vargPO->vics[j] = ival;
             break;
         case REAL_TYPE:
-            if((!isdigit(INT(bufS[0])))&&(!NEG_NUM(bufS)))
+            if( (!isdigit(INT(bufS[0]))) && (!NEG_NUM(bufS)) )
             {
                 printf("\n missing real argument (%s # %d)\n",vargPO->key,j+1);
                 return(FALSE);
@@ -442,7 +476,7 @@ PRIV_I ParseSingVargArgI(V_ARG *vargPO,char *bufS,int j)
             *vargPO->rvics[j] = (REAL)rvalR;
             break;
         case DOUB_TYPE:
-            if((!isdigit(INT(bufS[0])))&&(!NEG_NUM(bufS)))
+            if( (!isdigit(INT(bufS[0]))) && (!NEG_NUM(bufS)) )
             {
                 printf("\n missing double arg (%s # %d)\n",vargPO->key,j+1);
                 return(FALSE);

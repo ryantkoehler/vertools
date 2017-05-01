@@ -14,7 +14,7 @@
 *
 */
 
-#define VERSION_S "AlphCont Version 0.95"
+#define VERSION_S "AlphCont Version 0.96"
 
 #define ALPH_BLEN       2500
 

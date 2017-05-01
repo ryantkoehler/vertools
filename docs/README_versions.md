@@ -1,4 +1,4 @@
-## VerTools 1.3
+## VerTools 1.4
 
 * 11/28/14 RTK
 * 1/4/15 RTK; Update with cleaned code (tabs to space, etc)
@@ -7,10 +7,45 @@
 * 6/2/16 RTK; V1.3; Update dna_util windows (and generally -ds); Also tested
     this code on both Linux (Ubuntu 14.04) and Mac (El Capitan; Darwin Kernel 
     Version 15.4.0) and outcomes agree (except lassoo ???)
+* 4/30/17 RTK; V1.4; Update command line parser so partial arg keyword match 
+    should suffice so long as arg is unambiguous
 
 
 Below are the list of version numbers for the vertools source dump.
 These were taken from subdirectories packaged by "make_all.csh"
+
+--------------------------------------------------------------------------
+### 4/30/17 
+--------------------------------------------------------------------------
+    alphcont_src.0.96
+    bit_util_src.0.12
+    blastout_src.0.67
+    bpaste_src.0.22
+    ccase_src.0.21
+    chardump_src.0.41
+    cmake_src.2.55
+    comp_seq_src.1.61
+    dna_util_src.0.97
+    filepick_src.0.53
+    filter_src.1.46
+    fname_src.0.32
+    gen_clis_src.0.32
+    gen_nums_src.1.4
+    gen_prot_src.1.36
+    gen_seq_src.1.03
+    getsnps_src.0.6
+    lassoo_src.0.22
+    num_src.1.24
+    numstat_src.2.31
+    pick_seq_src.0.81
+    plotmat_src.0.62
+    scoretab_src.1.11
+    seqtweak_src.0.7
+    shuffle_src.0.23
+    tm_util_src.1.21
+    venpipe_src.1.11
+    wfmerge_src.0.41
+    wordfreq_src.0.95
 
 --------------------------------------------------------------------------
 ### 6/2/16 

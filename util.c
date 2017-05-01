@@ -140,7 +140,7 @@ void DBInit()
     FILE *fPF;
     char bufS[LINEGRAB+1];
 
-    DBClear();
+    DBClear(FALSE);
     fPF = fopen(DB_FILE_S,"r");
     if(fPF == NULL) {   
         return; 
@@ -202,15 +202,18 @@ void DBComlineCheck(int argc, char **argv)
         DBReport(); 
     }
     if(c) {
-        DBClear();  
+        DBClear(TRUE);  
     }
     return;
 }
 /**************************************************************************/
-void DBClear()
+void DBClear(int report)
 {
     int i;
 
+    if(report) {
+        printf("# Clearing DB flags\n");
+    }
     for(i=0; i<NUM_DB_FLAGS; i++)
     {   
         dbflagsGC[i] = 0;   

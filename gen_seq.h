@@ -15,7 +15,7 @@
 */
 
 
-#define VERSION_S "Gen_Seq version 1.02"
+#define VERSION_S "Gen_Seq version 1.03"
 
 /***
 *   Data structure for holding settings for gen_seq

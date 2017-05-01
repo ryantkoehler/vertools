@@ -14,7 +14,7 @@
 *
 */
 
-#define VERSION_S       "Filter version 1.45"
+#define VERSION_S       "Filter version 1.46"
 
 #define FILTBUF_SIZE    100000
 

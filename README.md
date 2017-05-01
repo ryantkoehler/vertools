@@ -4,6 +4,7 @@ vertools
 ### VerdAscend tools collection
 
 6/23/16 RTK
+4/30/17 RTK (update)
 
 More info is in other README files (in docs directory):
 

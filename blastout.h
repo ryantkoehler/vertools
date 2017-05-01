@@ -16,7 +16,7 @@
 
 
 
-#define VERSION_S   "BlastOut version 0.66"
+#define VERSION_S   "BlastOut version 0.67"
 
 #define BLASTOUT_ID 5031
 #define BLASTANS_ID 6005

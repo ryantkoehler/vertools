@@ -129,20 +129,18 @@ void DumpSeq(SEQ *seqPO,FILE *outPF)
 *   If par, reference to parent structure is cleared
 *   If mem, memory is cleared 
 */
-void InitSeq(SEQ *seqPO,int par,int mem)
+void InitSeq(SEQ *seqPO, int par, int mem)
 {
     VALIDATE(seqPO,SEQ_ID);
     INIT_S(seqPO->name);
-    if(par)
-    {
+    if(par) {
         seqPO->ind = 0;
         seqPO->par = NULL;
     }
     seqPO->len = 0;
     seqPO->nsnp = 0;
     seqPO->flag = 0;
-    if(mem)
-    {
+    if(mem) {
         CHECK_FREE(seqPO->seq);
         seqPO->ssize = 0;
     }
