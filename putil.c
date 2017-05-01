@@ -408,11 +408,11 @@ PRIV_V ReportAmbigArgs(char *inkeyS, int n_mat, int *mats, V_ARG *varglisPO)
 
     printf("\n");
     printf("Ambiguous keyword argument\n");
-    printf("    %s matches %d options:\n", inkeyS, n_mat);
+    printf("    '%s' matches %d options:\n", inkeyS, n_mat);
     for(i=0; i<n_mat; i++)
     {
         vargPO = &varglisPO[mats[i]];
-        printf("    %s ?\n", vargPO->key);
+        printf("    '%s' ?\n", vargPO->key);
     }
     printf("\n");
 }
