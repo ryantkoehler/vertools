@@ -453,10 +453,9 @@ int FinishSeqSettingsI(SEQ *seqPO, int clean, int error)
             case 'C': case 'c':
             case 'G': case 'g':
             case 'T': case 't':
+                break;
             case 'U': case 'u':
-                if( (seqPO->seq[i]=='U') || (seqPO->seq[i]=='u') ) {
-                    SET_SEQ_HASU(seqPO->flag);
-                }
+                SET_SEQ_HASU(seqPO->flag);
                 break;
             /***
             *   2-fold degen; i.e. S = G/C, W = A/T
@@ -533,11 +532,17 @@ int FinishSeqSettingsI(SEQ *seqPO, int clean, int error)
             *   Default = some bogus letter?
             */
             default:
-                SET_SEQ_AMB(seqPO->flag);
-                if ( clean < SCLEAN_MID) {
-                    SET_SEQ_NS(seqPO->flag);
+                /* Not letter = sham */
+                if( ! isalpha(INT(seqPO->seq[i])) ) {
+                    if(error) {
+                        printf("# ERROR: Bad seq char |%c| @%d in %s\n",
+                            seqPO->seq[i],i+1,seqPO->name);
+                    }
+                    ok = BOGUS;
                     break;
                 }
+                /* Letter ... but not covered above */
+                SET_SEQ_AMB(seqPO->flag);
                 if(error) {
                     printf("\n");
                     printf("# WARNING: Bad seq char |%c| @%d in %s\n",
@@ -545,13 +550,17 @@ int FinishSeqSettingsI(SEQ *seqPO, int clean, int error)
                     printf("#   Setting to \"N\"\n");
                 }
                 seqPO->seq[i] = 'N';
+                if ( clean < SCLEAN_MID) {
+                    SET_SEQ_NS(seqPO->flag);
+                    break;
+                }
                 ok = FALSE;
                 break;
         }
         /***
         *   Already a problem, so don't keep checking
         */
-        if(!ok) {
+        if(ok != TRUE) {
             break;
         }
     }
@@ -594,8 +603,9 @@ int DestroySeqcompI(SEQCOMP *scPO)
 void InitSeqcomp(SEQCOMP *scPO)
 {
     VALIDATE(scPO,SEQCOMP_ID);
-    scPO->slen = 0;
+    scPO->slen = scPO->nbase = 0;
     scPO->ra = scPO->rc = scPO->rg = scPO->rt = 0;
+    scPO->rs = scPO->rw = scPO->rr = scPO->ry = scPO->rk = scPO->rm = 0;
     scPO->na = scPO->nc = scPO->ng = scPO->nt = 0;
     scPO->fa = scPO->fc = scPO->fg = scPO->ft = 0.0;
     scPO->n_dinuc = 0;

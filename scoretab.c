@@ -394,16 +394,14 @@ int HandleNormalizationI(SCORETAB *stPO,TABLE *tabPO)
 */
 int HandleSmoothingI(SCORETAB *stPO, TABLE *tabPO)
 {
-    if(stPO->do_srow > 0)
-    {
+    if(stPO->do_srow > 0) {
         SmoothTableI(tabPO,TABLE_ROW,stPO->do_srow, FALSE);
         if(!stPO->quiet) {
             printf("# Row values smoothed with window +/- %d (%d wide)\n",
                 stPO->do_srow, stPO->do_srow * 2 + 1);
         }
     }
-    if(stPO->do_scol > 0)
-    {
+    if(stPO->do_scol > 0) {
         SmoothTableI(tabPO,TABLE_COL,stPO->do_scol, FALSE);
         if(!stPO->quiet) {
             printf("# Col values smoothed with window +/- %d (%d wide)\n",
@@ -457,7 +455,11 @@ void HandleSctOutput(SCORETAB *stPO,FILE *outPF)
             HandleSctOutStats(stPO,tabPO,TABLE_FULL,0,outPF);
             break;
         case SCTO_CINFO:
-            if( (stPO->cinfo<1) || (stPO->cinfo>tabPO->ncol) ) {
+            /* If negative index, recalc from end (as per Python) */
+            if(stPO->cinfo < 0) {
+                stPO->cinfo = tabPO->ncol + stPO->cinfo + 1;
+            }
+            if( (stPO->cinfo < 1) || (stPO->cinfo > tabPO->ncol) ) {
                 printf("Table has %d columns; Can't compare col %d to others\n",
                     tabPO->ncol,stPO->cinfo);
                 return;
@@ -468,7 +470,11 @@ void HandleSctOutput(SCORETAB *stPO,FILE *outPF)
             HandleSctOutCols(stPO,tabPO,outPF);
             break;
         case SCTO_CCOR:
-            if( (stPO->ccor<1) || (stPO->ccor>tabPO->ncol) ) {
+            /* If negative index, recalc from end (as per Python) */
+            if(stPO->ccor < 0) {
+                stPO->ccor = tabPO->ncol + stPO->ccor + 1;
+            }
+            if( (stPO->ccor < 1) || (stPO->ccor > tabPO->ncol) ) {
                 printf("Table has %d columns; Can't correlate col %d to others\n",
                     tabPO->ncol,stPO->ccor);
                 return;
@@ -485,13 +491,11 @@ void HandleSctOutput(SCORETAB *stPO,FILE *outPF)
             HandleSctColCors(stPO,tabPO,outPF);
             break;
         case SCTO_FLAG:
-            if(stPO->do_not)
-            {
+            if(stPO->do_not) {
                 fprintf(outPF,"# Flagged values NOT in range %f to %f\n", 
                     stPO->flglo, stPO->flghi);
             }
-            else
-            {
+            else {
                 fprintf(outPF,"# Flagged values in range %f to %f\n", 
                     stPO->flglo, stPO->flghi);
             }

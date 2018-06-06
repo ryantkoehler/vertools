@@ -17,8 +17,8 @@ score.c
 numlist.c
 snp_char.c
 gen_seq.c
-dna_cons.h
 dna.h
+dna_cons.h
 gen_seq.h
 numlist.h
 prim.h

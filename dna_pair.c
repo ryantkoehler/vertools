@@ -96,6 +96,9 @@ int ScoreSeqCompareI(char *fS, int flen, char *sS, int slen, PPARS *ppPO,
     }
     off = 0;
     scR = 0.0;
+    /***
+    * Hamming dist; Set both lengths to min of either; "minword" to full len
+    */
     if(ppPO->do_ham) {
         flen = slen = MIN_NUM(flen,slen);
         SetPparsWordMinI(ppPO,flen);

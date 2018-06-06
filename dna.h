@@ -63,10 +63,11 @@ typedef struct SEQCOMP      /* Sequence composition holder */
     int slen,nbase;         /* Seq length, number of non-ambig bases */
     int ra,rc,rg,rt;        /* Maximum base rows */
     int rs,rw,rr,ry,rk,rm;  /* Max degenerate base rows */
+    int rmax1, rmax2;       /* Max of max-rows; normal and degnerate */
     int na,nc,ng,nt;        /* Number of bases */
-    int dinuc[16];          /* inucleotide numbers */
-    int n_dinuc;            /* umber of dinucleotides */
-    DOUB fa,fc,fg,ft;       /* raction of bases */
+    int dinuc[16];          /* Dinucleotide numbers */
+    int n_dinuc;            /* Number of dinucleotides */
+    DOUB fa,fc,fg,ft;       /* Fraction of bases */
 }SEQCOMP;
 
 typedef struct SEQTRIM      /* Sequence trimming settings holder */

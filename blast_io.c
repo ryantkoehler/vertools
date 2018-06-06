@@ -38,9 +38,6 @@ int LoadBlastoutRecordI(BLASTANS *aPO,int warn)
         case BOT_SMWU:  
             ok = LoadBlastRecordI(aPO,aPO->in,warn);
             break;
-        case BOT_BO:    
-            ok = LoadBdciRecordI(aPO,aPO->in,warn);
-            break;
         default:
             ok = FALSE;
     }
@@ -62,7 +59,8 @@ int LoadBlastRecordI(BLASTANS *aPO,FILE *inPF,int warn)
     /***   
     *   Pass whatever header to get to start of query
     */ 
-    while(fgets(bufS,BLINEGRAB,inPF)) {
+    while(fgets(bufS,BLINEGRAB,inPF)) 
+    {
         if(EQSTRING(bufS,"Query=",6)) {
             ok = LoadBlastQueryLineData(aPO, bufS, inPF);
             if( ok != TRUE ) {
@@ -84,7 +82,8 @@ int LoadBlastRecordI(BLASTANS *aPO,FILE *inPF,int warn)
     *   Now each hit until next record block... at which point we back up and bail
     */
     fpos = ftell(inPF);
-    while(fgets(bufS,BLINEGRAB,inPF)) {
+    while(fgets(bufS,BLINEGRAB,inPF)) 
+    {
         /***
         *   Next record block so back up and break out
         */
@@ -221,15 +220,15 @@ int AddBlastHitSetI(char *headS, FILE *inPF, BLASTANS *aPO, int hit, int warn)
     thit = 0;
     INIT_S(scoreS); INIT_S(identS); INIT_S(qseqS); INIT_S(sseqS);
     InitArrayI(coordsIA, IS_INT, 0, 4, -1);
-    while(fgets(bufS,BLINEGRAB,inPF)) {
+    while(fgets(bufS,BLINEGRAB,inPF)) 
+    {
         DB_BIO {
             DB_PrI("+ "); fputs(bufS,stdout);
         }
         /***
         *   If we get to the next hit or record, bail
         */
-        if( (bufS[0]=='>') || EQSTRING(bufS,"Query=",6) ) 
-        {
+        if( (bufS[0]=='>') || EQSTRING(bufS,"Query=",6) ) {
             DB_BIO DB_PrI("+ Next record; Restoring file to %d (break)\n",fpos);
             fseek(inPF,fpos,0);
             break;
@@ -237,8 +236,7 @@ int AddBlastHitSetI(char *headS, FILE *inPF, BLASTANS *aPO, int hit, int warn)
         /***
         *   Score = starts single hit alignment block
         */
-        if( (cPC = strstr(bufS,"Score =")) != NULL)
-        {
+        if( (cPC = strstr(bufS,"Score =")) != NULL) {
             /***
             *    If we already have info, save that to a hit and reset everything
             */
@@ -255,8 +253,7 @@ int AddBlastHitSetI(char *headS, FILE *inPF, BLASTANS *aPO, int hit, int warn)
         /***
         *   Identities line
         */
-        if( (cPC = strstr(bufS,"Identities =")) != NULL)
-        {
+        if( (cPC = strstr(bufS,"Identities =")) != NULL) {
             NEXT_WORD(cPC); NEXT_WORD(cPC);
             sscanf(cPC,"%s",identS);
         }
@@ -329,12 +326,12 @@ xxx SHAM; Old version not working; No queries parse ... not sure if this is prob
             thit++;
         }
     }
-
     DB_BIO DB_PrI("<< AddBlastHitSetI thit=%d\n",thit);
     return(thit);
 }
 
 /****************************************************************************
+*   Save all settings for current hit into array collection
 */
 int SaveOneHitRecI(BLASTANS *aPO, int hit, char *hitS, char *scoreS, char *identS,
     char *qseqS, char *sseqS, int *coordPI)
@@ -353,189 +350,10 @@ int SaveOneHitRecI(BLASTANS *aPO, int hit, char *hitS, char *scoreS, char *ident
     aPO->shec[hit] = coordPI[3];;
     return(TRUE);
 }
-
-/****************************************************************************
-*   Load hits for record in blastout dci format
-*/
-int LoadBdciRecordI(BLASTANS *aPO,FILE *inPF,int warn)
-{
-    int in,hit,n,line,expect;
-    char bufS[BBUFF_SIZE];
-
-    in = line = 0;
-    expect = BAD_I;
-    while(fgets(bufS,BLINEGRAB,inPF))
-    {
-        line++;
-        if(line>HEAD_CHECK) { 
-            break;
-        }
-        if( (bufS[0]=='#') && (strstr(bufS,"QueryNumber")) ) {
-            in++;
-        }
-        if(!in) {
-            continue;
-        }
-        INIT_S(bufS);
-        if(!fgets(bufS,BLINEGRAB,inPF) ) {
-            return(FALSE);
-        }
-        sscanf(bufS,"%*s %s %*s %d",aPO->query,&expect);
-        if(!fgets(bufS,BLINEGRAB,inPF) ) {
-            return(FALSE);
-        }
-        sscanf(bufS,"%*s %*s %*s %d",&aPO->qlen);
-        break;
-    }
-/**
-printf("query |%s| %d in=%d\n",aPO->query,aPO->qlen,in);
-**/
-    if(!in) {
-        return(FALSE);
-    }
-    /***
-    *   Load up to max records
-    */
-    hit = 0;
-    while(hit<aPO->asize)
-    {
-        n = AddBlastDciRecI(inPF,aPO,hit,warn);
-/*
-printf(" hit=%d n=%d\n",hit,n);
-*/
-        if(n<1) {
-            if(IS_BOG(n)) {
-                return(FALSE);
-            }
-            break;
-        }
-        hit+=n;
-    }
-    /***
-    *   Compare actual to alleged 
-    */
-    if(hit != expect) {
-        PROBLINE;
-        printf("Differing actual / alleged hit counts for query\n");
-        printf("  Indicated: %d\n",expect);
-        printf("  Found:     %d\n",hit);
-        return(BOGUS);
-    }
-    aPO->nhits = hit;
-    return(TRUE);
-}
-/***************************************************************************
-*   TRUE for added hit
-*   FALSE for end; nothing added
-*   BOGUS for problem
-*/
-int AddBlastDciRecI(FILE *inPF,BLASTANS *aPO,int hit,int warn)
-{
-    int line,f,n,t;
-    char bufS[BBUFF_SIZE];
-
-    /***
-    *   Get hit name from buffer then continue to eat lines till done
-    */
-    f = line = 0;
-    while(fgets(bufS,BLINEGRAB,inPF))
-    {
-        line++;
-        if(line>HEAD_CHECK) {
-            break;
-        }
-        if(bufS[0]=='#') {
-            if(strstr(bufS,"EndQuery")) {
-                break;
-            }
-            if(strstr(bufS,"HitNumber")) {
-                f++;
-                continue;
-            }
-        }
-        switch(f)
-        {
-            case 1:     /* Name & idents */
-                if( !strstr(bufS,"HitStat") )
-                {
-                    PROBLINE;
-                    printf("Derailed reading blastout hit stats\n");
-                    fputs(bufS,stdout);
-                    return(BOGUS);
-                }
-                n = t = BAD_I;
-                sscanf(bufS,"%*s %*s %s (%d/%d)",&aPO->hits[BLBSIZE*hit],&n,&t);
-                sprintf(&aPO->idens[BLBSIZE*hit],"%d/%d",n,t);
-                f++;
-                break;
-            case 2:     /* Score line */
-                ReplaceChars('\n',&bufS[2],'\0',&aPO->scos[BLBSIZE*hit]);
-                f++;
-                break;
-            case 3:     /* Hit coords */
-                if( !strstr(bufS,"HitCoords") )
-                {
-                    PROBLINE;
-                    printf("Derailed reading blastout hit coords\n");
-                    fputs(bufS,stdout);
-                    return(BOGUS);
-                }
-                sscanf(bufS,"%*s %*s %d %d %d %d",&aPO->qhsc[hit], 
-                    &aPO->qhec[hit], &aPO->shsc[hit],&aPO->shec[hit]);
-                f++;
-                break;
-            case 4:     /* Query (sub)sequence */
-/*
-                if(bufS[0]!='Q')
-                {
-                    PROBLINE;
-                    printf("Derailed reading blastout query seq\n");
-                    fputs(bufS,stdout);
-                    return(BOGUS);
-                }
-*/
-                sscanf(bufS,"%*s %s",&aPO->qseqs[BLBSIZE*hit]);
-                f++;
-                break;
-            case 5:     /* Subject (sub)sequence */
-/*
-                if(bufS[0]!='H')
-                {
-                    PROBLINE;
-                    printf("Derailed reading blastout hit seq\n");
-                    fputs(bufS,stdout);
-                    return(BOGUS);
-                }
-                sscanf(&bufS[2],"%s %s",&aPO->hits[BLBSIZE*hit],
-                    &aPO->sseqs[BLBSIZE*hit]);
-*/
-                sscanf(bufS,"%s %s",&aPO->hits[BLBSIZE*hit],
-                    &aPO->sseqs[BLBSIZE*hit]);
-                f++;
-                break;
-        }
-        if(f>5)
-            break;
-    }
-    /***
-    *   there should have been six fields loaded after "HitNumber"
-    */
-    if(f==0)
-    {
-        return(FALSE);
-    }
-    else if(f!=6)
-    {
-        PROBLINE;
-        printf("Derailed reading blastout hit record; got only %d fields\n",f);
-        return(BOGUS);
-    }
-    return(TRUE);
-}
 /****************************************************************************
 *   Report hit data held in bPO structure
 */
-void DumpBlastout(BLASTOUT *bPO, BLASTANS *aPO,int qn, FILE *outPF)
+void DumpBlastout(BLASTOUT *bPO, BLASTANS *aPO, int qn, FILE *outPF)
 {
     int i,max, mod_case;
     static int head = FALSE;
@@ -546,7 +364,7 @@ void DumpBlastout(BLASTOUT *bPO, BLASTANS *aPO,int qn, FILE *outPF)
     *   Hit histogram, then bail
     */
     if(bPO->dhis > 0) {
-        max = FillHitHistI(aPO,bPO->firstb,bPO->lastb,bPO->rre,bPO->do_con, bPO->do_co3);
+        max = FillHitHistI(bPO, aPO);
         if(bPO->chis) {
             IntegrateHist(aPO);
         }
@@ -573,10 +391,10 @@ void DumpBlastout(BLASTOUT *bPO, BLASTANS *aPO,int qn, FILE *outPF)
         return;
     }
     /***
-    *   Per query reports, then bail
+    *   Per query single reports, then bail
     */
     if(bPO->dsum) {
-        fprintf(outPF,"%12s %4d %4d\n",aPO->query,aPO->nhits,aPO->maxhit);
+        fprintf(outPF,"%12s\t%d\t%d\t%d\n",aPO->query,aPO->nhits,aPO->maxhit,aPO->nok);
         return;
     }
     if(bPO->do_dfml > 0) {
@@ -588,110 +406,202 @@ void DumpBlastout(BLASTOUT *bPO, BLASTANS *aPO,int qn, FILE *outPF)
         return;
     }
     /***
-    *   Dumping hit seqs/coords
+    *   Dumping hit/seqs/coords gets more 'padding' output than just count
     */
-    if( bPO->dseq || bPO->dhc || bPO->dmbc ) {
+    if( bPO->dseq || bPO->dhit || bPO->dhc || bPO->dmbc ) {
         fprintf(outPF,"#\n");
-        fprintf(outPF,"# QueryNumber %d\n",qn);
-        fprintf(outPF,"# %s HitTotal %d\n",aPO->query,aPO->nhits);
-        fprintf(outPF,"# %s QueryLen %d\n",aPO->query,aPO->qlen);
+        fprintf(outPF,"# QueryNumber %d\t%s\n", qn, aPO->query);
+        fprintf(outPF,"# %s HitTotal %d  %d\n", aPO->query, aPO->nok, aPO->nhits);
+        fprintf(outPF,"# %s QueryLen %d\n", aPO->query, aPO->qlen);
     }
     else {
-        fprintf(outPF,"%12s %4d\n",aPO->query,aPO->nhits);
+        fprintf(outPF,"%12s\t%d\t%d\n", aPO->query, aPO->nok, aPO->nhits);
     }
     /***
     *   Dump hit story
     */
-    for(i=0;i<aPO->nhits;i++) {
-        FillBlastRecHitName(aPO, i, sS);
+    for(i=0; i<aPO->nhits; i++) {
+        if(! aPO->mask[i]) {
+            continue;
+        }
+        FillBlastRecHitNameI(aPO, i, sS);
+        fprintf(outPF,"# HitNumber %2d  %s\n",i+1,sS);
         if(bPO->dhit) {
-            fprintf(outPF,"# HitNumber %d\n",i+1);
-            if(bPO->dseq)
+            if(bPO->dseq) {
                 fprintf(outPF,"# ");
+            }
             FillBlastRecHitStatLineI(aPO, i, bufS);
-            fprintf(outPF,"HitStat %s\t%s\n",sS,bufS);
+            fprintf(outPF,"HitStat   %2d  %s  %s\n", i+1,sS,bufS);
         }
         if(bPO->dsco) {
-            if(bPO->dseq)
+            if(bPO->dseq) {
                 fprintf(outPF,"# ");
+            }
+            fprintf(outPF,"HitScore  %2d  %s  ", i+1, sS);
             fprintf(outPF,"%s\n",&aPO->scos[i*BLBSIZE]);
         }
         if(bPO->dhc) {
-            if(bPO->dseq)
+            if(bPO->dseq) {
                 fprintf(outPF,"# ");
+            }
             FillBlastRecHitCoordsLineI(aPO, i, bufS);
-            fprintf(outPF,"HitCoords\t%d\t%s\t", i+1, bufS);
-            FillBlastRecHitStatLineI(aPO, i, bufS);
-            fprintf(outPF,"%s\n",bufS);
+            fprintf(outPF,"HitCoords %2d  %s  %s\n", i+1,sS,bufS);
         }
         if(bPO->dseq) {
-            if( (bPO->do_smc) || (bPO->do_sml) ) {
-                mod_case = (bPO->do_smc) ? 1 : -1;
+            if( (bPO->do_smu) || (bPO->do_sml) ) {
+                mod_case = (bPO->do_smu) ? 1 : -1;
             }
             else {
                 mod_case = 0;
             }
-            DumpBlastoutHitSeqs(aPO, i, mod_case, bPO->nsqh, outPF);
+            DumpBlastoutHitSeqs(bPO, aPO, i, mod_case, outPF);
         }
     }
-    if(bPO->do_dci) {
-        fprintf(outPF,"# EndQuery %d\n",qn);
-    }
+    fprintf(outPF,"# EndQuery %d\n",qn);
     fflush(outPF);
 }
 /**************************************************************************
 *   Dump sequences 
 */
-void DumpBlastoutHitSeqs(BLASTANS *aPO, int hit, int mod_case, char *nsqhS, FILE *outPF)
+void DumpBlastoutHitSeqs(BLASTOUT *bPO, BLASTANS *aPO, int hit, int mod_case, FILE *outPF)
 {
     char qnameS[NSIZE],snameS[NSIZE],qseqS[BLBSIZE+1],sseqS[BLBSIZE+1];
-    int i;
+    char alignS[BLBSIZE+1], padS[BLBSIZE], fmtS[DEF_BS], sepS[DEF_BS];
+    int w;
 
     HAND_NFILE(outPF);
     sprintf(qnameS,"%s", aPO->query);
-    FillBlastRecHitName(aPO, hit, snameS);
+    FillBlastRecHitNameI(aPO, hit, snameS);
     sprintf(qseqS,"%s",&aPO->qseqs[hit*BLBSIZE]);
     sprintf(sseqS,"%s",&aPO->sseqs[hit*BLBSIZE]);
-    /***
-    *   Sequence marking via case?
-    */
-    if (mod_case) {
-        if ( mod_case < 0 ) {
-            Lowerize(qseqS);
-            Lowerize(sseqS);
-        }
-        else {
-            Upperize(qseqS);
-            Upperize(sseqS);
-        }
-        i = 0;
-        while(isgraph(qseqS[i])) {
-            if (sseqS[i] != qseqS[i]) {
-                if ( mod_case < 0 ) {
-                    sseqS[i] = toupper(sseqS[i]);
-                }
-                else {
-                    sseqS[i] = tolower(sseqS[i]);
-                }
-            }
-            i++;
-        }
+    /* Case changes */
+    ModSeqAlignCase(qseqS, sseqS, mod_case);
+    ModSeqBrangeCase(bPO, aPO, hit, qseqS, sseqS);
+    /*  Fill alignment string? */
+    if(bPO->do_align) {
+        FillQuerySubjAlignString(qseqS, sseqS, alignS);
     }
-    /***
-    *   
-    */
-    fprintf(outPF,"%s\t%s\n",qnameS,qseqS);
-    if ( (nsqhS) && (! NO_S(nsqhS)) ) {
-        fprintf(outPF,"%s%s%s\t%s\n",qnameS,nsqhS,snameS,sseqS);
+    if( ! NO_S(bPO->nsqh) ) {
+        fprintf(outPF,"%s\t%s\n",qnameS,qseqS);
+        fprintf(outPF,"%s%s%s\t%s\n",qnameS,bPO->nsqh,snameS,sseqS);
     }
     else {
-        fprintf(outPF,"%s\t%s\n",snameS,sseqS);
+        sprintf(sepS, " ");
+        w = TwoWordFormatStringI(qnameS, snameS, -1, fmtS);
+        DumpNameSeq(qnameS, fmtS, sepS, qseqS, TRUE, outPF);
+        if(bPO->do_align) {
+            FillStringNull(padS, ' ', w);
+            fprintf(outPF,"%s%s%s\n", padS, sepS, alignS);
+        }
+        DumpNameSeq(snameS, fmtS, " ", sseqS, TRUE, outPF);
+    }
+}
+/**************************************************************************
+*   Modify case of passed sequences for alignment matching
+*/
+void ModSeqAlignCase(char *qseqS, char *sseqS, int mod_case)
+{
+    int i;
+
+    if( mod_case == 0 ) {
+        return;
+    }
+    if ( mod_case < 0 ) {
+        Lowerize(qseqS);
+        Lowerize(sseqS);
+    }
+    else {
+        Upperize(qseqS);
+        Upperize(sseqS);
+    }
+    i = 0;
+    while(isgraph(qseqS[i])) 
+    {
+        if (sseqS[i] != qseqS[i]) {
+            if ( mod_case < 0 ) {
+                sseqS[i] = toupper(sseqS[i]);
+            }
+            else {
+                sseqS[i] = tolower(sseqS[i]);
+            }
+        }
+        i++;
+    }
+}
+/**************************************************************************
+*   Modifiy sequence case based on any base range restriction
+*/
+void ModSeqBrangeCase(BLASTOUT *bPO, BLASTANS *aPO, int hit, char *qseqS, char *sseqS)
+{
+    int i,n;
+    char maskS[BLBSIZE];
+
+    /* Keep case or no range = nothing to do */ 
+    if((bPO->do_rkc) || (bPO->firstb < 1)) {
+        return;
+    }
+    /* Must be same length */
+    BOG_CHECK(strlen(qseqS) != strlen(sseqS));
+    /* Use mask of within-range query string positions */
+    n = FillHitAlignQseqMaskI(bPO, aPO, hit, maskS);
+    for(i=0;i<n;i++)
+    {
+        if(maskS[i]) {
+            qseqS[i] = toupper(qseqS[i]);
+            sseqS[i] = toupper(sseqS[i]);
+        }
+        else {
+            qseqS[i] = tolower(qseqS[i]); 
+            sseqS[i] = tolower(sseqS[i]); 
+        }
+    }
+}
+/**************************************************************************
+*   Fill alignment string for two sequences; MUST BE SAME LENGTH
+*/
+void FillQuerySubjAlignString(char *qseqS, char *sseqS, char *alignS)
+{
+    int i;
+
+    BOG_CHECK(strlen(qseqS) != strlen(sseqS));
+    i = 0;
+    while(isgraph(qseqS[i])) 
+    {
+        alignS[i] = (sseqS[i] == qseqS[i]) ? '|' : ' ';
+        i++;
+    }
+    alignS[i] = '\0';
+}
+/**************************************************************************
+*   Dump name+seq to given file
+*   If fmtS is given, use this format; Null = default
+*   If sepS is given, use this separator; Null = default
+*   If newline, end with newline
+*/
+void DumpNameSeq(char *nameS, char *fmtS, char *sepS, char *seqS, int newline, FILE *outPF)
+{
+    HAND_NFILE(outPF);
+    if(fmtS) {
+        fprintf(outPF, fmtS, nameS);
+    }
+    else {
+        fprintf(outPF, "%s", nameS);
+    }
+    if(sepS) {
+        fprintf(outPF, "%s", sepS);
+    }
+    else {
+        fprintf(outPF, " ");
+    }
+    fprintf(outPF, "%s", seqS);
+    if(newline) {
+        fprintf(outPF, "\n");
     }
 }
 /**************************************************************************
 *   Fill name for blasthit record
 */
-int FillBlastRecHitName(BLASTANS *aPO, int r, char *bufS)
+int FillBlastRecHitNameI(BLASTANS *aPO, int r, char *bufS)
 {
     if( (r < 0) || ( r >= aPO->nhits) ) {
         return(FALSE);
@@ -723,7 +633,7 @@ int FillBlastRecHitCoordsLineI(BLASTANS *aPO, int r, char *bufS)
     */
     ss = aPO->shsc[r]; 
     se = aPO->shec[r];
-    FillBlastRecHitName(aPO, r, sS);
+    FillBlastRecHitNameI(aPO, r, sS);
     if ( ss < se ) {
         sprintf(strandS,"Pos");
     }
@@ -734,49 +644,63 @@ int FillBlastRecHitCoordsLineI(BLASTANS *aPO, int r, char *bufS)
         se = t;
     }
     sprintf(bufS,"%s\t%d\t%d\t%s\t%d\t%d\t%s",
-        qS,qs,qe, sS,ss,se,strandS);
+        qS,qs,qe, sS,ss,se, strandS);
     return(TRUE);
 }
 /**************************************************************************
-*   Fill stat report for match
+*   Fill alignment stat report for match
+*   New format:
+*       <qlen> <alen> <amat> <amm> <agap> <amat>/<alen> <amat>/<qlen>
 */
 int FillBlastRecHitStatLineI(BLASTANS *aPO, int r, char *bufS)
 {
+    int den;
+
     if( (r < 0) || ( r >= aPO->nhits) ) {
         return(FALSE);
     }
-    sprintf(bufS,"(%s)\t%2d/%2d  %4.3f  %4.3f",
+    /***
+    * Get n-match, n-mismatch via alignment call; No string for results so NULL
+    *
+    OLD VERSION
+    sprintf(bufS,"(%s)\t%2d/%2d  %4.3f  %4.3f  %4.3f",
         &aPO->idens[r*BLBSIZE], 
-        aPO->hnums[r], aPO->hlens[r], aPO->hfmb[r],
-        RNUM(aPO->hnums[r]) / RNUM(aPO->qlen) );
+        aPO->hnums[r], aPO->hlens[r], 
+        aPO->hfmb[r],
+        RNUM(aPO->hnums[r]) / RNUM(aPO->qlen),
+        RNUM(aPO->amats[r]) / RNUM(aPO->alens[r]) );
+    */
+    den = aPO->alens[r];
+    den = (den < 1) ? 1 : den;
+    sprintf(bufS,"%2d  %2d  %2d  %2d  %2d  %4.3f  %4.3f",
+        aPO->qlen,
+        aPO->alens[r],
+        aPO->amats[r],
+        aPO->amms[r],
+        aPO->agaps[r],
+        RNUM(aPO->amats[r]) / RNUM(den),
+        RNUM(aPO->amats[r]) / RNUM(aPO->qlen)
+    );
     return(TRUE);
 }
 /**************************************************************************
 *   Dump (sorted) list of hit match fractions
+*   XXX Old shams; not sure how correct? Don't think -dffl or -bran works
 */
 void DumpBlastFracMatchList(BLASTOUT *bPO,BLASTANS *aPO,FILE *outPF)
 {
-    int i, num, den;
-    DOUB fR, sortR[DEF_MAXHITS], normD;
+    int i, num;
+    DOUB fR, sortR[DEF_MAXHITS];
 
-    /***
-    *   Normalization factor; If full length or no len restriction...
-    */
-    if( (bPO->do_dffl) || (bPO->firstb<1) ) {
-        normD = DNUM(aPO->qlen);
-    }
-    else {
-        normD = DNUM(bPO->lastb - bPO->firstb + 1);
-    } 
     /***
     *   Collect fractions and sort
     */
     InitArrayI(sortR, IS_DOUB, 0, DEF_MAXHITS, 0.0);
-    for(i=0; i<bPO->do_dfml; i++) {
+    for(i=0; i<bPO->do_dfml; i++) 
+    {
         if(i<aPO->nhits){
-            num = HitMatchCountI(aPO, i, bPO->firstb, bPO->lastb, bPO->rre, 
-                bPO->do_con, bPO->do_co3, &den);
-            fR = RNUM(num)/normD;
+            num = HitMatchCountI(bPO, aPO, i, NULL);
+            fR = RNUM(num)/RNUM(aPO->qlen);
         }
         else {
             fR = 0.0;
@@ -791,7 +715,8 @@ void DumpBlastFracMatchList(BLASTOUT *bPO,BLASTANS *aPO,FILE *outPF)
     i = MIN_NUM(i,DEF_MAXHITS);
     SortArray(sortR, IS_DOUB, i, SORT_DECEND);
     fprintf(outPF,"%-15s\t",aPO->query);
-    for(i=0; i<bPO->do_dfml; i++) {
+    for(i=0; i<bPO->do_dfml; i++) 
+    {
         fprintf(outPF,"%2.2f ",sortR[i]);
     }
     fprintf(outPF,"\n");
@@ -812,6 +737,11 @@ void DumpBlastMatchBaseCounts(BLASTOUT *bPO,BLASTANS *aPO,FILE *outPF)
         hist[i] = 0;
     }
     for(i=0;i<aPO->nhits;i++) {
+        /* Don't count masked-out seqs */
+        if(! aPO->mask[i]) {
+            continue;
+        }
+        /* Start, end, and seqs */
         qs = aPO->qhsc[i]; 
         qe = aPO->qhec[i];
         j = gap = 0;
@@ -825,10 +755,12 @@ void DumpBlastMatchBaseCounts(BLASTOUT *bPO,BLASTANS *aPO,FILE *outPF)
                 j++;
                 continue;
             }
-            if(qs<qe)
+            if(qs<qe) {
                 b = qs+j-1-gap;
-            else
+            }
+            else {
                 b = qs-j-1+gap;
+            }
             if( (b<0) || (b>=aPO->qlen) ) {
                 printf("Bogus base bin b=%d i=%d j=%d gap=%d qlen=%d\n",
                     b,i,j,gap,aPO->qlen);
@@ -837,8 +769,9 @@ void DumpBlastMatchBaseCounts(BLASTOUT *bPO,BLASTANS *aPO,FILE *outPF)
             }
             hist[b] += 1;
             j++;
-            if(!isgraph(INT(sPC[j])))
+            if(!isgraph(INT(sPC[j]))) {
                 break;
+            }
         }
     }
     /***
@@ -846,7 +779,8 @@ void DumpBlastMatchBaseCounts(BLASTOUT *bPO,BLASTANS *aPO,FILE *outPF)
     */
     fprintf(outPF,"%-15s\t",aPO->query);
     i = 0;
-    while(i<aPO->qlen) {
+    while(i<aPO->qlen) 
+    {
         b = TRUE;
         /***
         *   Restricted bases?
@@ -870,7 +804,7 @@ void DumpBlastMatchBaseCounts(BLASTOUT *bPO,BLASTANS *aPO,FILE *outPF)
     fprintf(outPF,"\n");
 }
 /****************************************************************************
-*
+*   Guess input format from header lines
 */
 int GuessBlastInputTypeI(FILE *inPF)
 {
@@ -885,13 +819,7 @@ int GuessBlastInputTypeI(FILE *inPF)
     while(fgets(bufS,BLINEGRAB,inPF))
     {
         line++;
-        if(bufS[0]=='#') {
-            Upperize(bufS);
-            if(strstr(bufS,"BLASTOUT")) {
-                itype = BOT_BO;
-            }
-        }
-        else if(EQSTRING(bufS,"BLAST",5)) {
+        if(EQSTRING(bufS,"BLAST",5)) {
             if(strstr(bufS,"WashU")) {
                 if(strstr(bufS,"linux")) {
                     itype = BOT_SMWU;
@@ -910,8 +838,7 @@ int GuessBlastInputTypeI(FILE *inPF)
             }
             break;
         }
-        if(line>HEAD_CHECK)
-        {
+        if(line>HEAD_CHECK) {
             break;
         }
     }
@@ -928,25 +855,22 @@ void FillBlastFormatString(int type,char *nameS)
         case BOT_NCBOLD:    sprintf(nameS,"NCBI (old Blast)");  break;
         case BOT_WU:        sprintf(nameS,"Wu (normal)");   break;
         case BOT_SMWU:      sprintf(nameS,"Wu (\"smart\")");    break;
-        case BOT_BO:        sprintf(nameS,"BlastOut (dci)");    break;
         default:            sprintf(nameS,"???");
     }
 }
 /**************************************************************************/
 int HandleBlastoutOutfileI(BLASTOUT *bPO,BLASTANS *aPO,int q,int head)
 {
+    /* Set to default (in case not set) */
+    HAND_NFILE(bPO->out);
     /***
     *   Output per query
     */
-    if(!NO_S(bPO->opq))
-    {
+    if(!NO_S(bPO->opq)) {
         CHECK_NFILE(bPO->out,bPO->outname);
-        if(q>0)
-        {
+        if(q>0) {
             sprintf(bPO->outname,"%s.%s",aPO->query,bPO->opq);
-            if(!(bPO->out = OpenUFilePF(bPO->outname,"w",NULL)))
-            {
-                HAND_NFILE(bPO->out);
+            if(!(bPO->out = OpenUFilePF(bPO->outname,"w",NULL))) {
                 return(FALSE);
             }
         }
@@ -954,36 +878,24 @@ int HandleBlastoutOutfileI(BLASTOUT *bPO,BLASTANS *aPO,int q,int head)
     /***
     *   Normal output file, once
     */
-    else
-    {
-        if( (!NO_S(bPO->outname)) && (bPO->out==NULL) )
-        {
-            if(!(bPO->out = OpenUFilePF(bPO->outname,"w",NULL)))
-            {
-                HAND_NFILE(bPO->out);
+    else {
+        if( (!NO_S(bPO->outname)) && (bPO->out==NULL) ) {
+            if(!(bPO->out = OpenUFilePF(bPO->outname,"w",NULL))) {
                 return(FALSE);
             }
         }
     }
-    /***
-    *   Set to default
-    */
-    HAND_NFILE(bPO->out);
     return(TRUE);
 }
-/****************************************************************************
-*
-*/
+/*****************************************************************************/
 int SetBlastansFileI(char *inS,BLASTANS *aPO)
 {
     VALIDATE(aPO,BLASTANS_ID);
-    if(!(aPO->in = OpenUFilePF(inS,"r",NULL)))
-    {
+    if(!(aPO->in = OpenUFilePF(inS,"r",NULL))) {
         return(FALSE);
     }
     aPO->itype = GuessBlastInputTypeI(aPO->in);
-    if(IS_BOG(aPO->itype))
-    {
+    if(IS_BOG(aPO->itype)) {
         PROBLINE;
         printf("Unrecognized input format\n");
         return(FALSE);

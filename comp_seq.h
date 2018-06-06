@@ -15,11 +15,12 @@
 */
 
 
-#define VERSION_S "Comp_Seq Version 1.61"
+#define VERSION_S "Comp_Seq Version 1.62"
 
 #define MAX_CSL 25000
 
 #define COMPSEQ_ID 5041
+
 
 typedef struct COMPSEQ
 {
@@ -55,6 +56,7 @@ typedef struct COMPSEQ
     int do_crs;
     int do_dpar;            /* Flag to dump full parameters */
     int do_sa;              /* Flag to show alignment */
+    int sa_anp;             /* Show alignment name padding width */
     int do_rm;              /* Flag to report matching alignment */
     int do_fmat;            /* Flag to dump full matrix */
     int do_norm;            /* Flag to normalize reported scores */
@@ -85,6 +87,11 @@ typedef struct COMPSEQ
 #define CSO_PSELF   3346    /* Parallel self output */
 #define CSO_RSER    3347    /* Ref-set serial compare */
 #define CSO_FULL    3348    /* Full pair-wise compare */
+
+
+/* Defaults */
+#define DEF_ANP     16      /* Default alignment name padding width */
+
 
 
 /*********************** ppp ********************

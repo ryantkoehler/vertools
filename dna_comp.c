@@ -168,12 +168,14 @@ int GetSeqCompositionI(char *seqS, int slen, int clean, SEQCOMP *scPO)
     scPO->rc = rowc;
     scPO->rg = rowg;
     scPO->rt = rowt;
+    scPO->rmax1 = MAX_NUM(rowa, MAX_NUM(rowc, MAX_NUM(rowg,rowt)));
     scPO->rs = rows;
     scPO->rw = roww;
     scPO->rr = rowr;
     scPO->ry = rowy;
     scPO->rm = rowm;
     scPO->rk = rowk;
+    scPO->rmax2 = MAX_NUM(rows, MAX_NUM(roww, MAX_NUM(rowr, MAX_NUM(rowy, MAX_NUM(rowm,rowk)))));
     DB_CONS DB_PrI("<< GetSeqCompositionI TRUE\n");
     return(TRUE);
 }

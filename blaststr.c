@@ -45,8 +45,6 @@ int DestroyBlastoutI(BLASTOUT *bPO)
 {
     VALIDATE(bPO,BLASTOUT_ID);
     CHECK_BLASTANS(bPO->ans);
-    CHECK_BLASTANS(bPO->sans);
-    CHECK_BLASTANS(bPO->mans);
     FREE(bPO);
     return(TRUE);
 }
@@ -83,13 +81,15 @@ BLASTANS *CreateBlastansPO(int max)
         max = DEF_MAXHITS;
     }
     aPO->asize = max;
+    /* Filter qualifying mask */
+    aPO->mask = (char *)ALLOC(max, sizeof(char));
     /***
     *   Hit info arrays
     */
     aPO->hits = (char *)ALLOC(max * BLBSIZE, sizeof(char));
     aPO->scos = (char *)ALLOC(max * BLBSIZE, sizeof(char));
     aPO->idens = (char *)ALLOC(max * BLBSIZE, sizeof(char));
-    if( (!aPO->hits) || (!aPO->scos) || (!aPO->idens) ) {
+    if( (!aPO->mask) || (!aPO->hits) || (!aPO->scos) || (!aPO->idens) ) {
         printf("Failed to allocate hit space for %d\n",max);
         CHECK_BLASTANS(aPO);
         return(NULL);
@@ -110,11 +110,22 @@ BLASTANS *CreateBlastansPO(int max)
         CHECK_BLASTANS(aPO);
         return(NULL);
     }
+    /* Alignment related numbers */
+    aPO->alens = (int *)ALLOC(max, sizeof(int));
+    aPO->amats = (int *)ALLOC(max, sizeof(int));
+    aPO->amms = (int *)ALLOC(max, sizeof(int));
+    aPO->agaps = (int *)ALLOC(max, sizeof(int));
+    if( (!aPO->alens) || (!aPO->amats) || (!aPO->amms) || (!aPO->agaps) ) { 
+        printf("Failed to allocate Align space for %d\n",max);
+        CHECK_BLASTANS(aPO);
+        return(NULL);
+    }
+    /* Processed hits */
     aPO->hlens = (int *)ALLOC(max, sizeof(int));
     aPO->hnums = (int *)ALLOC(max, sizeof(int));
     aPO->hfmb = (REAL *)ALLOC(max, sizeof(REAL));
     if( (!aPO->hlens) || (!aPO->hnums) || (!aPO->hfmb) ) {
-        printf("Failed to allocate x space for %d\n",max);
+        printf("Failed to allocate Hit space for %d\n",max);
         CHECK_BLASTANS(aPO);
         return(NULL);
     }
@@ -128,6 +139,7 @@ int DestroyBlastansI(BLASTANS *aPO)
 {
     VALIDATE(aPO,BLASTANS_ID);
     CHECK_FILE(aPO->in);
+    CHECK_FREE(aPO->mask);
     CHECK_FREE(aPO->hits);
     CHECK_FREE(aPO->scos);
     CHECK_FREE(aPO->idens);
@@ -140,6 +152,10 @@ int DestroyBlastansI(BLASTANS *aPO)
     CHECK_FREE(aPO->hlens);
     CHECK_FREE(aPO->hnums);
     CHECK_FREE(aPO->hfmb);
+    CHECK_FREE(aPO->alens);
+    CHECK_FREE(aPO->amats);
+    CHECK_FREE(aPO->amms);
+    CHECK_FREE(aPO->agaps);
     FREE(aPO);
     return(TRUE);
 }
@@ -153,8 +169,9 @@ void InitBlastout(BLASTOUT *bPO)
     bPO->dsum = FALSE;
     bPO->do_dfml = 0;
     bPO->dseq = FALSE;
-    bPO->do_smc = FALSE;
+    bPO->do_smu = FALSE;
     bPO->do_sml = FALSE;
+    bPO->do_align = FALSE;
     bPO->dsco = FALSE;
     bPO->dhc = FALSE;
     bPO->dmbc = FALSE;
@@ -165,11 +182,14 @@ void InitBlastout(BLASTOUT *bPO)
     bPO->chis = FALSE;
     bPO->mid = 0;
     bPO->mif = 0.0;
-    bPO->do_mfq = FALSE;
-    bPO->do_mnot = FALSE;
+    bPO->do_mmm = -1;
+    bPO->do_mgap = -1;
+    bPO->do_fnot = FALSE;
+    bPO->do_frq = FALSE;
     bPO->firstb = 0;
     bPO->lastb = TOO_BIG;
     bPO->rre = FALSE;
+    bPO->do_rkc = FALSE;
     bPO->firstq = 0;
     bPO->lastq = TOO_BIG;
     bPO->firsth = 0;
@@ -182,7 +202,7 @@ void InitBlastout(BLASTOUT *bPO)
 /****************************************************************************
 *   Initialize blast answers struct
 */
-void InitBlastans(BLASTANS *aPO,int full)
+void InitBlastans(BLASTANS *aPO, int full)
 {
     if(full) {
         INIT_S(aPO->input);
@@ -191,67 +211,6 @@ void InitBlastans(BLASTANS *aPO,int full)
     INIT_S(aPO->query);
     aPO->qlen = 0;
     aPO->nhits = 0;
+    aPO->nok = 0;
     aPO->maxhit = 0;
-}
-/****************************************************************************
-*   Set alignment length for normalization 
-*/
-int AdjustHitLenI(BLASTOUT *bPO,BLASTANS *aPO,int hit, int len)
-{
-    int qs,qe;
-
-    if(bPO->do_mfq) {
-        len = aPO->qlen;
-    }
-    else if(bPO->firstb > 0) {
-        qs = MIN_NUM(aPO->qhsc[hit], aPO->qhec[hit]);
-        qe = MAX_NUM(aPO->qhsc[hit], aPO->qhec[hit]);
-        if(bPO->rre) {
-            if( qe < (aPO->qlen - bPO->firstb + 1) ) {
-                len += (aPO->qlen - bPO->firstb + 1 - qe);
-            }
-            if( qs > (aPO->qlen - bPO->lastb + 1) ) {
-                len += (aPO->qlen - bPO->lastb + 1 - qs);
-            }
-        }
-        else {
-            if( qs > bPO->firstb ) {
-                len += (qs - bPO->firstb);
-            }
-            if( qe < bPO->lastb ) {
-                len += (bPO->lastb - qe);
-            }
-        }
-    }
-    return(len);
-}
-/****************************************************************************
-*   Get query portion of sequence for hit 
-*/
-int GetBlastansQseqI(BLASTANS *aPO,int hit,char *seqS,int max)
-{
-    VALIDATE(aPO,BLASTANS_ID);
-    if( (hit<0) || (hit>=aPO->nhits) )
-    {
-        return(FALSE);
-    }
-    LIMIT_NUM(max,1,BLBSIZE-1);
-    strncpy(seqS,&aPO->qseqs[hit*BLBSIZE],max);
-    seqS[max] =  '\0';
-    return(TRUE);
-}
-/****************************************************************************
-*   Get subject portion of sequence for hit 
-*/
-int GetBlastansSseqI(BLASTANS *aPO,int hit,char *seqS,int max)
-{
-    VALIDATE(aPO,BLASTANS_ID);
-    if( (hit<0) || (hit>=aPO->nhits) )
-    {
-        return(FALSE);
-    }
-    LIMIT_NUM(max,1,BLBSIZE-1);
-    strncpy(seqS,&aPO->sseqs[hit*BLBSIZE],max);
-    seqS[max] =  '\0';
-    return(TRUE);
 }

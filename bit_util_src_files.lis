@@ -13,8 +13,8 @@ table_str.c
 table_val.c
 bitpool.c
 bit_util.c
-bitpool.h
 bit_util.h
+bitpool.h
 numlist.h
 prim.h
 table.h

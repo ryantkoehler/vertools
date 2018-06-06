@@ -40,6 +40,7 @@ void Filter_numsUse()
     printf("   -gt #     Qualify line if value is greater than or equal to #\n");
     printf("   -lt #     Qualify line if value is less than or equal to #\n");
     printf("   -vex      Value exclusive filtering; e.g. make -rg, -lt, -gt NOT inclusive\n");
+    printf("   -abs      Use absolute value\n");
     printf("   -lrg # #  Qualify line number range # to #     [NOTE: Only data lines count]\n");
     printf("   -brg # #  Qualify block number range # to #    [NOTE: Only data lines count]\n");
     printf("   -wlis XXX Qualify line with words (first token) listed in XXX\n");
@@ -50,6 +51,7 @@ void Filter_numsUse()
     printf("   -ranf #   Qualify random fraction (0 - 1) #    [NOTE: Exact, NO stdin]\n");
     printf("   -ranp #   Qualify random probability (0 -1) #  [NOTE: Approximate]\n");
     printf("   -seed #   Set random seed to #\n");
+    printf("   -maxout # Limit output lines to #\n");
     printf("   -A #      Report # lines After qualifiying lines (like grep -A)\n");
     printf("   -B #      Report # lines Before qualifiying lines [NOTE: NO stdin]\n");
     printf("   -all      All lines considered; Default ignores blank and # comments\n");
@@ -71,7 +73,7 @@ void Filter_numsUse()
 int Filter_numsI(int argc, char **argv)
 {
     char bufS[FILTBUF_SIZE+1], *cPC;
-    int ok,nok,prev_ok,b_line,line,pout,extra;
+    int ok,nok,prev_ok,b_line,line,outline,pout,extra;
     FILTER *filtPO;
     
     filtPO = CreateFilterPO();
@@ -81,7 +83,7 @@ int Filter_numsI(int argc, char **argv)
         -rann I -sc I -flag B -icbn B\
         -lrg I2 -wlis S -kc B -wst B -wsub B\
         -pln B -A I -B I -qu B -vex B -all B -bof I -blk I\
-        -brg I2 -bnot B -blis S",
+        -brg I2 -bnot B -blis S -maxout I -abs B",
         filtPO->inname, &filtPO->do_not, &filtPO->do_stat, 
         &filtPO->min,&filtPO->max, &filtPO->min, &filtPO->max, 
         &filtPO->col, filtPO->outname, 
@@ -93,7 +95,8 @@ int Filter_numsI(int argc, char **argv)
         &filtPO->do_pln, &filtPO->do_A, &filtPO->do_B, 
         &filtPO->do_quiet, &filtPO->do_vex, &filtPO->do_all, 
         &filtPO->l_bof, &filtPO->l_blk, &filtPO->firstb,&filtPO->lastb,
-        &filtPO->do_bm_not, filtPO->blk_mlis,
+        &filtPO->do_bm_not, filtPO->blk_mlis, &filtPO->maxout,
+        &filtPO->do_abs,
         (int *)NULL))
     {
         Filter_numsUse();
@@ -114,7 +117,7 @@ int Filter_numsI(int argc, char **argv)
     /***
     *   Process lines 
     */
-    line = nok = extra = pout = 0;
+    line = outline = nok = extra = pout = 0;
     prev_ok = TRUE;
     while(fgets(bufS,FILTBUF_SIZE,filtPO->in) != NULL) 
     {
@@ -149,11 +152,16 @@ int Filter_numsI(int argc, char **argv)
                 extra = filtPO->do_A + 1;
             }
         }
-        /*  Not only stats = output */
+        /*  Not only stats = per-line output */
         if( !filtPO->do_stat) {
             pout = FALSE;
             if( (filtPO->do_flag) || (ok) || (extra>0) ) {
                 pout++;
+                outline++;
+            }
+            /* If maxout is set, unset print flag if too many lines */
+            if( (filtPO->maxout > 0) && (outline > filtPO->maxout) ) {
+                pout = FALSE;
             }
             if(pout) {
                 if(filtPO->do_pln) {
@@ -296,6 +304,7 @@ void InitFilter(FILTER *fpPO)
     fpPO->seed = BAD_I;
     fpPO->rann = -1;
     fpPO->ranf = fpPO->ranp = -1.0;
+    fpPO->maxout = -1;
     fpPO->do_not = FALSE;
     fpPO->do_stat = FALSE;
     fpPO->do_kc = fpPO->do_wst = fpPO->do_wsub = FALSE;
@@ -306,6 +315,7 @@ void InitFilter(FILTER *fpPO)
     fpPO->do_quiet = FALSE;
     fpPO->do_vex = FALSE;
     fpPO->do_all = FALSE;
+    fpPO->do_abs = FALSE;
 }
 /*************************************************************************/
 int CheckFilterOptionsI(FILTER *filtPO)
@@ -652,6 +662,12 @@ int IsFiltLineOkI(FILTER *filtPO, int line, char *cPC, int use_mask)
         */
         if( ok && (!filtPO->wlis) ) {
             ok = FiltGetWordNumValI(filtPO, wordS, &rD);
+            /***
+            *   Absolute value?
+            */
+            if( ok && filtPO->do_abs && (rD < 0.0) ) {
+                rD = -rD;
+            }
             /***
             *   Too big or small? Inclusive or exclusive bounds differ
             */

@@ -46,8 +46,12 @@ void SeqTweakUse(void)
     printf("   -amb       All mismatch bases for each mismatch (i.e. 3/seq)\n");
     printf("   -smm       \"Smart\" mismatch placement\n");
     printf("   -cpm       Close-pack mismatch placement\n");
+    printf("   -sh        Shuffle sequence\n");
+    /* -fsh not implemented 
     printf("   -sh -fsh   Shuffle sequence; Full shuffle changes *all* bases\n");
+    */
     printf("   -seed #    Set random seed to #\n");
+    printf("   -num #     Number of different tweaks / input; default 1\n");
     printf("   -bname XXX Append output names with base XXX\n");
     printf("   -nsim      Use 'simple' naming (i.e. old)\n");
     printf("   -nre       Name relative to end (i.e. 3' == 1)\n");
@@ -56,7 +60,7 @@ void SeqTweakUse(void)
 /**************************************************************************/
 int SeqTweakI(int argc,char **argv)
 {
-    int ok,iraw,iseq,ifas,verb,nseq,n;
+    int ok,iraw,iseq,ifas,verb,n;
     SEQTWEAK *stPO;
 
     stPO = CreateSeqtweakPO();
@@ -65,14 +69,14 @@ int SeqTweakI(int argc,char **argv)
     if(!ParseArgsI(argc,argv,
         "S -out S -iraw B -ifas B -mis I -del I -ins I -ids I -bran I2\
         -seed I -mds I -quiet B -amb B -smm B -cpm B -bname S\
-        -sh B -fsh B -rre B -nsim B -nre B -iseq B",
+        -sh B -fsh B -rre B -nsim B -nre B -iseq B -num I",
         stPO->inname, stPO->outname, &iraw, &ifas, 
         &stPO->mis, &stPO->del, &stPO->ins, &stPO->ids, 
         &stPO->firstb,&stPO->lastb, &stPO->seed, 
         &stPO->mds, &verb, &stPO->do_amb, &stPO->do_smm, &stPO->do_cpm,
         &stPO->bname,
         &stPO->do_sh, &stPO->do_fsh, &stPO->do_rre,
-        &stPO->do_nsim, &stPO->do_nre, &iseq,
+        &stPO->do_nsim, &stPO->do_nre, &iseq, &stPO->num,
         (int *)NULL))
     {
         SeqTweakUse();
@@ -113,7 +117,7 @@ int SeqTweakI(int argc,char **argv)
     /***
     *   Party through file; getting seqs and messing them up
     */
-    nseq = n = 0;
+    n = 0;
     while(TRUE) {
         /***
         *   Parse sequence; FALSE = done
@@ -125,20 +129,27 @@ int SeqTweakI(int argc,char **argv)
         if(ok!=TRUE) {
             continue;
         }
-        nseq++;
-        if(!TweakableSeqI(stPO,stPO->seq,nseq)) {
+        stPO->seq_n += 1;
+        if(!TweakableSeqI(stPO,stPO->seq,stPO->seq_n)) {
             continue;
         }
-        if( stPO->do_sh || stPO->do_fsh ) {
-            n += TweakShuffleSeqI(stPO,verb,stPO->out);
-        }
-        else {
-            n += TweakSeqBasesI(stPO,verb,stPO->out);
+        /***
+        *   N number of tweaks
+        */
+        stPO->tweak_n = 0;
+        while(stPO->tweak_n < stPO->num)
+        {
+            stPO->tweak_n += 1;
+            if(DoingShuffle(stPO)) {
+                n += TweakShuffleSeqI(stPO,verb,stPO->out);
+            }
+            else {
+                n += TweakSeqBasesI(stPO,verb,stPO->out);
+            }
         }
     }
-    if(verb)
-    {
-        printf("# Input sequences:  %d\n",nseq);
+    if(verb) {
+        printf("# Input sequences:  %d\n",stPO->seq_n);
         printf("# Output sequences: %d\n",n);
     }
     /***
@@ -208,6 +219,8 @@ void InitSeqtweak(SEQTWEAK *stPO)
     INIT_S(stPO->bname);
     stPO->do_nre = FALSE;
     stPO->do_nsim = FALSE;
+    stPO->num = 1;
+    stPO->seq_n = stPO->tweak_n = 0;
 }
 /**************************************************************************
 *   Check options
@@ -301,6 +314,14 @@ int TweakableSeqI(SEQTWEAK *stPO, SEQ *seqPO, int nseq)
         return(FALSE);
     }
     return(TRUE);
+}
+/*************************************************************************/
+int DoingShuffle(SEQTWEAK *stPO)
+{
+    int shuff;
+
+    shuff = ( stPO->do_sh || stPO->do_fsh ) ? TRUE : FALSE;
+    return(shuff);
 }
 /**************************************************************************
 *   Too big and complicated!
@@ -519,7 +540,7 @@ int TweakShuffleSeqI(SEQTWEAK *stPO,int verb, FILE *outPF)
 {
     int shuffIA[MAX_TWEAKSEQ];
     int i, firstb, lastb, slen, mlen;
-    char *seqPC, nameS[NSIZE], newS[MAX_TWEAKSEQ];
+    char *seqPC, nameS[NSIZE], nnameS[NSIZE], newS[MAX_TWEAKSEQ];
     SEQ *seqPO;
 
     HAND_NFILE(outPF);
@@ -576,8 +597,9 @@ printf("first = %d, last = %d, mlen=%d, slen=%d\n",firstb,lastb,mlen,slen);
         newS[i + firstb] = seqPC[shuffIA[i] + firstb];
     }
     newS[slen] = '\0';
+    SetTweakedName(stPO,nameS,nnameS,slen);
     fprintf(outPF,"%s-orig\t%s\n",nameS,seqPC);
-    fprintf(outPF,"%s-shuf\t%s\n",nameS,newS);
+    fprintf(outPF,"%s-shuf\t%s\n",nnameS,newS);
     return(TRUE);
 }
 /**************************************************************************
@@ -817,16 +839,27 @@ void MaskDisruption(int ran,char *maskS,int slen,int mds)
 */
 void SetTweakedName(SEQTWEAK *stPO,char *nameS, char *newS, int len)
 {
+    char ntsufS[DEF_BS];
+
     strcpy(newS,nameS);
     if(!NO_S(stPO->bname)) {
         strcat(newS,"_");
         strcat(newS,stPO->bname);
+    }
+    else if(DoingShuffle(stPO)) {
     }
     else if (stPO->do_nsim) {
         SetTweakedSimName(stPO, nameS, newS);
     }
     else {
         SetTweakedNmodName(stPO, nameS, newS, len);
+    }
+    /***
+    * Any num-tweak suffix?
+    */
+    if( stPO->num > 1 ){
+        sprintf(ntsufS, "_twk%02d", stPO->tweak_n);
+        strcat(newS, ntsufS);
     }
     return;
 }

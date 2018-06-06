@@ -173,12 +173,27 @@ int SecondsI(int sec)
 /*************************************************************************
 *   Fills passed string with '\0' characters to the passed length 
 */
-void CleanString(char *stringS,int num)
+void CleanString(char *stringS, int len)
 {   
+    FillString(stringS, '\0', len);
+    return;
+}
+/**********************************************************************/
+void FillString(char *stringS, char cC, int len)
+{
     int i;
 
-    for(i=0; i<num; i++)
-    {   stringS[i] = '\0';  }
+    for(i=0; i<len; i++)
+    {
+        stringS[i] = cC;  
+    }
+    return;
+}
+/**********************************************************************/
+void FillStringNull(char *stringS, char cC, int len)
+{
+    FillString(stringS, cC, len);
+    stringS[len] = '\0';
     return;
 }
 /***********************************************************************
@@ -402,6 +417,25 @@ void KillTrailStringBlanks(char *sS)
         i--;
     }
     sS[i+1] = '\0';
+    return;
+}
+/*************************************************************************
+*/
+void PadStringToMin(char *inS, int min, char *outS)
+{
+    int i, max;
+
+    max = MAX_NUM(min, strlen(inS));
+    for(i=0; i<max; i++)
+    {
+        if ( isgraph(INT(inS[i])) ) {
+            outS[i] = inS[i];
+        }
+        else {
+            outS[i] = ' ';
+        }
+    }
+    outS[i+1] = '\0';
     return;
 }
 /*************************************************************************/
@@ -920,8 +954,8 @@ int DoubArrayPrecisionI(DOUB *valsPD, int n, int *pPI, int *wPI, char *formS)
     for(i=0;i<n;i++)
     {
         NumPrecisionI(valsPD[i], &w, &p, NULL, NULL);
-        wmax = MAX_NUM(w,wmax);
-        pmax = MAX_NUM(p,pmax);
+        wmax = MAX_NUM(w, wmax);
+        pmax = MAX_NUM(p, pmax);
         if(valsPD[i] < 0.0) {
             neg++;
         }
@@ -952,3 +986,18 @@ int DoubArrayPrecisionI(DOUB *valsPD, int n, int *pPI, int *wPI, char *formS)
     }
     return(TRUE);
 }
+/*************************************************************************
+*   Get print format string to fit two words so they align; 
+*   If min > 0, then width at least this wide
+*   Return the format width (i.e. max of words)
+*/
+int TwoWordFormatStringI(char *w1S, char *w2S, int min, char *fmtS)
+{
+    int w;
+
+    w = MAX_NUM(strlen(w1S), strlen(w2S));
+    w = (min < 1) ? w : MAX_NUM(w, min);
+    sprintf(fmtS,"%%-%ds", w);
+    return(w);
+}
+

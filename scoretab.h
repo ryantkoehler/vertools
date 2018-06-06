@@ -14,7 +14,7 @@
 *
 */
 
-#define VERSION_S   "ScoreTab Version 1.11"
+#define VERSION_S   "ScoreTab Version 1.12"
 
 #define SCORETAB_ID     5131
 typedef struct SCORETAB

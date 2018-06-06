@@ -31,8 +31,8 @@ int main(int argc, char **argv)
 void Gen_numsUse()
 {
     VersionSplash(NULL,VERSION_S,"#  ",TRUE);
-    printf("Usage: <num> [options...]\n");
-    printf("   <num>      Is the number of items (lines) to output\n");
+    printf("Usage: [options...]\n");
+    printf("   -num #     Is the number of items (lines) to output\n");
     printf("   -st #      Start at number # (default = 1)\n");
     printf("   -end #     End value # (For step increment)\n");
     printf("   -inc #     Increment by # (default = 1)\n");
@@ -46,6 +46,8 @@ void Gen_numsUse()
     printf("   -npl #     Numbers per line (default = 1)\n");
     printf("   -tab       Separate multiple items per line with tabs\n");
     printf("   -cs XXX    Print character string XXX rather than number\n");
+    printf("   -pre XXX   Output as prefix to lines in file XXX\n");
+    printf("   -suf XXX   Output as suffix to lines in file XXX\n");
     printf("   -ran # #   Random numbers in range # to #\n");
     printf("   -gaus # #  Gaussian distribution centered at # with S.D. #\n");
     printf("   -bits #    Bits with # percent on / line (e.g. 33.3 = 1/3)\n");
@@ -57,14 +59,16 @@ void Gen_numsUse()
 int Gen_numsI(int argc, char **argv)
 {
     char bufS[DEF_BS],outS[NSIZE],stS[DEF_BS], *maskPC;
+    char preS[NSIZE], sufS[NSIZE], lineS[BBUFF_SIZE];
     char letS[DEF_BS], fC,lC,cC;
     int i,j,num,seed;
     int p_wid,p_pre,do_zp,do_tab,numpl,p_pdp;
     DOUB vD,startD,endD,incD,mrandD,randD,drandD,gmeanD,gsdD,maxD,minD;
     REAL bitsR;
-    FILE *outPF;
+    FILE *outPF, *inPF;
 
     INIT_S(stS); INIT_S(outS);
+    INIT_S(preS); INIT_S(sufS);
     do_zp = do_tab = FALSE;
     numpl = 1;
     mrandD = randD = gmeanD = gsdD = BAD_R;
@@ -80,26 +84,42 @@ int Gen_numsI(int argc, char **argv)
     maxD = TOO_BIG_D;
     INIT_S(letS);
     if(!ParseArgsI(argc,argv,
-        "I -st D -zp B -cs S -seed I -ran D2 -inc D -out S -pfmt I2\
-        -gaus D2 -bits R -min D -max D -npl I -tab B -en D -pdp I -let S",
+        "-num I -st D -zp B -cs S -seed I -ran D2 -inc D -out S -pfmt I2\
+        -gaus D2 -bits R -min D -max D -npl I -tab B -en D -pdp I -let S\
+        -pre S -suf S",
         &num, &startD, &do_zp, stS, &seed, &mrandD,&randD, &incD, outS,
         &p_wid,&p_pre, &gmeanD,&gsdD, &bitsR, &minD, &maxD, &numpl,
-        &do_tab, &endD, &p_pdp, &letS,
+        &do_tab, &endD, &p_pdp, &letS, preS, sufS,
         (int *)NULL))
     {
         Gen_numsUse();
         return(FALSE);
     }
     /***
+    *   If prefix / suffix, num = number of lines
+    */
+    inPF = NULL;
+    if(!NO_S(preS)) {
+        if(!(inPF=OpenUFilePF(preS, "r", NULL))) {
+            return(FALSE);
+        }
+    }
+    else if(!NO_S(sufS)) {
+        if(!(inPF=OpenUFilePF(sufS, "r", NULL))) {
+            return(FALSE);
+        }
+    }
+    /***
     *   Check if can do anything before starting
     */
-    if(num < 1) {
+    if( (num < 1) && (!inPF) ) {
         /*
         PROBLINE;
         printf(" Can't enumerate %d items!\n",num);     
         ABORTLINE;
         return(FALSE);
         */
+        CHECK_FILE(inPF);
         return(TRUE);
     }
     /***
@@ -115,6 +135,7 @@ int Gen_numsI(int argc, char **argv)
     if(numpl<1) {
         PROBLINE;
         printf("Number of items per line too small: %d\n",numpl);
+        CHECK_FILE(inPF);
         return(FALSE);
     }
     if( (!BAD_REAL(endD)) && (num > 1) ) {
@@ -128,12 +149,14 @@ int Gen_numsI(int argc, char **argv)
             PROBLINE;
             printf("Bit fraction out of bounds (0-100): %f\n",bitsR);
             ABORTLINE;
+            CHECK_FILE(inPF);
             return(FALSE);
         }
         if(! (maskPC= (char *)ALLOC(numpl,sizeof(char)) ) ) {
             PROBLINE;
             printf("Failed to allocate for bit mask\n");
             ABORTLINE;
+            CHECK_FILE(inPF);
             return(FALSE);
         }
         INIT_S(stS);
@@ -143,6 +166,7 @@ int Gen_numsI(int argc, char **argv)
             PROBLINE;
             printf("SD too small: %f\n",gsdD);
             ABORTLINE;
+            CHECK_FILE(inPF);
             return(FALSE);
         }
         INIT_S(stS);
@@ -153,6 +177,7 @@ int Gen_numsI(int argc, char **argv)
             PROBLINE;
             printf(" Random range %f to %f is too narrow\n",mrandD,randD);      
             ABORTLINE;
+            CHECK_FILE(inPF);
             return(FALSE);
         }
         INIT_S(stS);
@@ -162,6 +187,7 @@ int Gen_numsI(int argc, char **argv)
             PROBLINE;
             printf(" Didn't parse letters XY from |%s|\n",letS);        
             ABORTLINE;
+            CHECK_FILE(inPF);
             return(FALSE);
         }
         cC = fC;
@@ -172,6 +198,7 @@ int Gen_numsI(int argc, char **argv)
     if(!NO_S(outS)) {
         if(!(outPF = OpenUFilePF(outS,"w",NULL))) {
             ABORTLINE;
+            CHECK_FILE(inPF);
             return(FALSE);
         }
     }
@@ -192,11 +219,32 @@ int Gen_numsI(int argc, char **argv)
         sprintf(bufS,"%%%d.%df",p_wid,p_pre);
     }
     /***
-    *   Party until done for each line
+    *   Party until done 
     */
     vD = startD;    
-    for(i=0;i<num;i++)
+    i = 0;
+    while(TRUE)
     {
+        /***
+        *   Input line or next number; Break if done
+        */
+        if(inPF) {
+            if(! fgets(lineS,LINEGRAB,inPF)) {
+                break;
+            }
+            ReplaceChars('\n',lineS,'\0',lineS);
+            /* If number suffix, print line here */
+            if(!NO_S(sufS)) {
+                fprintf(outPF,"%s\t",lineS);
+            }
+        }
+        else {
+            i++;
+            if(i>num) {
+                break;
+            }
+        }
+        /* Bit mask sham */
         if(maskPC) {
             MaskRandSubsetI(maskPC,numpl,bitsR/100.0);
         }
@@ -240,12 +288,17 @@ int Gen_numsI(int argc, char **argv)
                 vD = startD;
             }
         }
+        /* If number is prefix, print line here */
+        if(!NO_S(preS)) {
+            fprintf(outPF,"\t%s",lineS);
+        }
         fprintf(outPF,"\n");
     }
     /**
     *   All done
     */
     CHECK_FREE(maskPC);
+    CHECK_FILE(inPF);
     CHECK_NFILE(outPF,outS);
     return(TRUE);
 }

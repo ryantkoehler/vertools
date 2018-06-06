@@ -62,6 +62,7 @@ void Comp_seqUse(void)
     printf("   -fmat        Report full pair-wise score matrix\n");
     printf("   -rm          Report matches (high score with position offset)\n");
     printf("   -sa          Show alignments (of high score match)\n");
+    printf("   -anp #       Alignments name padding width (def = %d)\n",DEF_ANP);
     printf("   -ds          Dump (report) sequences appended as last column\n");
     printf("   -alf #       Set threhold for full alignment display\n");
     printf("   -alp #       Set threhold for partial alignment display\n");
@@ -97,7 +98,7 @@ int Comp_seqI(int argc, char **argv)
         -scon B -rm B -swm B -rset S -mwf S -flg R2 -scb B\
         -smat B -loop I -norm B -cl3 I -cl5 I -sco3 B -sco5 B -num B\
         -tot B -th R -mwd I -fmat B -psel B -crs B -not B -eraw B \
-        -iraw B -ifas B -alf R -alp R -sw32 B -ham B -iseq B -ds B",
+        -iraw B -ifas B -alf R -alp R -sw32 B -ham B -iseq B -ds B -anp I",
         csPO->inname, csPO->outname, &csPO->do_sa, &csPO->do_sim, &csPO->do_com,
         &csPO->do_self, &scon, &csPO->do_rm, &swm, csPO->rinname,
         smfS, &csPO->flo,&csPO->fhi, 
@@ -106,7 +107,7 @@ int Comp_seqI(int argc, char **argv)
         &thR, &mword, &csPO->do_fmat, &csPO->do_pself, &csPO->do_crs, 
         &csPO->do_not, &csPO->do_eraw, &iraw, &ifas,
         &csPO->fullmat, &partmatR, &sw32, &csPO->do_ham,
-        &iseq, &csPO->do_ds,
+        &iseq, &csPO->do_ds, &csPO->sa_anp,
         (int *)NULL))
     {
         Comp_seqUse();
@@ -116,16 +117,21 @@ int Comp_seqI(int argc, char **argv)
     /***
     *   How are we comparing / what output?
     */
-    if(csPO->do_loop>0)
-    {   csPO->owhat = CSO_LOOP; }
-    else if(csPO->do_pself)
-    {   csPO->owhat = CSO_PSELF; }
-    else if(csPO->do_self)
-    {   csPO->owhat = CSO_SELF; }
-    else if(csPO->do_crs)
-    {   csPO->owhat = CSO_RSER; }
-    else 
-    {   csPO->owhat = CSO_FULL; }
+    if(csPO->do_loop>0){   
+        csPO->owhat = CSO_LOOP; 
+    }
+    else if(csPO->do_pself){
+        csPO->owhat = CSO_PSELF; 
+    }
+    else if(csPO->do_self){   
+        csPO->owhat = CSO_SELF; 
+    }
+    else if(csPO->do_crs){   
+        csPO->owhat = CSO_RSER; 
+    }
+    else {   
+        csPO->owhat = CSO_FULL; 
+    }
 
     if(csPO->do_ham) {
         SetPparsHammingI(csPO->pp, csPO->do_ham);
@@ -529,11 +535,13 @@ void HandleSeqPairOut(COMPSEQ *csPO, SEQ *fseqPO, SEQ *sseqPO, int sc, int
     fseqS[p] = sseqS[p] = pS[p] = '\0';
     /***
     *   Summary statement?
+    * xxx 5/2/18 RTK put in tabs; Add fraciton match
     */
     if(csPO->do_rm) {
-        fprintf(csPO->out,"%-10s -vs- %-10s = %6.2f",fnameS,snameS,scR); 
-        fprintf(csPO->out," @[%d]",off);
-        fprintf(csPO->out," %5d/%d",n,flen);
+        fprintf(csPO->out,"%-10s -vs- %-10s = %2.2f",fnameS,snameS,scR); 
+        fprintf(csPO->out,"\t@[%d]",off);
+        fprintf(csPO->out,"\t%d/%d",n,flen);
+        fprintf(csPO->out,"\t%3.2f",RNUM(n)/RNUM(flen));
         if(csPO->do_ds) {
             fprintf(csPO->out,"\t%s\t%s",fPC,sPC);
         }
@@ -547,9 +555,11 @@ void HandleSeqPairOut(COMPSEQ *csPO, SEQ *fseqPO, SEQ *sseqPO, int sc, int
     }
     /***
     *   Ajdustable format string for different name lengths
+    *   Max of names, name-vs-user, then limit 
     */
     n = MAX_NUM(strlen(fnameS),strlen(snameS));
-    LIMIT_NUM(n,10,60);
+    n = MAX_NUM(n,csPO->sa_anp);
+    LIMIT_NUM(n, 10, 60);
     sprintf(formS,"%%-%ds",n);
     /***
     *   Report the match
@@ -940,6 +950,7 @@ void InitCompseq(COMPSEQ *csPO)
     INIT_S(csPO->outname);
     INIT_S(csPO->com);
     csPO->do_ds = csPO->do_sa = csPO->do_rm = FALSE;
+    csPO->sa_anp = DEF_ANP;
     csPO->do_norm = FALSE;
     csPO->do_flag = csPO->do_eraw = FALSE;
     csPO->flo = csPO->fhi = BAD_R;

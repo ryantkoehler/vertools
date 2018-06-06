@@ -14,7 +14,7 @@
 *
 */
 
-#define VERSION_S   "Dna_Util version 0.97"
+#define VERSION_S   "Dna_Util version 0.98"
 
 #define DNA_UTIL_ID     5051
 typedef struct DNA_UTIL
@@ -45,6 +45,7 @@ typedef struct DNA_UTIL
     int do_wst;             /* lag to compare starte for token compare */
     int do_wsub;            /* lag to check substring for token compare */
     int do_tnb;             /* Flag to truncate name on blank */
+    int do_b2u;             /* Flag to replace blanks in name with underscore */
     int do_not;             /* Invert flagging */
     int do_num;             /* Report number of seqs */
     struct SEQ *seq;        /* Sequence object */

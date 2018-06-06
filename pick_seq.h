@@ -15,7 +15,7 @@
 */
 
 
-#define VERSION_S "Pick_Seq Version 0.81"
+#define VERSION_S "Pick_Seq Version 0.85"
 
 
 /***
@@ -47,6 +47,7 @@ typedef struct PICKSEQ
     REAL scb,ccb;           /* Score coefficients for Sim/Comp block match */
     int do_mswm;            /* Score mat via weighted matching */
     int do_cswm;            /* Score con via weighted matching */
+    int do_ham;             /* Score via Hamming distance */
     char biasname[NSIZE];   /* Input bias value filename */
     REAL *bias;             /* Array of bias values to skew picking */
     char fixname[NSIZE];    /* Fix subset file name */
@@ -61,6 +62,8 @@ typedef struct PICKSEQ
     int tie,btie;           /* Current worst / best number of ties */
     int mtry;               /* Max replacements to try */
     int verbose;            /* Flag to report what's going on */
+    int do_bwn;             /* Bail (break) if number of 'worst' is this or more */
+    REAL do_bwf;            /* Bail (break) if fraction of 'worst' is this or more */
 }PICKSEQ;
 
 #define CHECK_PICKSEQ(ps) if(ps){DestroyPickseqI(ps); ps=NULL;}

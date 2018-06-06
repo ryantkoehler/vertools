@@ -23,8 +23,8 @@
 *   Type for bitwise operations; int32_t is 32 bits
 */
 typedef int32_t BITPTR;
-#define BU_WORDLEN      32      /* ord length; 32 bits */
-#define BU_BLK_SIZE     8       /* lock size; Process 8 bits at a time */
+#define BU_WORDLEN      32      /* Word length; 32 bits */
+#define BU_BLK_SIZE     8       /* block size; Process 8 bits at a time */
 
 
 #define BITPOOL_ID  4002
@@ -32,16 +32,16 @@ typedef int32_t BITPTR;
 typedef struct BITPOOL
 {
     int ID;
-    char name[NSIZE];       /* ame */
-    char fname[NSIZE];      /* nput file name */
-    int num;                /* umber of records */
-    BITPTR *blocks;         /* it array */
-    int n_blocks;           /* imension of blocks */
-    int bsize;              /* itstring size for records */
-    int bkprec;             /* locks per record */
-    struct WORDLIST *mnames;/* ember names */
-    char prlform[NSIZE];    /* rint formatting string for labels */
-    DOUB coef;              /* oefficient for weighting */
+    char name[NSIZE];       /* Name */
+    char fname[NSIZE];      /* Input file name */
+    int num;                /* Number of records */
+    BITPTR *blocks;         /* Bit array */
+    int n_blocks;           /* Dimension of blocks */
+    int bsize;              /* Bitstring size for records */
+    int bkprec;             /* Blocks per record */
+    struct WORDLIST *mnames;/* Member names */
+    char prlform[NSIZE];    /* Print formatting string for labels */
+    DOUB coef;              /* Coefficient for weighting */
 }BITPOOL;
 
 #define CHECK_BITPOOL(ob) if(ob){DestroyBitpoolI(ob); ob=NULL;}

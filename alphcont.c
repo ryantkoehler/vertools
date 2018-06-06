@@ -44,13 +44,13 @@ void AlphContUse(void)
     printf("   -con XXX   Report count of string XXX\n");
     printf("   -skew XXX  Report skew of string XXX\n");
     printf("   -cent XXX  Report centroid of string XXX\n");
-    printf("   -cwin #    Evaluate counts in windows of # bases\n");
     printf("   -btab      Base table output: ACGTSWRYMK content\n");
     printf("   -rtab      Rows table output: ACGTSWRYMK max-length rows\n");
     printf("   -dtab      Dinucleotide table output: AA AC AG ... TC TG TT\n");
     printf("   -ecc       Explicit char counts (e.g. \"S\"==S, not G or C)\n");
     printf("   -dnum      Dump count of words (number); Default is fraction\n");
     printf("   -ign       Ignore N's when computing fraction matching\n");
+    printf("   -cwin #    Evaluate counts in windows of # bases\n");
     printf("   -dcw       Dump (cwin) values along length\n");
     printf("   -dcc       Dump cumulative counts along sequence\n");
     printf("   -dfg       Dump flagging with matches along sequence length\n");
@@ -440,6 +440,8 @@ int OpenAlcoFilesI(ALPHCONT *alPO)
 */
 void HandleAlcoHeader(ALPHCONT *alPO, FILE *outPF)
 {
+    char bufS[DEF_BS];
+
     HAND_NFILE(outPF);
     if(alPO->quiet)
     {
@@ -466,14 +468,23 @@ void HandleAlcoHeader(ALPHCONT *alPO, FILE *outPF)
     */
     if( alPO->do_btab || alPO->do_dtab || alPO->do_rtab ) {
         if(alPO->do_rtab) {
-            fprintf(outPF,"# Base row table: A C G T S W R Y M K\n");
+            sprintf(bufS,"A C G T Max1 S W R Y M K Max2");
+            ReplaceChars(' ', bufS, '\t', bufS);
+            fprintf(outPF,"# Base row table\n");
+            fprintf(outPF,"#\tSeq\t%s\n",bufS);
         }
         else {
             if(alPO->do_dtab) {
-                fprintf(outPF,"# Dinucleotide table: AA AC AG ... TC TG TT\n");
+                sprintf(bufS,"AA AC AG AT CA CC CG CT GA GC GG GT TA TC TG TT");
+                ReplaceChars(' ', bufS, '\t', bufS);
+                fprintf(outPF,"# Dinucleotide table\n");
+                fprintf(outPF,"#\tSeq\t%s\n",bufS);
             }
             else {
-                fprintf(outPF,"# Base count table: A C G T S W R Y M K\n");
+                sprintf(bufS,"A C G T S W R Y M K");
+                ReplaceChars(' ', bufS, '\t', bufS);
+                fprintf(outPF,"# Base count table\n");
+                fprintf(outPF,"#\tSeq\t%s\n",bufS);
             }
         }
     }
@@ -546,7 +557,6 @@ void HandleAlcoHeader(ALPHCONT *alPO, FILE *outPF)
             }
             break;
     }
-    fprintf(outPF,"#\n");
 }
 /****************************************************************************
 *   Clean up non-standard chars and init mask
@@ -1083,7 +1093,8 @@ void ReportAlphcontBaseTables(ALPHCONT *alPO, char *nameS, SEQ *seqPO, SEQCOMP *
 
     VALIDATE(compPO,SEQCOMP_ID);
     HAND_NFILE(outPF);
-    fprintf(outPF,"%-15s",nameS);
+
+    fprintf(outPF,"%s",nameS);
     if(alPO->do_dtab) {
         ReportAlphcontDinucCounts(compPO, alPO->do_dfr, outPF);
         return;
@@ -1105,10 +1116,10 @@ void ReportAlphcontBaseTables(ALPHCONT *alPO, char *nameS, SEQ *seqPO, SEQCOMP *
     */
     else {
         if(alPO->do_rtab) {
-            fprintf(outPF,"%3d\t%3d\t%3d\t%3d",
-                compPO->ra, compPO->rc, compPO->rg, compPO->rt);
-            fprintf(outPF,"\t%3d\t%3d\t%3d\t%3d\t%3d\t%3d",
-                compPO->rs, compPO->rs, compPO->rr, compPO->ry, compPO->rm, compPO->rk);
+            fprintf(outPF,"%3d\t%3d\t%3d\t%3d\t%3d",
+                compPO->ra, compPO->rc, compPO->rg, compPO->rt, compPO->rmax1);
+            fprintf(outPF,"\t%3d\t%3d\t%3d\t%3d\t%3d\t%3d\t%3d",
+                compPO->rs, compPO->rs, compPO->rr, compPO->ry, compPO->rm, compPO->rk, compPO->rmax2);
         }
         else {
             fprintf(outPF,"%3d\t%3d\t%3d\t%3d",

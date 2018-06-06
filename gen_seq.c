@@ -64,17 +64,16 @@ void GenSeqUse(void)
 */
 int GenSeqI(int argc, char **argv)
 {
-    int nt,ng,slen,mtry,dump,quiet,ok;
+    int nt,ng,slen,mtry,dump,ok;
     char bnameS[NSIZE];
     GENSEQ *gsPO;
     SEQ *seqPO;
 
     INIT_S(bnameS); 
-    dump = quiet = FALSE;
+    dump = FALSE;
     mtry = TOO_BIG;
     gsPO = CreateGenseqPO();
-    if(!gsPO)
-    {
+    if(!gsPO) {
         printf("Failed to allocate genseq structure for settings\n");
         ABORTLINE;
         return(FALSE);
@@ -89,7 +88,7 @@ int GenSeqI(int argc, char **argv)
         &gsPO->out_fasta, gsPO->outfile, bnameS,
         &gsPO->len, &gsPO->do_both, &gsPO->do_enu, &gsPO->rseed, &gsPO->num, 
         &gsPO->dump_ok, &gsPO->do_ran, &gsPO->do_ostat, 
-        gsPO->filtname, &gsPO->do_not, &mtry, &quiet,
+        gsPO->filtname, &gsPO->do_not, &mtry, &gsPO->quiet,
         &gsPO->baseper, 
         &gsPO->iraw, &gsPO->ifas, &gsPO->iseq,
         (int *)NULL))
@@ -98,13 +97,11 @@ int GenSeqI(int argc, char **argv)
         CHECK_GENSEQ(gsPO);
         return(FALSE);
     }
-    if(!CheckGenSeqOptionsI(gsPO))
-    {
+    if(!CheckGenSeqOptionsI(gsPO)) {
         CHECK_GENSEQ(gsPO);
         return(FALSE);
     }
-    if(!SetUpGenSeqI(gsPO))
-    {
+    if(!SetUpGenSeqI(gsPO)) {
         ABORTLINE;
         CHECK_GENSEQ(gsPO);
         return(FALSE);
@@ -171,7 +168,7 @@ int GenSeqI(int argc, char **argv)
     *   Random sequence generation?
     */
     else if(gsPO->do_ran) {
-        if(!quiet) {
+        if(!gsPO->quiet) {
             PrintI("# Attempting to generate %d random sequences\n",gsPO->num);
         }
         while(ng < gsPO->num)
@@ -226,19 +223,19 @@ int GenSeqI(int argc, char **argv)
         }
     }
     /***
-    *   Summary?
+    *   Summary only?
     */
-    if( gsPO->do_ostat || gsPO->do_stat)
-    {
+    if(gsPO->do_ostat || gsPO->do_stat) {
         if(gsPO->out_raw || gsPO->out_fasta) {
             printf("# ");
         }
+        printf("Final ");
         if(gsPO->do_enu) {
-            printf("%1.6E of %1.6E seqs %d long OK (%1.4f%%)\n",gsPO->n_good,
+            printf("# %1.6E of %1.6E seqs %d long OK (%1.4f%%)\n",gsPO->n_good,
                 gsPO->n_max, gsPO->len, PERCENT_R(gsPO->n_good,gsPO->n_max));
         }
         else {
-            printf("%d of %d seqs OK (%1.4f%%)\n",ng,nt,PERCENT_R(ng,nt));
+            printf("# %d of %d seqs OK (%1.4f%%)\n",ng,nt,PERCENT_R(ng,nt));
         }
     }
     CHECK_GENSEQ(gsPO);
@@ -320,8 +317,7 @@ int SetUpGenSeqI(GENSEQ *gsPO)
     /***
     *   Filter set input file?
     */
-    if(!NO_S(gsPO->filtname))
-    {
+    if(!NO_S(gsPO->filtname)) {
         if( ! (gsPO->filt=OpenUFilePF(gsPO->filtname,"r",NULL)) ) {
             printf("Can't open input to filter!\n");
             return(FALSE);
@@ -426,15 +422,13 @@ int HandleBasePerSetupI(GENSEQ *gsPO)
     }
     a = c = g = t = BOGUS;
     sscanf(gsPO->baseper, "%d,%d,%d,%d",&a,&c,&g,&t);
-    if(IS_BOG(a) || IS_BOG(c) || IS_BOG(g) || IS_BOG(t) )
-    {
+    if(IS_BOG(a) || IS_BOG(c) || IS_BOG(g) || IS_BOG(t) ) {
         PROBLINE;
         printf("Failed to parse 4 percentiles from |%s|\n",gsPO->baseper);
         printf("Format expected to be #,#,#,# as e.g. \"10,20,30,40\"\n");
         return(FALSE);
     }
-    if( (a+c+g+t) != 100)
-    {
+    if( (a+c+g+t) != 100) {
         PROBLINE;
         printf("Percentiles for ACGT don't add to 100\n");
         printf("Base percentiles:\tA=%d\tC=%d\tG=%d\tT=%d\t=%d%%\n",a,c,g,t,a+c+g+t);
@@ -461,13 +455,11 @@ void WriteGenseqHeader(GENSEQ *gsPO,FILE *outPF)
     TimeStamp("# ",outPF);
     fprintf(outPF,"#\n");
     ran = FALSE;
-    if(gsPO->filt)
-    {
+    if(gsPO->filt) {
         fprintf(outPF,"# Filtering sequences from %s (%d)\n",
             gsPO->filtname,gsPO->num);
     }
-    else if(gsPO->do_ran)
-    {
+    else if(gsPO->do_ran) {
         fprintf(outPF,"# Random sequences (len %d)\n",gsPO->len);
         if(! NO_S(gsPO->baseper))
         {
@@ -475,12 +467,10 @@ void WriteGenseqHeader(GENSEQ *gsPO,FILE *outPF)
         }
         ran++;
     }
-    else if(gsPO->do_enu)
-    {
+    else if(gsPO->do_enu) {
         fprintf(outPF,"# Enumerating sequences (len %d)\n",gsPO->len);
     }
-    if(ran)
-    {
+    if(ran) {
         FillRandSeedString(gsPO->rseed,sS);
         fprintf(outPF,"# Random seed: %s\n",sS);
     }
@@ -500,12 +490,10 @@ int ExtendSeqI(char *seqS, int len, IN_CONS *iconPO, GENSEQ *gsPO)
     /***
     *   If not full length check if ok; if no seq at all, ok to extend
     */
-    if((len) && (len<iconPO->maxlen))
-    {
+    if((len) && (len<iconPO->maxlen)) {
         gsPO->ok = SeqInConsOkI(seqS,len,FALSE,iconPO);
     }
-    else if(!len)
-    {
+    else if(!len) {
         gsPO->ok = TRUE;
     }
     /***
@@ -513,15 +501,15 @@ int ExtendSeqI(char *seqS, int len, IN_CONS *iconPO, GENSEQ *gsPO)
     *   If looking at both sequences, don't consider the complementary seq;
     *       otherwise look at both seq and compliment
     */
-    if(len == iconPO->maxlen)
-    {
+    if(len == iconPO->maxlen) {
         /***
         *   Provide feedback?
         */
-        if(gsPO->n_tot >= gsPO->nexttime)
-        {
-            printf("  %1.4E seqs\n",gsPO->n_tot);
-            fflush(stdout);
+        if(gsPO->n_tot >= gsPO->nexttime) {
+            if(!gsPO->quiet) {
+                printf("# %1.4E seqs\n",gsPO->n_tot);
+                fflush(stdout);
+            }
             gsPO->nexttime += GENSEQ_UDF;
         }
         /***
@@ -536,8 +524,7 @@ int ExtendSeqI(char *seqS, int len, IN_CONS *iconPO, GENSEQ *gsPO)
         /***
         *   If not explicitly enumerating both strands, check compliment here
         */
-        if(!gsPO->do_both)
-        {
+        if(!gsPO->do_both) {
             InverseDNASeqI(seqS,len,compS);
             gsPO->ok = SeqInConsOkI(compS,len,FALSE,iconPO);
             HandleCompleteSeqI(compS,len,NULL,iconPO,gsPO);
@@ -550,8 +537,7 @@ int ExtendSeqI(char *seqS, int len, IN_CONS *iconPO, GENSEQ *gsPO)
     /***
     *   If not keeping everything and sequence is bad, bail early
     */
-    if((!gsPO->ok)&&(!gsPO->dump_all))
-    {
+    if((!gsPO->ok)&&(!gsPO->dump_all)) {
         return(FALSE);
     }
     /***
@@ -578,7 +564,9 @@ double NumSkippedD(int len,int max)
     l = max-len;
     nD=1.0;
     for(i=0;i<l;i++)
+    {
         nD*=4.0;
+    }
     return(nD);
 }
 /****************************************************************************
@@ -590,45 +578,47 @@ int HandleCompleteSeqI(char *seqS,int len,char *nS,IN_CONS *iconPO,
     /***
     *   If only stats, done
     */
-    if(gsPO->do_ostat)
-    {   
+    if(gsPO->do_ostat) {   
         return(TRUE);   
     }
     /***
     *   Dump everything else only if ok
     */
-    if(gsPO->dump_all || gsPO->ok)
-    {
-        if(gsPO->out_fasta)
-        {
-            if(nS)
+    if(gsPO->dump_all || gsPO->ok) {
+        if(gsPO->out_fasta) {
+            if(nS) {
                 fprintf(gsPO->out,"> %s",nS);
-            else
+            }
+            else {
                 fprintf(gsPO->out,"> %s%06.0f",gsPO->bname,gsPO->n_good);
-            if(gsPO->dump_ok)
-            {
-                if(gsPO->ok)
+            }
+            if(gsPO->dump_ok) {
+                if(gsPO->ok) {
                     fprintf(gsPO->out," GOOD");
-                else
+                }
+                else {
                     fprintf(gsPO->out," BAD ");
+                }
             }
             fprintf(gsPO->out,"\n");
             fprintf(gsPO->out,"\t");
             PrintString(seqS,len,gsPO->out);
             fprintf(gsPO->out,"\n");
         }
-        else if(gsPO->out_raw)
-        {
-            if(nS)
+        else if(gsPO->out_raw) {
+            if(nS) {
                 fprintf(gsPO->out,"%-12s",nS);
-            else
+            }
+            else {
                 fprintf(gsPO->out,"%s%06.0f",gsPO->bname,gsPO->n_good);
-            if(gsPO->dump_ok)
-            {
-                if(gsPO->ok)
+            }
+            if(gsPO->dump_ok) {
+                if(gsPO->ok) {
                     fprintf(gsPO->out," GOOD");
-                else
+                }
+                else {
                     fprintf(gsPO->out," BAD ");
+                }
             }
             fprintf(gsPO->out," ");
             PrintString(seqS,len,gsPO->out);

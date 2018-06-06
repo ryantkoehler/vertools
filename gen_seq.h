@@ -15,7 +15,7 @@
 */
 
 
-#define VERSION_S "Gen_Seq version 1.03"
+#define VERSION_S "Gen_Seq version 1.04"
 
 /***
 *   Data structure for holding settings for gen_seq
@@ -37,6 +37,7 @@ typedef struct GENSEQ
     DOUB n_good;        /* how many ok? (for stats) */
     DOUB n_tot;         /* how many considered? (for feedback) */
     DOUB nexttime;      /* For feedback */
+    int quiet;          /* Flag for no feedback */
     int verb;           /* Flag for verbose output */
     int ok;             /* Flag placeholder for reporting seq status */
     int do_stat;        /* Report stats */

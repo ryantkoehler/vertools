@@ -14,7 +14,7 @@
 *
 */
 
-#define VERSION_S       "Filter version 1.46"
+#define VERSION_S       "Filter version 1.48"
 
 #define FILTBUF_SIZE    100000
 
@@ -35,33 +35,35 @@ typedef struct FILTER
     FILE *out;              /* outpuf file */
     char wlisname[NSIZE];   /* token list filename */
     struct WORDLIST *wlis;  /* token list structure */
-    int num;                /* working number of lines */
-    int nok;                /* working number of qualified lines */
-    int col;                /* column to filter on */
+    int num;                /* Working number of lines */
+    int nok;                /* Working number of qualified lines */
+    int col;                /* Column to filter on */
     DOUB min, max;          /* min / max values */
-    int firstl,lastl;       /* first and last lines */
-    int firstb,lastb;       /* first and last blocks */
-    int l_bof,l_blk;        /* line block offset and block size */
-    char blk_mlis[NSIZE];   /* within-block line mask raw string */
-    char *blk_mask;         /* within-block line number mask */
-    int do_bm_not;          /* flag to invert within-block line mask */
-    int rann;               /* random number to pick */
-    int seed;               /* random seed */
-    DOUB ranf, ranp;        /* random fraction / probability to pick */
-    int do_not;             /* flag to invert record qualifcations */
-    int skipc;              /* number of chars to skip in input lines */
-    int do_stat;            /* flag to do stats */
-    int do_kc;              /* flag to keep case for token compare */
-    int do_wst;             /* flag to compare starte for token compare */
-    int do_wsub;            /* flag to check substring for token compare */
-    int do_flag;            /* flag to prepend output lines 1/0 */
-    int do_pln;             /* flag to prepend output lines with line number */
-    int do_icbn;            /* flag to ignore chars before numbers */
-    int do_vex;             /* flag to filter values exclusive of bounds */
-    int do_all;             /* flag to consider all lines */
+    int firstl,lastl;       /* First and last lines */
+    int firstb,lastb;       /* First and last blocks */
+    int l_bof,l_blk;        /* Line block offset and block size */
+    char blk_mlis[NSIZE];   /* Within-block line mask raw string */
+    char *blk_mask;         /* Within-block line number mask */
+    int do_bm_not;          /* Flag to invert within-block line mask */
+    int rann;               /* Random number to pick */
+    int seed;               /* Random seed */
+    DOUB ranf, ranp;        /* Random fraction / probability to pick */
+    int maxout;             /* Limit on number of output lines */
+    int do_not;             /* Flag to invert record qualifcations */
+    int skipc;              /* Number of chars to skip in input lines */
+    int do_stat;            /* Flag to do stats */
+    int do_kc;              /* Flag to keep case for token compare */
+    int do_wst;             /* Flag to compare starte for token compare */
+    int do_wsub;            /* Flag to check substring for token compare */
+    int do_flag;            /* Flag to prepend output lines 1/0 */
+    int do_pln;             /* Flag to prepend output lines with line number */
+    int do_icbn;            /* Flag to ignore chars before numbers */
+    int do_vex;             /* Flag to filter values exclusive of bounds */
+    int do_all;             /* Flag to consider all lines */
+    int do_abs;             /* Flag to do absolute values */
     int do_A;               /* Number of lines After to report */
     int do_B;               /* Number of lines Before to report */
-    int do_quiet;           /* flag to only output lines; No summary */
+    int do_quiet;           /* Flag to only output lines; No summary */
 }FILTER;
 
 #define CHECK_FILTER(fp)    if(fp){DestroyFilterI(fp);fp=NULL;}

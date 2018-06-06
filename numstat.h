@@ -37,41 +37,42 @@
 typedef struct NUMSTAT
 {
     int ID;
-    char inname[NSIZE];     /* nput file name */
-    FILE *in;               /* nput file */
-    char outname[NSIZE];    /* utput file name */
-    FILE *out;              /* utpuf file */
-    int col,scol;           /* olumn and second column */
-    int col_set;            /* lag that column is set */
-    struct NUMLIST *vals;   /* ata values */
-    struct NUMLIST *svals;  /* econd set of data values */
-    int num;                /* umber of values */
-    int lines;              /* ines in input file */
-    char prls[BBUFF_SIZE];  /* ercentile series string */
-    DOUB prsd;              /* ercentile steps */
-    DOUB min,max,av,sd,sum; /* un-time stat values */
-    int h_maxbin;           /* ist max bins */
-    int h_mbin_set;         /* lag that hist max bins is set */
-    int h_pwide;            /* istoram plot width */
-    DOUB h_bin;             /* istogram specified bin */         
-    DOUB h_lo, h_hi;        /* istogram specified low and hi */
-    DOUB h_abin;            /* istogram auto bin */         
-    DOUB h_alo, h_ahi;      /* istogram auto low and hi */
-    char h_pfmt[DEF_BS];    /* istogram print format string */
-    char hvsep[DEF_BS];     /* istogram value sep string */
-    int do_perc, do_hist;   /* un-time output modifiers */
-    int do_hntb;            /* lag for Histogram Not Trim Bin */
-    DOUB htb_xfold;         /* ist trim bin if highest > xfold */
-    int do_sk;              /* lag to skip missing data lines */
-    int do_sl;              /* lag for single line */
-    int do_efi;             /* lag for echo */
-    int do_ic;              /* lag to inore chars up to this position */
-    int do_hplot;           /* lag to plot hist */
-    int do_splot;           /* lag to plot scatter */
-    int do_hends;           /* lag for no "ends" in hist plotting */
-    int do_ploti;           /* lag to plot hist integral */
+    char inname[NSIZE];     /* Input file name */
+    FILE *in;               /* Input file */
+    char outname[NSIZE];    /* Output file name */
+    FILE *out;              /* Outpuf file */
+    int col,scol;           /* Column and second column */
+    int col_set;            /* Flag that column is set */
+    struct NUMLIST *vals;   /* Data values */
+    struct NUMLIST *svals;  /* Second set of data values */
+    int num;                /* Number of values */
+    int lines;              /* Lines in input file */
+    char prls[BBUFF_SIZE];  /* Percentile series string */
+    DOUB prsd;              /* Percentile steps */
+    DOUB min,max,av,sd,sum; /* Run-time stat values */
+    int h_maxbin;           /* List max bins */
+    int h_mbin_set;         /* Flag that hist max bins is set */
+    int h_pwide;            /* Historam plot width */
+    DOUB h_bin;             /* Histogram specified bin */         
+    DOUB h_lo, h_hi;        /* Histogram specified low and hi */
+    DOUB h_abin;            /* Histogram auto bin */         
+    int h_limbin;           /* Histogram auto bin */         
+    DOUB h_alo, h_ahi;      /* Histogram auto low and hi */
+    char h_pfmt[DEF_BS];    /* Histogram print format string */
+    char hvsep[DEF_BS];     /* Histogram value sep string */
+    int do_perc, do_hist;   /* Run-time output modifiers */
+    int do_hntb;            /* Flag for Histogram Not Trim Bin */
+    DOUB htb_xfold;         /* Fist trim bin if highest > xfold */
+    int do_sk;              /* Flag to skip missing data lines */
+    int do_sl;              /* Flag for single line */
+    int do_efi;             /* Flag for echo */
+    int do_ic;              /* Flag to inore chars up to this position */
+    int do_hplot;           /* Flag to plot hist */
+    int do_splot;           /* Flag to plot scatter */
+    int do_hends;           /* Flag for no "ends" in hist plotting */
+    int do_ploti;           /* Flag to plot hist integral */
     int do_dif;             /* Report diff between C1 and C2 */
-    char echo[NSIZE];       /* tring for output echo */
+    char echo[NSIZE];       /* String for output echo */
 }NUMSTAT;
 
 #define CHECK_NUMSTAT(fp)   if(fp){DestroyNumstatI(fp);fp=NULL;}

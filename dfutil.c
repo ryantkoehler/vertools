@@ -66,6 +66,36 @@ int DataTableDimsI(FILE *inPF,int hr,int *ncolPI,int *nrowPI)
     return(TRUE);
 }
 /*************************************************************************
+*   Wrappers for FileStatsI and FileLinesI
+*   ... someday nice to have functions determine if given file or name????
+*/
+int FilenameStatsI(char *fnameS, int *linePI, int *minPI, int *maxPI, 
+    int *comPI, int *blankPI)
+{
+    int n;
+    FILE *fPF;
+
+    if(!(fPF=OpenUFilePF(fnameS, "r", NULL))) {
+        return(-1);
+    }
+    n = FileStatsI(fPF, linePI, minPI, maxPI, comPI, blankPI);
+    FILECLOSE(fPF);
+    return(n);
+}
+/************************************************************************/
+int FilenameLinesI(char *fnameS, int ig_com, int ig_blank)
+{
+    int n;
+    FILE *fPF;
+
+    if(!(fPF=OpenUFilePF(fnameS, "r", NULL))) {
+        return(-1);
+    }
+    n = FileLinesI(fPF, ig_com, ig_blank);
+    FILECLOSE(fPF);
+    return(n);
+}
+/*************************************************************************
 *   Reads through a file collecting stats on line number and size as well
 *       as number of comment and blank lines
 *   Returns total number of characters read in file
@@ -76,9 +106,10 @@ int FileStatsI(FILE *fPF, int *linePI, int *minPI, int *maxPI, int *comPI,
     int c,n,p,g,line,min,max,com,blank;
     off_t fpos;
 
+    if(!fPF) {   
+        return(0);  
+    }
     line = n = 0;
-    if(!fPF)
-    {   return(n);  }
     fpos = ftell(fPF);
     max = -TOO_BIG;
     min = TOO_BIG;
@@ -145,8 +176,9 @@ int FileLinesI(FILE *fPF, int ig_com, int ig_blank)
 {
     int n,nc,nb;
 
-    if(!fPF)
-    {   return(0); }
+    if(!fPF) {   
+        return(0); 
+    }
     FileStatsI(fPF,&n,NULL,NULL,&nc,&nb);
     if(ig_com) {
         n -= nc;

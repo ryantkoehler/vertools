@@ -21,6 +21,7 @@
 #include "prim.h"
 #include "dna.h"
 
+
 /***************************************************************************
 *   TRUE if in standard DNA alphabet
 *   BOGUS if degenerate DNA code

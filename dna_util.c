@@ -49,6 +49,7 @@ void DnaUtilUse(void)
     printf("   -cstat     Case-base stat report (UPPER lower ambigN)\n");
     printf("   -csep      Case-base separation of subseqs\n");
     printf("   -tnb       Truncate name on blank (first token only)\n");
+    printf("   -b2u       Replace blanks in name with underscores\n");
     printf("   -oraw      Output \"raw\" format\n");
     printf("   -ofas      Output fasta format\n");
     printf("   -nfas      Output 'nice' fasta format, lines and blocks\n");
@@ -110,7 +111,7 @@ int DnaUtilI(int argc, char **argv)
         -sran I2 -wlis S -kc B -olis B -fsnp B\
         -iraw B -ifas B -ostat B -plp S -pew I2 -cln B -cls B -pol I -igp B\
         -flg B -psj I2 -inwf I2 -insh B -inbr B -inbp B\
-        -cll B -pat I -exi B -tnb B\
+        -cll B -pat I -exi B -tnb B -b2u B\
         -pco B -pml I2\
         -cstat B -csep B -wst B -tsub B -nan B -nfl I -nfb I -ds B -di B -iseq B",
         duPO->inname, duPO->outname, &oraw, &duPO->do_comp, &duPO->do_inv, 
@@ -128,7 +129,7 @@ int DnaUtilI(int argc, char **argv)
         &duPO->ifwmin,&duPO->ifwmax,
         &duPO->do_insh, &duPO->do_inbr, &duPO->do_inbp,
         &do_cll, &duPO->do_pat, &duPO->do_exi,
-        &duPO->do_tnb, &duPO->do_pco, &duPO->do_pol,&duPO->do_pml,
+        &duPO->do_tnb, &duPO->do_b2u, &duPO->do_pco, &duPO->do_pol,&duPO->do_pml,
         &duPO->do_cstat, &duPO->do_csep, 
         &duPO->do_wst, &duPO->do_wsub, &duPO->do_nan,
         &duPO->nfline, &duPO->nfblock, &duPO->do_ds, &duPO->do_di,
@@ -337,7 +338,7 @@ void InitDna_util(DNA_UTIL *duPO)
     duPO->nfblock = duPO->nfline = BOGUS;
     duPO->igprob = FALSE;
     duPO->do_kc = duPO->do_wst = duPO->do_wsub = FALSE;
-    duPO->do_tnb = FALSE;
+    duPO->do_tnb = duPO->do_b2u = FALSE;
     duPO->do_comp = duPO->do_rev = duPO->do_inv = FALSE;
     duPO->do_nan = FALSE;
     duPO->do_not = FALSE;
@@ -616,6 +617,11 @@ int HandleDuCleanExpI(DNA_UTIL *duPO, SEQ *seqPO)
         FillSeqNameStringI(seqPO, nameS, NSIZE-1);
         sscanf(nameS,"%s",tokS);
         SetSeqName(seqPO,tokS); 
+    }
+    else if(duPO->do_b2u) {
+        FillSeqNameStringI(seqPO, nameS, NSIZE-1);
+        ReplaceChars(' ', nameS, '_', nameS);
+        SetSeqName(seqPO,nameS); 
     }
     return(TRUE);
 }

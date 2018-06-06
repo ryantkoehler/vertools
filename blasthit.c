@@ -25,155 +25,89 @@
 #define DB_BIO  if(DB[133])
 
 /****************************************************************************
-*   Process raw hit list and possibly cull some records
+*   Process raw hit list, setting mask with OK passing ones
 */
 void ProcHitList(BLASTOUT *bPO, BLASTANS *aPO)
 {
-    int i,n,ok,num,max,den,alen;
+    int i,nok,ok,num,max,mc,den,alen;
     REAL fracR;
 
     DB_BIO DB_PrI(">> ProcHitList\n");
-    n = max = 0;
-    for(i=0;i<aPO->nhits;i++) {
+    /* Init counts and mask array */
+    nok = max = 0;
+    InitArrayI(aPO->mask, IS_CHAR, 0, aPO->asize, 0);
+    for(i=0; i<aPO->nhits; i++) 
+    {
         if( ((i+1) < bPO->firsth) || ((i+1) > bPO->lasth) ) {
             continue;
         }
-        num = HitMatchCountI(aPO,i,bPO->firstb,bPO->lastb,bPO->rre,
-            bPO->do_con, bPO->do_co3, &den);
+        SetAlignCountsI(bPO, aPO, i);
+        /* Get what qualifies as match count */
+        num = HitMatchCountI(bPO, aPO, i, &den);
         max = MAX_NUM(num,max);
-        /***
-        *   Qualify by max match 
-        */
+        /* Qualify flag */
         ok = TRUE;
-        if(num < bPO->mid) {
+        /* Min match */
+        if( ok && (num < bPO->mid) ) {
             ok = FALSE;
         }
-        alen = AdjustHitLenI(bPO,aPO,i,den);
+        /* Min fraction match */
+        alen = AdjustHitLenI(bPO,aPO,i, den);
         fracR = RNUM(num)/RNUM(alen);
-        if(fracR < bPO->mif) {
+        if( ok && (fracR < bPO->mif) ) {
             ok = FALSE;
         }
-        ok = bPO->do_mnot ? (!ok) : ok;
-        if (!ok) {
-            continue;
+        /* Max mismatch */
+        if( ok && (bPO->do_mmm >= 0) ) {
+            /* Mismatch count is total or just in alignment */
+            if(bPO->do_frq) {
+                /* Max of explicit mismatch or len - match */
+                mc = MAX_NUM(aPO->qlen - aPO->amats[i], aPO->amms[i]);
+            }
+            else {
+                mc = aPO->amms[i];
+            }
+            if(mc > bPO->do_mmm) {
+                ok = FALSE;
+            }
         }
-        /***
-        *   Current record is cool; shrink list if any have been skipped
-        */
-        if(i != n) {
-            strcpy(&aPO->scos[n*BLBSIZE],&aPO->scos[i*BLBSIZE]);
-            strcpy(&aPO->idens[n*BLBSIZE],&aPO->idens[i*BLBSIZE]);
-            strcpy(&aPO->hits[n*BLBSIZE],&aPO->hits[i*BLBSIZE]);
-            strcpy(&aPO->qseqs[n*BLBSIZE],&aPO->qseqs[i*BLBSIZE]);
-            strcpy(&aPO->sseqs[n*BLBSIZE],&aPO->sseqs[i*BLBSIZE]);
+        /* Max gaps */
+        if( ok && (bPO->do_mgap >= 0) ) {
+            if(aPO->agaps[i] > bPO->do_mgap) {
+                ok = FALSE;
+            }
         }
-        aPO->hnums[n] = num;
-        aPO->hlens[n] = alen;
-        aPO->hfmb[n] = fracR;
-        n++;
+        /* Logic inversion; Not */
+        ok = bPO->do_fnot ? (!ok) : ok;
+        /* Count and mark */
+        if (ok) {
+            nok++;
+            aPO->mask[i] = TRUE;
+        }
     }
-    aPO->nhits = n;
+    aPO->nok = nok;
     aPO->maxhit = max;
     DB_BIO DB_PrI("<< ProcHitList\n");
 }
 /****************************************************************************
-*   Merge hits from two BLASTANS into a third
-*/
-int MergeHitListsI(BLASTOUT *bPO, BLASTANS *a1PO,BLASTANS *a2PO,BLASTANS *a3PO)
-{
-    int i,n,a,a1,a2,num,max,den,alen;
-    REAL fracR;
-    BLASTANS *aPO;
-
-    if(!SameBlastQueryI(a1PO,a2PO)) {
-        return(FALSE);
-    }
-    /***
-    *   Merge hits into a3PO
-    */
-    n = max = a = a1 = a2 = 0;
-    aPO = NULL;
-    for(i=0;i<a3PO->asize;i++)
-    {
-        /***
-        *   Figure out which source to copy from
-        */
-        if( (a1>=a1PO->nhits) && (a2>=a2PO->nhits) ) {
-            break;
-        }
-        else if( (a1<a1PO->nhits) && (a2<a2PO->nhits) ) {
-            if(ODD_NUM(n)) {
-                aPO = a2PO;
-                a = a2++;
-            }
-            else {
-                aPO = a1PO;
-                a = a1++;
-            }
-        }
-        else if(a1<a1PO->nhits) {
-            aPO = a1PO;
-            a = a1++;
-        }
-        else if(a2<a2PO->nhits) {
-            aPO = a2PO;
-            a = a2++;
-        }
-        num = HitMatchCountI(aPO,a,bPO->firstb,bPO->lastb,bPO->rre,
-            bPO->do_con, bPO->do_co3, &den);
-        max = MAX_NUM(num,max);
-        if(num < bPO->mid) {
-            continue;
-        }
-        alen = AdjustHitLenI(bPO,aPO,a,den);
-        fracR = RNUM(num)/RNUM(alen);
-        if(fracR < bPO->mif) {
-            continue;
-        }
-        /***
-        *   Copy current record into answer set
-        */
-        strcpy(&a3PO->scos[n*BLBSIZE],&aPO->scos[a*BLBSIZE]);
-        strcpy(&a3PO->idens[n*BLBSIZE],&aPO->idens[a*BLBSIZE]);
-        strcpy(&a3PO->hits[n*BLBSIZE],&aPO->hits[a*BLBSIZE]);
-        strcpy(&a3PO->qseqs[n*BLBSIZE],&aPO->qseqs[a*BLBSIZE]);
-        strcpy(&a3PO->sseqs[n*BLBSIZE],&aPO->sseqs[a*BLBSIZE]);
-        a3PO->hnums[n] = num;
-        a3PO->hlens[n] = alen;
-        a3PO->hfmb[n] = fracR;
-        a3PO->qhsc[n] = aPO->qhsc[a];
-        a3PO->qhec[n] = aPO->qhec[a];
-        a3PO->shsc[n] = aPO->shsc[a];
-        a3PO->shec[n] = aPO->shec[a];
-        n++;
-    }
-    a3PO->nhits = n;
-    a3PO->maxhit = max;
-    strcpy(a3PO->query,a1PO->query);
-    a3PO->qlen = a1PO->qlen;
-    return(TRUE);
-}
-/****************************************************************************
 *   Fill histogram with matching base counts
 */
-int FillHitHistI(BLASTANS *aPO,int first,int last,int rre,int con, int co3)
+int FillHitHistI(BLASTOUT *bPO, BLASTANS *aPO)
 {
     int i,num,max;
 
-    for(i=0;i<HISTDIM;i++)
-    {
-        aPO->ihist[i] = 0;
-    }
+    InitArrayI(aPO->ihist, IS_INT, 0, HISTDIM, 0);
     max = 0;
 /**
 printf("nhits=%d\n",aPO->nhits);
 */
     for(i=0;i<aPO->nhits;i++)
     {
-        num = HitMatchCountI(aPO,i,first,last,rre,con, co3, NULL);
+        num = HitMatchCountI(bPO, aPO, i, NULL);
         max = MAX_NUM(num,max);
-        if(num >= HISTDIM)
+        if(num >= HISTDIM) {
             continue;
+        }
         aPO->ihist[num] += 1;
 /**
 printf("i=%d num=%d ihis=%d max=%d\n",i,num,aPO->ihist[num],max);
@@ -196,101 +130,62 @@ void IntegrateHist(BLASTANS *aPO)
     }
 }
 /****************************************************************************
-*   Returns the count of (qualified) matching bases 
-*   Also sets length of (qualified) alignment if passed third arg
-*   SHAM TODO; Break this up!
+*   Returns the count of (qualified) matching bases; Can be contig, 3' or total
+*   If last arg, set this to (length) denominator 
 */
-int HitMatchCountI(BLASTANS *aPO, int hit, int first, int last, int rre,
-    int con, int co3, int *alenPI)
+int HitMatchCountI(BLASTOUT *bPO, BLASTANS *aPO, int hit, int *denPI)
 {
-    int qs,qe,gap,ok,b,j,c,alen,max,num;
-    char *qPC,*sPC;
+    int i, n, c, mat;
+    char qseqS[BLBSIZE+1], sseqS[BLBSIZE+1], maskS[BLBSIZE];
 
-    j = gap = num = c = max = alen = 0;
-    qs = aPO->qhsc[hit]; 
-    qe = aPO->qhec[hit];
-    qPC = &aPO->qseqs[hit * BLBSIZE];
-    sPC = &aPO->sseqs[hit * BLBSIZE];
-    /*** 
-    *   Special case for 3' end contig (too messy to try and fit here!)
-    */
-    if(co3) {
+    sprintf(qseqS,"%s",&aPO->qseqs[hit*BLBSIZE]);
+    sprintf(sseqS,"%s",&aPO->sseqs[hit*BLBSIZE]);
+    n = FillHitAlignQseqMaskI(bPO, aPO, hit, maskS);
+    mat = 0;
+    /* Contig 3' end */
+    if( bPO->do_co3 ) {
         /***
-        *   Query end has to be full length
+        *   Has to be full length; Short circuit loop if not
         */
-        if(qe == aPO->qlen) {
-            num = Cont3pEndMatchI(aPO, aPO->qlen - qs, qPC, sPC);
+        n = (aPO->qhec[hit] == aPO->qlen) ? n : 0;
+        /* Loop backwards 3' end first */
+        for(i=n-1;i>=0;i--)
+        {
+            if(qseqS[i] != sseqS[i]) {
+                break;
+            }
+            mat++;
         }
-        else {
-            num = 0;
-        }
-        if(alenPI) {
-            *alenPI = num;
-        }
-        return(num);
     }
-    /***
-    *   Scan alignment until out of chars
-    */
-    while(isgraph(INT(qPC[j])))
-    {
-        /***
-        *   Restricted base range?
-        */
-        ok = TRUE;
-        if(qs<qe) {
-            b = qs+j-1-gap;
-        }
-        else {
-            b = qs-j-1+gap;
-        }
-        if(first>0) {
-            if(rre) {
-                if( ((aPO->qlen-b)<first) || 
-                    ((aPO->qlen-b)>last) )
-                    ok = FALSE;
+    /* General max contig */
+    else if( bPO->do_con ) {
+        c = 0;
+        for(i=0;i<n;i++)
+        {
+            if(qseqS[i] != sseqS[i]) {
+                mat = MAX_NUM(c,mat);
+                c = 0;
             }
             else {
-                if( ((b+1)<first) || (b>=last) )
-                    ok = FALSE;
+                c++;
             }
         }
-        if(!ok) {
-            j++;
-            continue;
+        mat = MAX_NUM(c,mat);
+    }
+    /* total matches */
+    else {
+        mat = aPO->amats[hit];
+    }
+    /* Denominator? set to len */
+    if(denPI) {
+        if(bPO->do_frq) {
+            *denPI = aPO->qlen;
         }
-        alen++;
-        /***
-        *   Missmatch
-        * SHAM; Could check if degenerate IUB codes match?
-        */
-        if(qPC[j] != sPC[j]) {
-            if(qPC[j] == '-') {
-                gap++;
-            }
-            max = MAX_NUM(c,max);
-            c = 0;
-            j++;
-            continue;
+        else {
+            *denPI = n;
         }
-        /***
-        *   Matching case, up counts
-        */
-        c++;
-        num++;
-        j++;
     }
-    /***
-    *   Final counts and what to return?
-    */
-    max = MAX_NUM(c,max);
-    if(con) {
-        num = max;
-    }
-    if(alenPI) {
-        *alenPI = alen;
-    }
-    return(num);
+    return(mat);
 }
 /**************************************************************************
 *   Count contiguous matches from 3' end
@@ -316,18 +211,146 @@ printf("xxx i=%d len=%d %p %p\n",i,len,qPC,sPC);
     }
     return(n);
 }
-/**************************************************************************/
-int SameBlastQueryI(BLASTANS *fPO, BLASTANS *sPO)
+/**************************************************************************
+*   Fill passed map array with query coords for hit alignment;
+*   Basically, count along seq but skip gaps (i.e. '-' in aligment)
+*   Return length of array actually filled
+*/
+int FillHitAlignQcoordMapI(BLASTOUT *bPO, BLASTANS *aPO, int hit, int *mapPI)
 {
-    if(strcmp(fPO->query,sPO->query))
+    int i,b,n;
+    char qseqS[BLBSIZE+1];
+
+    sprintf(qseqS,"%s",&aPO->qseqs[hit*BLBSIZE]);
+    if(bPO->rre) {
+        b = aPO->qhec[hit];
+        i = strlen(qseqS) - 1;
+    }
+    else {
+        b = aPO->qhsc[hit];
+        i = 0;
+    }
+    n = 0;
+    while(isgraph(qseqS[i]))
     {
-        PROBLINE;
-        printf("Different query names\n");
-        printf(" From %s\n",fPO->input);
-        printf(" Name %s\n",fPO->query);
-        printf(" From %s\n",sPO->input);
-        printf(" Name %s\n",sPO->query);
+        mapPI[i] = b;
+        if(bPO->rre) {
+            if(qseqS[i] != '-') {
+                b--;
+            }
+            i--;
+        }
+        else {
+            if(qseqS[i] != '-') {
+                b++;
+            }
+            i++;
+        }
+        n++;
+    }
+    return(n);
+}
+/**************************************************************************
+*   Fill passed char mask to mark in-range alignment query string 
+*/
+int FillHitAlignQseqMaskI(BLASTOUT *bPO, BLASTANS *aPO, int hit, char *maskPC)
+{
+    int i, n, b, qclis[BLBSIZE];
+    char qseqS[BLBSIZE+1];
+
+    /* Init full mask */
+    sprintf(qseqS,"%s",&aPO->qseqs[hit*BLBSIZE]);
+    n = strlen(qseqS);
+    InitArrayI(maskPC, IS_CHAR, 0, n, TRUE);
+    /* If base range, unmask out-of-range positions */
+    if(bPO->firstb > 0) {
+        FillHitAlignQcoordMapI(bPO, aPO, hit, qclis);
+        for(i=0; i<n; i++)
+        {
+            /* Current base from end or start? */
+            if(bPO->rre) {
+                b = aPO->qlen - qclis[i] + 1;
+            }
+            else {
+                b = qclis[i];
+            }
+            if( (b < bPO->firstb) || (b > bPO->lastb) ) {
+                maskPC[i] = FALSE;
+            }
+        }
+    }
+    return(n);
+}
+/**************************************************************************
+*   Set various counts for hit alignment 
+*/
+int SetAlignCountsI(BLASTOUT *bPO, BLASTANS *aPO, int hit)
+{
+    int i, n, nmat, nmm, ngap;
+    char qseqS[BLBSIZE+1], sseqS[BLBSIZE+1], maskS[BLBSIZE];
+
+    if(hit >= aPO->asize) {
         return(FALSE);
     }
+    sprintf(qseqS,"%s",&aPO->qseqs[hit*BLBSIZE]);
+    sprintf(sseqS,"%s",&aPO->sseqs[hit*BLBSIZE]);
+    /***
+    *   Get mask of query positions to look at, then count
+    */
+    FillHitAlignQseqMaskI(bPO, aPO, hit, maskS);
+    n = nmat = nmm = ngap = 0;
+    for(i=0;i<strlen(qseqS);i++)
+    {
+        if(! maskS[i]) {
+            continue;
+        }
+        n++;
+        if(sseqS[i] == qseqS[i]) {
+            nmat++;
+        }
+        else {
+            nmm++;
+            if( (sseqS[i] == '-') || (qseqS[i] == '-') ) {
+                ngap++;
+            }
+        }
+    }
+    aPO->alens[hit] = n;
+    aPO->amats[hit] = nmat;
+    aPO->amms[hit] = nmm;
+    aPO->agaps[hit] = ngap;
     return(TRUE);
 }
+/****************************************************************************
+*   Set alignment length for normalization
+*/
+int AdjustHitLenI(BLASTOUT *bPO, BLASTANS *aPO, int hit, int len)
+{
+    int qs,qe;
+
+    if(bPO->do_frq) {
+        len = aPO->qlen;
+    }
+    else if(bPO->firstb > 0) {
+        qs = MIN_NUM(aPO->qhsc[hit], aPO->qhec[hit]);
+        qe = MAX_NUM(aPO->qhsc[hit], aPO->qhec[hit]);
+        if(bPO->rre) {
+            if( qe < (aPO->qlen - bPO->firstb + 1) ) {
+                len += (aPO->qlen - bPO->firstb + 1 - qe);
+            }
+            if( qs > (aPO->qlen - bPO->lastb + 1) ) {
+                len += (aPO->qlen - bPO->lastb + 1 - qs);
+            }
+        }
+        else {
+            if( qs > bPO->firstb ) {
+                len += (qs - bPO->firstb);
+            }
+            if( qe < bPO->lastb ) {
+                len += (bPO->lastb - qe);
+            }
+        }
+    }
+    return(len);
+}
+

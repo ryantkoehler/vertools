@@ -44,8 +44,8 @@ void PickSeqUse(void)
     printf("   -num #     Pick # sequences\n");
     printf("   -swap      Use the monte carlo swap picking algorithm\n");
     printf("   -seed #    Set random number seed to #\n");
-    printf("   -cyc #     Set swap cycles to # (def = %d)\n",DEF_PS_CYC);
-    printf("   -rep #     Set replacement tries to # (def = %d)\n",DEF_PS_REP);
+    printf("   -cyc #     Set swap cycles to # (Default %d)\n", DEF_PS_CYC);
+    printf("   -rep #     Set replacement tries to # (Default %d)\n", DEF_PS_REP);
     printf("   -sirf #    Save intermediate results every # cycle\n");
     printf("   -siru      Save intermediate results unique name / cycle\n");
     printf("   -smat # #  Similar & Comp total match score factor to #\n");
@@ -53,8 +53,11 @@ void PickSeqUse(void)
     printf("   -scb # #   Similar & Comp block match score factor to #\n");
     printf("   -mswm      Score simple match via weighted matching\n");
     printf("   -cswm      Score contig match via weighted matching\n");
+    printf("   -ham       Score via Hamming distance (Similarity only)\n");
     printf("   -mwf XXX   Match weights from XXX (AA X, AC Y,... per line)\n");
     printf("   -fix XXX   Fix (keep) a subset of seqs listed in file XXX\n");
+    printf("   -bwn #     Bail (stop) cycling if number of 'worst' is this or more\n");
+    printf("   -bwf #     Bail (stop) cycling if fraction 'worst' is this or more\n");
     printf("   -quiet     Suppress run-time status reporting\n");
 }
 /**************************************************************************
@@ -70,13 +73,13 @@ int PickSeqI(int argc, char **argv)
     if(!ParseArgsI(argc,argv,
         "S -out S -seed I -num I -swap B -cyc I -rep I -sirf I -siru B\
         -smat R2 -scon R2 -scb R2 -mswm B -cswm B -mwf S -ifas B -iraw B\
-        -quiet B -fix S -iseq B",
+        -quiet B -fix S -iseq B -ham B -bwn I -bwf R",
         psPO->seqname, psPO->outname, &psPO->rseed, &psPO->num, &swap, 
         &psPO->cyc, &psPO->rep, &psPO->sirf, &psPO->siru,
         &psPO->smat, &psPO->cmat, &psPO->scon, &psPO->ccon, 
         &psPO->scb, &psPO->ccb, &psPO->do_mswm, &psPO->do_cswm, 
         &psPO->mwfname, &ifas, &iraw, &psPO->verbose, &psPO->fixname,
-        &iseq, 
+        &iseq, &psPO->do_ham, &psPO->do_bwn, &psPO->do_bwf,
         (int *)NULL))
     {
         PickSeqUse();
@@ -114,8 +117,7 @@ int PickSeqI(int argc, char **argv)
     /***
     *   Check run-time options
     */
-    if(!CheckPsSeqOptionsI(psPO))
-    {
+    if(!CheckPsSeqOptionsI(psPO)) {
         ABORTLINE;
         CHECK_PICKSEQ(psPO);
         return(FALSE);
@@ -123,8 +125,7 @@ int PickSeqI(int argc, char **argv)
     /***
     *   Handle output
     */
-    if(!SetPickseqOutputI(psPO))
-    {
+    if(!SetPickseqOutputI(psPO)) {
         ABORTLINE;
         return(FALSE);
     }
@@ -158,18 +159,15 @@ int RealizePickseqI(PICKSEQ *psPO)
     /***
     *   Load sequences
     */
-    if(IS_BOG(psPO->iform))
-    {
+    if(IS_BOG(psPO->iform)) {
         psPO->iform = GuessSeqFileTypeI(psPO->seqname,FALSE);
     }
-    if(!ReadInSeqsetI(psPO->seqname,psPO->iform,0,&psPO->seqs,TRUE))
-    {
+    if(!ReadInSeqsetI(psPO->seqname,psPO->iform,0,&psPO->seqs,TRUE)) {
         printf("Failed to load seqs\n");
         return(FALSE);
     }
     psPO->nseq = GetSeqsetNumI(psPO->seqs);
-    if(psPO->verbose)
-    {
+    if(psPO->verbose) {
         printf("# Have %d sequences\n",psPO->nseq);
     }
     /***
@@ -180,8 +178,7 @@ int RealizePickseqI(PICKSEQ *psPO)
     *   Add seq-size space
     */
     psPO->tmask = (char *)ALLOC(psPO->nseq,sizeof(char));
-    if(!psPO->tmask)
-    {
+    if(!psPO->tmask) {
         PROBLINE;
         printf("Failed to allocate temp space (%d seqs)\n",psPO->nseq);
         return(FALSE);
@@ -189,10 +186,8 @@ int RealizePickseqI(PICKSEQ *psPO)
     /***
     *   Any fixed subset to mask?
     */
-    if(!NO_S(psPO->fixname))
-    {
-        if(!SetFixedSubsetI(psPO))
-        {
+    if(!NO_S(psPO->fixname)) {
+        if(!SetFixedSubsetI(psPO)) {
             PROBLINE;
             printf("Failed to load fixed subset from file: %s\n",psPO->fixname);
             return(FALSE);
@@ -204,8 +199,7 @@ int RealizePickseqI(PICKSEQ *psPO)
     */
     psPO->recs = CreateScorecsPO(psPO->num);
     psPO->tscores = (REAL *)ALLOC(psPO->num,sizeof(REAL));
-    if( (!psPO->recs) || (!psPO->tscores) )
-    {
+    if( (!psPO->recs) || (!psPO->tscores) ) {
         PROBLINE;
         printf("Failed to allocate temp space (num %d)\n",psPO->num);
         return(FALSE);
@@ -213,13 +207,29 @@ int RealizePickseqI(PICKSEQ *psPO)
     /***
     *   Any match weighting file?
     */
-    if(!NO_S(psPO->mwfname))
-    {
-        if(!LoadPairingParsI(psPO->mwfname,psPO->pp))
-        {
+    if(!NO_S(psPO->mwfname)) {
+        if(!LoadPairingParsI(psPO->mwfname,psPO->pp)) {
             printf("Failed to load weights from %s\n",psPO->mwfname);
             return(FALSE);
         }
+    }
+    /***
+    *   Hamming distance
+    */
+    if(psPO->do_ham){
+        SetPparsHammingI(psPO->pp, psPO->do_ham);
+    }
+    /***
+    *   Bailing number or fraction?
+    */
+    if(psPO->do_bwn > 0){
+        psPO->do_bwf = RNUM(psPO->do_bwn) / RNUM(psPO->num);
+    } 
+    else if(psPO->do_bwf > 0.0){
+        psPO->do_bwn = INT(psPO->do_bwf * RNUM(psPO->num));
+    } 
+    else{
+        psPO->do_bwn = psPO->num;
     }
     return(TRUE);
 }
@@ -233,16 +243,14 @@ int SetFixedSubsetI(PICKSEQ *psPO)
     char bufS[NSIZE],nameS[NSIZE];
     FILE *fPF;
 
-    if(!(fPF = OpenUFilePF(psPO->fixname,"r",NULL)))
-    {
+    if(!(fPF = OpenUFilePF(psPO->fixname,"r",NULL))) {
         return(FALSE);
     }
     /***
     *   Allocate
     */
     psPO->fixmap = (char *)ALLOC(psPO->nseq,sizeof(char));
-    if(!psPO->fixmap)
-    {
+    if(!psPO->fixmap) {
         PROBLINE;
         printf("Failed to allocate fix subset space (%d seqs)\n",psPO->nseq);
         return(FALSE);
@@ -252,19 +260,16 @@ int SetFixedSubsetI(PICKSEQ *psPO)
     */
     while(fgets(bufS,NSIZE,fPF) != NULL)
     {
-        if(COM_LINE(bufS))
-        {
+        if(COM_LINE(bufS)) {
             continue;
         }
         INIT_S(nameS);
         sscanf(bufS,"%s",nameS);
-        if(NO_S(nameS))
-        {
+        if(NO_S(nameS)) {
             continue;
         }
         i = FindNamedSeqInSeqsetI(psPO->seqs,nameS,TRUE,NULL,NULL);
-        if(IS_BOG(i))
-        {
+        if(IS_BOG(i)) {
             PROBLINE;
             printf("Failed to find listed name in sequence collection\n");
             printf("   Name: |%s|\n",nameS);
@@ -292,14 +297,12 @@ int SetFixedSubsetI(PICKSEQ *psPO)
 */
 int CheckPsGenericOptionsI(PICKSEQ *psPO)
 {
-    if(IS_BOG(psPO->alg))
-    {
+    if(IS_BOG(psPO->alg)) {
         PROBLINE;
         printf("Bad algorithm specified\n");
         return(FALSE);
     }
-    if(psPO->num < 1)
-    {
+    if(psPO->num < 1) {
         printf("Number to pick is too small (%d)\n",psPO->num);
         return(FALSE);
     }
@@ -310,13 +313,11 @@ int CheckPsGenericOptionsI(PICKSEQ *psPO)
 */
 int CheckPsSeqOptionsI(PICKSEQ *psPO)
 {
-    if(psPO->num >= psPO->nseq)
-    {
+    if(psPO->num >= psPO->nseq) {
         printf("All sequences qualify; no picking needed\n");
         return(FALSE);
     }
-    if(psPO->nfix >= psPO->num)
-    {
+    if(psPO->nfix >= psPO->num) {
         printf("Number of fixed seqs is too big\n");
         printf("  Number fixed:   %d\n",psPO->nfix);
         printf("  Number to pick: %d\n",psPO->num);
@@ -329,10 +330,8 @@ int CheckPsSeqOptionsI(PICKSEQ *psPO)
 */
 int SetPickseqOutputI(PICKSEQ *psPO)
 {
-    if(!NO_S(psPO->outname))
-    {
-        if(!(psPO->out = OpenUFilePF(psPO->outname,"w",NULL)))
-        {
+    if(!NO_S(psPO->outname)) {
+        if(!(psPO->out = OpenUFilePF(psPO->outname,"w",NULL))) {
             return(FALSE);
         }
     }
@@ -361,8 +360,7 @@ int MonteCarloSwapPickI(PICKSEQ *psPO)
     *   Can't try more replacements than there are to try 
     */
     psPO->mtry = psPO->rep;
-    if(psPO->mtry > (psPO->nseq - psPO->num))
-    {
+    if(psPO->mtry > (psPO->nseq - psPO->num)) {
         psPO->mtry = psPO->nseq - psPO->num;
     }
     DB_PS DB_PrI("+ rep=%d mtry=%d\n",psPO->rep,psPO->mtry);
@@ -370,9 +368,12 @@ int MonteCarloSwapPickI(PICKSEQ *psPO)
     *   Tell the story
     */
     SetInitialInternalScoresI(psPO);
-    printf(
-        "# Evaluating %d sequences; %d cycles, %d replace attempts/bad/cyc\n",
+    printf("# Evaluating %d sequences; %d cycles, %d replace attempts/bad/cyc\n",
         psPO->num,psPO->cyc,psPO->mtry);
+    if(psPO->do_bwn < psPO->num) {
+        printf("# Threshold to bail if num / frac worst-case records too high: %d / %0.2f\n",
+            psPO->do_bwn, psPO->do_bwf);
+    }
     fflush(stdout);
     /***
     *   Run through n cycles
@@ -390,9 +391,16 @@ int MonteCarloSwapPickI(PICKSEQ *psPO)
         *   If all selected seqs tie for worst, up the count of tie cases
         *   Only allow one cycle with tie case, then give up
         */
-        if(psPO->tie == psPO->num)
-        {
+        if(psPO->tie == psPO->num) {
             printf("# All records have equivalent scores; DONE\n");
+            break;
+        }
+        /***
+        *   If the number of worst-scoring records meets threshold, bail
+        */
+        if(psPO->tie >= psPO->do_bwn) {
+            printf("# Number / fraction of worst-case records too high (%d / %0.2f)\n",
+                psPO->do_bwn, psPO->do_bwf);
             break;
         }
         /***
@@ -404,8 +412,7 @@ int MonteCarloSwapPickI(PICKSEQ *psPO)
         for(i=0;i<psPO->num;i++)
         {
             DB_PS DB_PrI("+ [%d] id=%d sc=%1.3f",i,recsPO[i].id,recsPO[i].sc);
-            if(recsPO[i].sc < psPO->worst)
-            {   
+            if(recsPO[i].sc < psPO->worst) {   
                 DB_PS DB_PrI(" Not worst\n");
                 continue;   
             }
@@ -413,21 +420,18 @@ int MonteCarloSwapPickI(PICKSEQ *psPO)
             /***
             *   Fixed?
             */
-            if( (psPO->fixmap) && (psPO->fixmap[recsPO[i].id]) )
-            {
+            if( (psPO->fixmap) && (psPO->fixmap[recsPO[i].id]) ) {
                 DB_PS DB_PrI(" Fixed\n");
                 continue;   
             }
-            if(SwapThisGuyOutI(psPO, i))
-            {
+            if(SwapThisGuyOutI(psPO, i)) {
                 rep++;
             }
         }
         /***
         *   If failed to improve score (no replacements), then done
         */
-        if(rep < 1)
-        {
+        if(rep < 1) {
             printf("\n");
             printf("# Couldn't find any replacements; DONE\n");
             break;
@@ -445,11 +449,9 @@ int MonteCarloSwapPickI(PICKSEQ *psPO)
         /***
         *   Saving temp results?
         */
-        if( (psPO->sirf>0) && ((n%psPO->sirf)==0) )
-        {
+        if( (psPO->sirf>0) && ((n%psPO->sirf)==0) ) {
             DB_PS DB_PrI("+ Handling temp results\n");
-            if(!HandleTempResultsI(psPO,n))
-            {
+            if(!HandleTempResultsI(psPO,n)) {
                 ABORTLINE;
                 break;
             }
@@ -584,8 +586,7 @@ int FindChosenBestWorstStatsI(PICKSEQ *psPO, int cyc)
         *   Fixed guys don't count here
         */
         rworstR = MAX_NUM(recsPO[i].sc,rworstR);
-        if( (psPO->fixmap) && (psPO->fixmap[recsPO[i].id]) )
-        {
+        if( (psPO->fixmap) && (psPO->fixmap[recsPO[i].id]) ) {
             continue;
         }
         n++;
@@ -600,12 +601,10 @@ int FindChosenBestWorstStatsI(PICKSEQ *psPO, int cyc)
     for(i=0; i<psPO->num; i++)
     {
         DB_PS DB_PrI("+ Rec[%d] %d %1.3f\n", i, recsPO[i].id,recsPO[i].sc);
-        if(recsPO[i].sc == worstR)
-        {   
+        if(recsPO[i].sc == worstR) {   
             tie++;  
         }
-        if(recsPO[i].sc == bestR)
-        {   
+        if(recsPO[i].sc == bestR) {   
             btie++; 
         }
         avR += recsPO[i].sc;
@@ -645,37 +644,31 @@ DumpArray(pickmapPC,psPO->nseq,"rand %d\n",IS_CHAR,NULL);
     /***
     *   If we have a fixed subset, mark these guys
     */
-    if(fixmapPC)
-    {
+    if(fixmapPC) {
         /***
         *   Scan fixed set, looking for any not in set
         */
         for(i=0;i<psPO->nseq;i++)
         {
-            if(pickmapPC[i])
-            {
+            if(pickmapPC[i]) {
                 continue;
             }
             /***
             *   Scan mask for first non-fixed one to swap; 
             *   Randomly start in either direction
             */
-            if(RandR(1.0)>0.5)
-            {
+            if(RandR(1.0)>0.5) {
                 fdir = FORWARD;
                 sdir = REVERSE;
             }
-            else
-            {
+            else {
                 fdir = REVERSE;
                 sdir = FORWARD;
             }
-            if(RandFixedSwapI(fixmapPC,pickmapPC,psPO->nseq,i,fdir))
-            {
+            if(RandFixedSwapI(fixmapPC,pickmapPC,psPO->nseq,i,fdir)) {
                 continue;
             }
-            if(RandFixedSwapI(fixmapPC,pickmapPC,psPO->nseq,i,sdir))
-            {
+            if(RandFixedSwapI(fixmapPC,pickmapPC,psPO->nseq,i,sdir)) {
                 continue;
             }
             BOG_CHECK(TRUE);
@@ -691,8 +684,7 @@ DumpArray(pickmapPC,psPO->nseq,"done %d\n",IS_CHAR,NULL);
     n = 0;
     for(i=0;i<psPO->nseq;i++)
     {   
-        if(pickmapPC[i])
-        {
+        if(pickmapPC[i]) {
             DB_PS DB_PrI("+ pick[%d] = %d\n",n,i);
             recsPO[n].id = i;   
             recsPO[n].sc = -TOO_BIG_R;  
@@ -727,8 +719,7 @@ int SetInitialInternalScoresI(PICKSEQ *psPO)
         {
             sid = recsPO[j].id;
             nsc++; 
-            if((nsc%UPDATE_NUM)==0)
-            {
+            if((nsc%UPDATE_NUM)==0) {
                 printf("#    %d %5.2f%%\n",nsc,PERCENT_R(nsc,ntot));
                 fflush(stdout);
             }
@@ -866,24 +857,19 @@ int HandleTempResultsI(PICKSEQ *psPO,int n)
     char bufS[DEF_BS],outS[NSIZE];
     FILE *outPF;
 
-    if(NO_S(psPO->outname))
-    {
+    if(NO_S(psPO->outname)) {
         GetFilePartsI(psPO->seqname,NULL,bufS,NULL);
     }
-    else
-    {
+    else {
         GetFilePartsI(psPO->outname,NULL,bufS,NULL);
     }
-    if(psPO->siru)
-    {
+    if(psPO->siru) {
         sprintf(outS,"%s-pick_seq-%03d.temp",bufS,n);
     }
-    else
-    {
+    else {
         sprintf(outS,"%s-pick_seq.temp",bufS);
     }
-    if(!(outPF = OpenUFilePF(outS,"w",NULL)))
-    {
+    if(!(outPF = OpenUFilePF(outS,"w",NULL))) {
         printf("Can't write temp results!!!\n");
         return(FALSE);
     }
@@ -920,13 +906,11 @@ PICKSEQ *CreatePickseqPO()
 {
     PICKSEQ *psPO;
 
-    if(!(psPO = (PICKSEQ *)ALLOC(1,sizeof(PICKSEQ))))
-    {
+    if(!(psPO = (PICKSEQ *)ALLOC(1,sizeof(PICKSEQ)))) {
         return(NULL);
     }
     psPO->ID = PICKSEQ_ID;
-    if(!InitPickseqI(psPO))
-    {
+    if(!InitPickseqI(psPO)) {
         CHECK_PICKSEQ(psPO);
         return(NULL);
     }
@@ -975,8 +959,8 @@ int InitPickseqI(PICKSEQ *psPO)
     psPO->ccb = DEF_PS_CCB;
     psPO->do_mswm = FALSE;
     psPO->do_cswm = FALSE;
-    if(!(psPO->pp = CreatePparsPO()))
-    {
+    psPO->do_ham = FALSE;
+    if( !(psPO->pp = CreatePparsPO())) {
         return(FALSE);
     }
     psPO->tmask = NULL;
@@ -985,6 +969,8 @@ int InitPickseqI(PICKSEQ *psPO)
     psPO->fixmap = NULL;
     psPO->nfix = 0;
     psPO->verbose = TRUE;
+    psPO->do_bwn = -1;
+    psPO->do_bwf = -1.0;
     return(TRUE);
 }
 /****************************************************************************
@@ -1002,52 +988,41 @@ void WritePickSeqHeader(PICKSEQ *psPO,FILE *outPF)
     TimeStamp("# Date        ",outPF);
     FillPsAlgoStringI(psPO->alg,bufS);
     fprintf(outPF,"# Algorithm   %s\n",bufS);
-    if(BAD_INT(psPO->rseed))
-    {
+    if(BAD_INT(psPO->rseed)) {
         fprintf(outPF,"# Random seed (clock)\n");
     }
-    else
-    {
+    else {
         fprintf(outPF,"# Random seed %d\n",psPO->rseed);
     }
-    if(!NO_S(psPO->fixname))
-    {
+    if(!NO_S(psPO->fixname)) {
         fprintf(outPF,"# Fixed subset: %s\n",psPO->fixname);
         fprintf(outPF,"# Number fixed: %d\n",psPO->nfix);
     }
     fprintf(outPF,"#\n");
     fprintf(outPF,"# Sim Matches     %4.2f\n",psPO->smat);
     fprintf(outPF,"# Com Matches     %4.2f\n",psPO->cmat);
-    if(psPO->do_mswm)
-    {
-        if(!NO_S(psPO->mwfname))
-        {
+    if(psPO->do_mswm) {
+        if(!NO_S(psPO->mwfname)) {
             fprintf(outPF,"#     Matches     weighted: %s\n",psPO->mwfname);
         }
-        else
-        {
+        else {
             fprintf(outPF,"#     Matches     weighted (default)\n");
         }
     }
-    else
-    {
+    else {
         fprintf(outPF,"#     Matches     simple count\n");
     }
     fprintf(outPF,"# Sim Contig      %4.2f\n",psPO->scon);
     fprintf(outPF,"# Com Contig      %4.2f\n",psPO->ccon);
-    if(psPO->do_cswm)
-    {
-        if(!NO_S(psPO->mwfname))
-        {
+    if(psPO->do_cswm) {
+        if(!NO_S(psPO->mwfname)) {
             fprintf(outPF,"#     Contig      weighted: %s\n",psPO->mwfname);
         }
-        else
-        {
+        else {
             fprintf(outPF,"#     Contig      weighted (default)\n");
         }
     }
-    else
-    {
+    else {
         fprintf(outPF,"#     Contig      simple count\n");
     }
     /***
@@ -1058,19 +1033,14 @@ void WritePickSeqHeader(PICKSEQ *psPO,FILE *outPF)
     /***
     *   Weight so dump weights (have to turn on here as well)
     */
-    if( (psPO->do_mswm) || (psPO->do_cswm) )
-    {
-/* xx?
-        SetPparsWeightMatch(psPO->pp,TRUE);
-*/
+    if( (psPO->do_mswm) || (psPO->do_cswm) ) {
         fprintf(outPF,"# Base pair weights (for simple and contig matches)\n");
         DumpPparsWeights(psPO->pp,outPF);
     }
     /***
     *   Bias file??? = SHAM?
     */
-    if(psPO->bias)
-    {
+    if(psPO->bias) {
         fprintf(outPF,"# Bias file   %s\n",psPO->biasname);
     }
     fprintf(outPF,"#\n");

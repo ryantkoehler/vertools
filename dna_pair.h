@@ -36,7 +36,7 @@ typedef struct PPARS
     int min_word;           /* Minimum word overlap to count in alignment */ 
     int min_loop;           /* Minimum loop size for loop alignment */ 
     int cl3,cl5;            /* Flag to "clamp" 3' and 5' ends */
-    int do_ham;             /* lag for Hamming dist; No alignment */
+    int do_ham;             /* Flag for Hamming dist; No alignment */
     REAL mA,mC,mG,mT;       /* Max values for ACGT */
 }PPARS;
 
