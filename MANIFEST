@@ -1,12 +1,12 @@
-6/2/16 RTK 
-List of all C, H and makefiles for VerTools 1.3
+9/18/18 RTK 
+List of all C, H and makefiles for VerTools
 
 alphcont.c
 autil.c
-bitpool.c
 bit_util.c
-blasthit.c
+bitpool.c
 blast_io.c
+blasthit.c
 blastout.c
 blaststr.c
 bpaste.c
@@ -14,8 +14,8 @@ ccase.c
 chardump.c
 cmake.c
 color.c
-competfb.c
 comp_seq.c
+competfb.c
 dfutil.c
 divinds.c
 dna.c
@@ -33,6 +33,7 @@ dna_seqs.c
 dna_snp.c
 dna_splc.c
 dna_tm.c
+dna_trim.c
 dna_util.c
 dset.c
 dset_tm.c
@@ -47,15 +48,15 @@ gen_seq.c
 getsnps.c
 histogram.c
 lassoo.c
-mutil.c
 mut_info.c
+mutil.c
 num.c
 numlist.c
 numstat.c
 pick_seq.c
 plot_lib.c
-plotmat.c
 plot_spec.c
+plotmat.c
 putil.c
 score.c
 score_io.c
@@ -85,24 +86,24 @@ tm_util.c
 util.c
 ven_engy.c
 ven_io.c
-venpipe.c
 ven_salt.c
 ven_str.c
+venpipe.c
 wfmerge.c
 wfutil.c
 wordfreq.c
 wordlist.c
 alphcont.h
-bitpool.h
 bit_util.h
+bitpool.h
 blastout.h
 color.h
-competfb.h
 comp_seq.h
+competfb.h
 data_structures.h
 divinds.h
-dna_cons.h
 dna.h
+dna_cons.h
 dna_pair.h
 dna_util.h
 dset.h

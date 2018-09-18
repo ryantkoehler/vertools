@@ -1,8 +1,8 @@
 ### README
-VerTools 1.4
-4/30/17 RTK
+VerTools 1.5
+9/18/18 RTK
 
-* Copyright 2017 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
+* Copyright 2018 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
 *
 * The programs and source code of the vertools collection are free software.
 * They are distributed in the hope that they will be useful,
