@@ -1,7 +1,7 @@
 /*
 * filter.h
 *
-* Copyright 2017 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
+* Copyright 2018 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
 *
 * The programs and source code of the vertools collection are free software.
 * They are distributed in the hope that they will be useful,
@@ -14,7 +14,7 @@
 *
 */
 
-#define VERSION_S       "Filter version 1.48"
+#define VERSION_S       "Filter version 1.5"
 
 #define FILTBUF_SIZE    100000
 
@@ -57,6 +57,9 @@ typedef struct FILTER
     int do_wsub;            /* Flag to check substring for token compare */
     int do_flag;            /* Flag to prepend output lines 1/0 */
     int do_pln;             /* Flag to prepend output lines with line number */
+    int do_pfn;             /* Flag to prepend output lines with filename */
+    char do_pre[NSIZE];     /* Add prefix to lines */
+    char do_suf[NSIZE];     /* Add suffix to lines */
     int do_icbn;            /* Flag to ignore chars before numbers */
     int do_vex;             /* Flag to filter values exclusive of bounds */
     int do_all;             /* Flag to consider all lines */

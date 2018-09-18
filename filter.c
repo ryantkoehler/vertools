@@ -1,7 +1,7 @@
 /*
 * filter.c
 *
-* Copyright 2017 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
+* Copyright 2018 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
 *
 * The programs and source code of the vertools collection are free software.
 * They are distributed in the hope that they will be useful,
@@ -63,6 +63,9 @@ void Filter_numsUse()
     printf("   -not      Invert line qualification test(s)\n");
     printf("   -flag     Preceed lines with 1/0 for good/bad\n");
     printf("   -pln      Preceed lines with line number\n");
+    printf("   -pfn      Preceed lines with filename (i.e. echo input name like grep -H)\n");
+    printf("   -pre XXX  Prefix lines with XXX\n");
+    printf("   -suf XXX  Suffix lines with XXX\n");
     printf("   -stat     Report only stats about values\n");
     printf("   -quiet    No summary report\n");
     printf("\n");
@@ -83,7 +86,8 @@ int Filter_numsI(int argc, char **argv)
         -rann I -sc I -flag B -icbn B\
         -lrg I2 -wlis S -kc B -wst B -wsub B\
         -pln B -A I -B I -qu B -vex B -all B -bof I -blk I\
-        -brg I2 -bnot B -blis S -maxout I -abs B",
+        -brg I2 -bnot B -blis S -maxout I -abs B -pfn B\
+        -pre S -suf S",
         filtPO->inname, &filtPO->do_not, &filtPO->do_stat, 
         &filtPO->min,&filtPO->max, &filtPO->min, &filtPO->max, 
         &filtPO->col, filtPO->outname, 
@@ -96,7 +100,8 @@ int Filter_numsI(int argc, char **argv)
         &filtPO->do_quiet, &filtPO->do_vex, &filtPO->do_all, 
         &filtPO->l_bof, &filtPO->l_blk, &filtPO->firstb,&filtPO->lastb,
         &filtPO->do_bm_not, filtPO->blk_mlis, &filtPO->maxout,
-        &filtPO->do_abs,
+        &filtPO->do_abs, &filtPO->do_pfn,
+        filtPO->do_pre, filtPO->do_suf,
         (int *)NULL))
     {
         Filter_numsUse();
@@ -164,13 +169,31 @@ int Filter_numsI(int argc, char **argv)
                 pout = FALSE;
             }
             if(pout) {
+                /***
+                * Any line prefixes?
+                */
+                if(!NO_S(filtPO->do_pre)) {
+                    fprintf(filtPO->out,"%s\t",filtPO->do_pre);
+                }
+                if(filtPO->do_pfn) {
+                    fprintf(filtPO->out,"%s\t",filtPO->inname);
+                }
                 if(filtPO->do_pln) {
                     fprintf(filtPO->out,"%d\t",line);
                 }
                 if(filtPO->do_flag) {
                     fprintf(filtPO->out,"%d\t",ok);
                 }
-                fputs(bufS,filtPO->out);
+                /*** 
+                * Suffix? Need to strip newline first, else just dump
+                */
+                if(!NO_S(filtPO->do_suf)) {
+                    Chomp(bufS);
+                    fprintf(filtPO->out,"%s\t%s\n",bufS, filtPO->do_suf);
+                }
+                else {
+                    fputs(bufS,filtPO->out);
+                }
             }
         }
         extra--;
@@ -310,7 +333,9 @@ void InitFilter(FILTER *fpPO)
     fpPO->do_kc = fpPO->do_wst = fpPO->do_wsub = FALSE;
     fpPO->do_icbn = FALSE;
     fpPO->skipc = 0;
-    fpPO->do_flag = fpPO->do_pln = FALSE;
+    fpPO->do_flag = fpPO->do_pln = fpPO->do_pfn = FALSE;
+    INIT_S(fpPO->do_pre);
+    INIT_S(fpPO->do_suf);
     fpPO->do_A = fpPO->do_B = 0;
     fpPO->do_quiet = FALSE;
     fpPO->do_vex = FALSE;
