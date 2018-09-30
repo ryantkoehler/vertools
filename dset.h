@@ -12,6 +12,8 @@
 * for any fee, and 2) Proper credit is given to the authors. If you wish to 
 * include this software in a product, please contact the authors.
 *
+* See https://www.verdascend.com/ for more
+*
 */
 
 # define lmax 1000
