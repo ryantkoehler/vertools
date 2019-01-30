@@ -1,7 +1,7 @@
 /*
 * blastout.h
 *
-* Copyright 2018 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
+* Copyright 2019 Ryan Koehler, VerdAscend Sciences, ryan@verdascend.com
 *
 * The programs and source code of the vertools collection are free software.
 * They are distributed in the hope that they will be useful,
@@ -29,7 +29,7 @@
 typedef struct BLASTOUT
 {
     int ID;
-    char outname[NSIZE];    /* Output file name */
+    char outname[NSIZE+20]; /* Output file name (extra for extension; for gcc -Wall) */
     FILE *out;              /* Output file */
     int owhat;              /* Flag for output processing */
     int dhit;               /* Flag to dump out all hits (summary) */
@@ -59,7 +59,7 @@ typedef struct BLASTOUT
     int do_fnot;            /* Flag for NOT logic on minimum match qualifications */
     int firstq,lastq;       /* First and last query to report */
     int firsth,lasth;       /* First and last hit to report */
-    char opq[NSIZE-10];     /* Output per query file extension string */
+    char opq[20];           /* Output per query file extension string */
     struct BLASTANS *ans;   /* Anwsers structure */
 }BLASTOUT;
 
