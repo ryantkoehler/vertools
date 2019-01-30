@@ -40,22 +40,20 @@ void SeqTweakUse(void)
     printf("   -out XXX   Set output basename to XXX\n");
     printf("   -bran # #  Limit base range # to # for modifications\n");
     printf("   -rre       Base range relative to end; i.e. backwards\n");
+    printf("   -iuc -ilc  Ignore (don't modify) Upper / Lower case\n");
     printf("   -mis #     Randomly put in # mismatches\n");
     printf("   -del #     Randomly put in # deletions\n");
     printf("   -ins #     Randomly put in # insertions\n");
     printf("   -ids #     Insert/deletion word size (i.e. how many bases)\n");
     printf("   -mds #     Set Minimum Disruption Separation to # bases\n");
     printf("   -amb       All mismatch bases for each mismatch (i.e. 3/seq)\n");
-    printf("   -smm       \"Smart\" mismatch placement\n");
     printf("   -cpm       Close-pack mismatch placement\n");
     printf("   -sh        Shuffle sequence\n");
-    /* -fsh not implemented 
-    printf("   -sh -fsh   Shuffle sequence; Full shuffle changes *all* bases\n");
-    */
     printf("   -seed #    Set random seed to #\n");
     printf("   -num #     Number of different tweaks / input; default 1\n");
+    printf("   -muc -mlc  Mark tweaks Upper / Lower case\n");
+    printf("   -dmask     Mark masking (non-tweakable) positions\n");
     printf("   -bname XXX Append output names with base XXX\n");
-    printf("   -nsim      Use 'simple' naming (i.e. old)\n");
     printf("   -nre       Name relative to end (i.e. 3' == 1)\n");
     printf("   -quiet     No verbose description of tweaking; only seqs\n");
 }
@@ -70,15 +68,17 @@ int SeqTweakI(int argc,char **argv)
     iraw = iseq = ifas = FALSE;
     if(!ParseArgsI(argc,argv,
         "S -out S -iraw B -ifas B -mis I -del I -ins I -ids I -bran I2\
-        -seed I -mds I -quiet B -amb B -smm B -cpm B -bname S\
-        -sh B -fsh B -rre B -nsim B -nre B -iseq B -num I",
+        -seed I -mds I -quiet B -amb B -cpm B -bname S\
+        -sh B -rre B -nre B -iseq B -num I\
+        -muc B -mlc B -iuc B -ilc B -dmask B",
         stPO->inname, stPO->outname, &iraw, &ifas, 
         &stPO->mis, &stPO->del, &stPO->ins, &stPO->ids, 
         &stPO->firstb,&stPO->lastb, &stPO->seed, 
-        &stPO->mds, &verb, &stPO->do_amb, &stPO->do_smm, &stPO->do_cpm,
-        &stPO->bname,
-        &stPO->do_sh, &stPO->do_fsh, &stPO->do_rre,
-        &stPO->do_nsim, &stPO->do_nre, &iseq, &stPO->num,
+        &stPO->mds, &verb, &stPO->do_amb, &stPO->do_cpm, &stPO->bname,
+        &stPO->do_sh, &stPO->do_rre,
+        &stPO->do_nre, &iseq, &stPO->num,
+        &stPO->do_muc, &stPO->do_mlc, &stPO->do_iuc, &stPO->do_ilc, 
+        &stPO->do_dmask,
         (int *)NULL))
     {
         SeqTweakUse();
@@ -132,7 +132,7 @@ int SeqTweakI(int argc,char **argv)
             continue;
         }
         stPO->seq_n += 1;
-        if(!TweakableSeqI(stPO,stPO->seq,stPO->seq_n)) {
+        if( (!UpdateSeqVarsI(stPO)) || (!TweakableSeqI(stPO)) ) {
             continue;
         }
         /***
@@ -141,8 +141,11 @@ int SeqTweakI(int argc,char **argv)
         stPO->tweak_n = 0;
         while(stPO->tweak_n < stPO->num)
         {
+            if(!InitTweakSeqMaskI(stPO)) {
+                break;
+            }
             stPO->tweak_n += 1;
-            if(DoingShuffle(stPO)) {
+            if(stPO->do_sh) {
                 n += TweakShuffleSeqI(stPO,verb,stPO->out);
             }
             else {
@@ -214,30 +217,34 @@ void InitSeqtweak(SEQTWEAK *stPO)
     stPO->ids = 1;
     stPO->mds = 0;
     stPO->do_amb = FALSE;
-    stPO->do_smm = FALSE;
     stPO->do_cpm = FALSE;
-    stPO->do_sh = stPO->do_fsh = FALSE;
+    stPO->do_sh = FALSE;
+    stPO->do_muc = stPO->do_mlc = FALSE;
+    stPO->do_iuc = stPO->do_ilc = FALSE;
+    stPO->do_dmask = FALSE;
     stPO->seed = BOGUS;
     INIT_S(stPO->bname);
     stPO->do_nre = FALSE;
-    stPO->do_nsim = FALSE;
     stPO->num = 1;
     stPO->seq_n = stPO->tweak_n = 0;
+    INIT_S(stPO->mask);
+    INIT_S(stPO->tseq1);
+    INIT_S(stPO->tseq2);
+    INIT_S(stPO->tseq3);
+    INIT_S(stPO->mbase);
 }
 /**************************************************************************
 *   Check options
 */
 int OkSeqTweakOptsI(SEQTWEAK *stPO)
 {
-    if( (stPO->mds>0) && ( (stPO->ins>0)||(stPO->del>0) ) ) {
-        PROBLINE;
-        printf(" -mds option doesn't work for In/Dels\n");
-        printf("\n");
+    if(stPO->ids > MAX_IDSIZE) {
+        printf("# In-del size %d too big (max %d)\n",stPO->ids,MAX_IDSIZE);
         return(FALSE);
     }
-    if( (stPO->del + stPO->ins) > 0) {
-        printf("# In/Del so setting to shotgun placement\n");
-        stPO->do_smm = stPO->do_cpm = FALSE;
+    if( (!stPO->do_sh) && (stPO->mis<1) && (stPO->del<1) && (stPO->ins<1) ) {
+        printf("# No mismatch, No insert, No deletion, Not shuffle = nothing to do!\n");
+        return(FALSE);
     }
     return(TRUE);
 }
@@ -260,11 +267,9 @@ int SetUpSeqtweakI(SEQTWEAK *stPO)
     HAND_NFILE(stPO->out);
     Srand(stPO->seed);
     /***
-    *   Only single mismatch, else simple (old) style naming
+    *   Total modify base count
     */
-    if( (stPO->mis > 1) || (stPO->ins > 0) || (stPO->del > 0) ) {
-        stPO->do_nsim = TRUE;
-    }
+    stPO->tmod = stPO->mis + (stPO->del * stPO->ids) + (stPO->ins * stPO->ids);
     return(TRUE);
 }
 /**************************************************************************
@@ -282,21 +287,23 @@ void WriteSeqtweakHeader(SEQTWEAK *stPO,FILE *outPF)
     fprintf(outPF,"# Input: %s\n",stPO->inname);
     FillRandSeedString(stPO->seed,sS);
     fprintf(outPF,"# Random seed: %s\n",sS);
-
     fprintf(outPF,"# Mismatchs: %d\n",stPO->mis);
-    fprintf(outPF,"# Insertions: %d (%d bases)\n",stPO->ins,stPO->ids);
-    fprintf(outPF,"# Deletions:  %d (%d bases)\n",stPO->del,stPO->ids);
+    fprintf(outPF,"# Insertions: %d (%d bases each)\n",stPO->ins,stPO->ids);
+    fprintf(outPF,"# Deletions:  %d (%d bases each)\n",stPO->del,stPO->ids);
     fprintf(outPF,"# Minimum disruption separation: %d\n",stPO->mds);
     if( ! IS_BOG(stPO->firstb) ) {
         fprintf(outPF,"# Base range: %d %d\n",stPO->firstb,stPO->lastb);
     }
+    if(stPO->do_iuc) {
+        fprintf(outPF,"# Ignore (don't change) Uppercase bases\n");
+    }
+    if(stPO->do_ilc) {
+        fprintf(outPF,"# Ignore (don't change) lowercase bases\n");
+    }
     if(stPO->do_amb) {
         fprintf(outPF,"# All (3) mismatch bases / mismatch\n");
     }
-    if(stPO->do_smm) {
-        fprintf(outPF,"# \"Smart\" disruption placement\n");
-    }
-    else if(stPO->do_cpm) {
+    if(stPO->do_cpm) {
         fprintf(outPF,"# Close-pack disruption placement\n");
     }
     else {
@@ -306,82 +313,100 @@ void WriteSeqtweakHeader(SEQTWEAK *stPO,FILE *outPF)
     fprintf(outPF,"\n");
 }
 /***************************************************************************
-*   Ok to mess with?
+*   Set run-time vars for seq into seqtweak
 */
-int TweakableSeqI(SEQTWEAK *stPO, SEQ *seqPO, int nseq)
+int UpdateSeqVarsI(SEQTWEAK *stPO)
 {
-    if(seqPO->len > MAX_TWEAKSEQ) {
-        printf("# Sequence %d too long: %d\n",nseq,seqPO->len);
+    stPO->seqlen = GetSeqLenI(stPO->seq);
+    if(!FillSeqNameStringI(stPO->seq, stPO->seqname, NSIZE)) {
+        return(FALSE);
+    }
+    if(!GetSeqSeqI(stPO->seq, &stPO->seqseq)) {
+        return(FALSE);
+    }
+    return(TRUE);
+}
+/***************************************************************************
+*   Check if ok to mess with
+*   If yes, 
+*/
+int TweakableSeqI(SEQTWEAK *stPO)
+{
+    if( stPO->seqlen > MAX_TWEAKSEQ ) {
+        printf("# Sequence %d too long: %d\n",stPO->seq_n, stPO->seqlen);
         printf("#   Max = %d\n",MAX_TWEAKSEQ);
         return(FALSE);
     }
     return(TRUE);
 }
-/*************************************************************************/
-int DoingShuffle(SEQTWEAK *stPO)
+/**************************************************************************
+*   Shuffle sequence 
+*/
+int TweakShuffleSeqI(SEQTWEAK *stPO, int verb, FILE *outPF)
 {
-    int shuff;
+    int i, k, shuffIA[MAX_TWEAKSEQ];
+    char nnameS[NSIZE], newS[MAX_TWEAKSEQ], nbaseS[MAX_TWEAKSEQ];
 
-    shuff = ( stPO->do_sh || stPO->do_fsh ) ? TRUE : FALSE;
-    return(shuff);
+    HAND_NFILE(outPF);
+    /***
+    *   Get shuffle index array; Only need the number we're shuffling 
+    *   Shuffled indices should be unique
+    *   Collect tweakable bases (only; ignore non-tweak)
+    */
+    ArrayRandSequenceI(shuffIA, stPO->ntpos, stPO->ntpos, TRUE);
+    k = 0;
+    for(i=0; i<stPO->seqlen; i++)
+    {
+        if(stPO->mask[i] == MASK_YES) {
+            nbaseS[k++] = stPO->seqseq[i];
+        }
+    }
+/* 
+    DumpArray(shuffIA, IS_INT, 0,stPO->ntpos, NULL, NULL);
+*/
+    if(verb) {
+        fprintf(outPF,"# Shuffling sequence bases\n");
+    }
+    /***
+    * Copy starting seq to new
+    * For open positions, copy from rand[ind] to current pos; 
+    * For closed positions, copy direct source > dest
+    */
+    k = 0;
+    for(i=0; i<stPO->seqlen; i++)
+    {
+        if(stPO->mask[i] == MASK_YES) {
+            newS[i] = nbaseS[shuffIA[k++]];
+        }
+        else {
+            newS[i] = stPO->seqseq[i];
+        }
+    }
+    newS[stPO->seqlen] = '\0';
+    SetTweakedName(stPO, nnameS);
+    if(verb) {
+        ReportOldMaskOuts(stPO, nnameS, outPF);
+    }
+    fprintf(outPF,"%s\t%s\n", nnameS, newS);
+    return(TRUE);
 }
 /**************************************************************************
-*   Too big and complicated!
+*   Tweak bases for current seq
 */
 int TweakSeqBasesI(SEQTWEAK *stPO, int verb, FILE *outPF)
 {
-    int i,j,k,slen,tlen,tmod,nmod,trys,ok,firstb,lastb;
-    char nameS[NSIZE],nnameS[NSIZE];
-    char twkS[DEF_BS],bufS[DEF_BS],maskS[MAX_TWEAKSEQ];
-    char seqS[MAX_TWEAKSEQ], sseqS[MAX_TWEAKSEQ], tseqS[MAX_TWEAKSEQ];
-    char bC, *seqPC;
-    SEQ *seqPO;
+    int i,j,k,trys,ok;
+    char nnameS[NSIZE], twkS[DEF_BS];
+    char bC;
 
     HAND_NFILE(outPF);
-    if( (stPO->mis<1) && (stPO->del<1) && (stPO->ins<1) ) {
-        return(FALSE);
-    }
-    tmod = stPO->mis + (stPO->del * stPO->ids) + (stPO->ins * stPO->ids);
-    nmod = stPO->mis + stPO->del + stPO->ins;
-    /***
-    *   Get starting seq & info
-    */
-    seqPO = stPO->seq;
-    if(!GetSeqSeqI(seqPO,&seqPC)) {
-        return(FALSE);
-    }
-    slen = GetSeqLenI(seqPO);
-    FillSeqNameStringI(seqPO,nameS,NSIZE);
-    /***
-    *   Bound region to be modified and check things fit
-    */
-    if( ! IS_BOG(stPO->firstb) ) {
-        firstb = (stPO->do_rre) ? (slen - stPO->lastb + 1)  : stPO->firstb;
-        lastb = (stPO->do_rre)  ? (slen - stPO->firstb + 1) : stPO->lastb;
-    }
-    else {
-        firstb = 1;
-        lastb = slen;
-    }
-    LIMIT_NUM(firstb,1,slen);
-    LIMIT_NUM(lastb,0,slen);
-    tlen = lastb - firstb + 1;
-    if( (tlen - ((nmod-1) * stPO->mds) ) < tmod) {
-        printf("# Too many modifications %d\n",tmod);
-        printf("#   Can't work for length range %d\n",tlen);
-        return(FALSE);
-    }
-    if(stPO->ids>MAX_IDSIZE) {
-        printf("# In-del size %d too big (max %d)\n",stPO->ids,MAX_IDSIZE);
-        return(FALSE);
-    }
     /***
     *   Try to find a tweak pattern that fits in allowed range
     */
     ok = trys = 0;
     while(trys<MAX_TWK_STARTS) 
     {
-        if(FillTweakMaskI(stPO, tlen, firstb-1, maskS, slen)) {
+        if(FillTweakMaskI(stPO)) {
             ok++;
             break;
         }
@@ -389,309 +414,341 @@ int TweakSeqBasesI(SEQTWEAK *stPO, int verb, FILE *outPF)
     }
     if(!ok) {
         printf("# Failed to place in-del / mismatch positions\n");
+        printf("#   No tweaks for %s\n",stPO->seqname);
         return(FALSE);
     }
     /***
-    *   For single mismatch naming..
-    */
-    INIT_S(stPO->smm_sub);
-    stPO->smm_pos = BOGUS;
-    /***
     *   Do the subs indicated in mask
+    *   i scans mask, j = source (start) seq, k = dest (tweaked) seq
     */
-    i = j = k = 0;
-    for(i=0;i<slen;i++)
+    j = k = 0;
+    for(i=0; i<stPO->seqlen; i++)
     {
-        switch(maskS[i])
+        switch(stPO->mask[i])
         {
-            /* 
-            *   Insertion 
-            */
-            case 'I':   
-                seqS[k++] = DNAIndexBaseC(RandI(4));
+            case MASK_INSERT:   
+                bC = DNAIndexBaseC(RandI(4));
+                stPO->tseq1[k] = stPO->tseq2[k] = stPO->tseq3[k] = bC;
+                stPO->mbase[k] = TRUE;
+                k++;
                 break;
-            /* 
-            *   Deletion
-            */
-            case 'D':
+            case MASK_DELETE:
                 j++;
                 break;
-            /* 
-            *   Miss-match 
-            */
-            case 'M':
+            case MASK_MISMATCH:
                 if(stPO->do_amb)
                 {
-                    switch(seqPC[j])
+                    switch(stPO->seqseq[j])
                     {
                         case 'a': case 'A':
-                            seqS[k] = 'C';
-                            sseqS[k] = 'G';
-                            tseqS[k] = 'T';
+                            stPO->tseq1[k] = 'C';
+                            stPO->tseq2[k] = 'G';
+                            stPO->tseq3[k] = 'T';
                             break;
                         case 'c': case 'C':
-                            seqS[k] = 'A';
-                            sseqS[k] = 'G';
-                            tseqS[k] = 'T';
+                            stPO->tseq1[k] = 'A';
+                            stPO->tseq2[k] = 'G';
+                            stPO->tseq3[k] = 'T';
                             break;
                         case 'g': case 'G':
-                            seqS[k] = 'A';
-                            sseqS[k] = 'C';
-                            tseqS[k] = 'T';
+                            stPO->tseq1[k] = 'A';
+                            stPO->tseq2[k] = 'C';
+                            stPO->tseq3[k] = 'T';
                             break;
                         case 't': case 'T':
-                            seqS[k] = 'A';
-                            sseqS[k] = 'C';
-                            tseqS[k] = 'G';
+                            stPO->tseq1[k] = 'A';
+                            stPO->tseq2[k] = 'C';
+                            stPO->tseq3[k] = 'G';
                             break;
                     }
-                    k++;
                 }
                 else {
                     bC = DNAIndexBaseC(RandI(4));
-                    while(UPPER(bC)==UPPER(seqPC[j]))
+                    while(TOUPPER(bC) == TOUPPER(stPO->seqseq[j]))
                     {
                         bC = DNAIndexBaseC(RandI(4));
                     }
-                    /* aving naming stuff */
-                    stPO->smm_sub[0] = seqPC[j];
-                    stPO->smm_sub[1] = ':';
-                    stPO->smm_sub[2] = bC;
-                    stPO->smm_pos = k;
-                    /* ake sub and advance */
-                    seqS[k] = bC;
-                    k++;
+                    stPO->tseq1[k] = bC;
                 }
+                stPO->mbase[k] = TRUE;
+                k++;
                 j++;
                 break;
             default:
-                seqS[k] = sseqS[k] = tseqS[k] = seqPC[j++];
+                stPO->tseq1[k] = stPO->tseq2[k] = stPO->tseq3[k] = stPO->seqseq[j];
+                j++;
                 k++;
                 break;
         }
     }
-    while(k<slen)
+    while(k < stPO->seqlen)
     {
-        if(j<slen) {
-            seqS[k++] = seqPC[j++];
+        if(j < stPO->seqlen) {
+            bC = stPO->seqseq[j++];
+            stPO->tseq1[k] = stPO->tseq2[k] = stPO->tseq3[k] = bC;
         }
         else {
-            seqS[k++] = DNAIndexBaseC(RandI(4));
+            bC = DNAIndexBaseC(RandI(4));
+            stPO->tseq1[k] = stPO->tseq2[k] = stPO->tseq3[k] = bC;
+            stPO->mbase[k] = TRUE;
         }
+        k++;
     }
-    seqS[slen] = sseqS[slen] = tseqS[slen] = '\0';
-    /***
-    *   Report the disruptions and modify name
-    */
-    INIT_S(twkS);
-    trys = 0;
-    for(i=0;i<slen;i++)
-    {
-        if(maskS[i]=='.') {
-            continue;
-        }
-        if( (maskS[i]=='I') || (maskS[i]=='D') ) {
-            sprintf(bufS,"%c%d=%d",maskS[i],stPO->ids,i+1);
-            i+= (stPO->ids-1);
-        }
-        else {
-            sprintf(bufS,"%c=%d",maskS[i],i+1);
-        }
-        if(trys>0) {
-            strcat(twkS," ");
-        }
-        strcat(twkS,bufS);
-        trys++;
-    }
-    maskS[slen] = '\0';
+    stPO->tseq1[k] = stPO->tseq2[k] = stPO->tseq3[k] = '\0';
     /***
     *   Tell the story
     */
-    SetTweakedName(stPO,nameS,nnameS,slen);
+    ChangeDisMaskSeqCase(stPO);
+    FillDisruptString(stPO, twkS);
+    SetTweakedName(stPO, nnameS);
     if(verb) {
         fprintf(outPF,"# Disrupts %d %s\n",(stPO->ins+stPO->del+stPO->mis),twkS);
-        sprintf(bufS,"#%s",nameS);
-        PadString(bufS,' ',strlen(nnameS));
-        bufS[strlen(nnameS)] = '\0';
-        fprintf(outPF,"%s\t%s\n",bufS,seqPC);
-        sprintf(bufS,"#");
-        PadString(bufS,' ',strlen(nnameS));
-        bufS[strlen(nnameS)] = '\0';
-        fprintf(outPF,"%s\t%s\n",bufS,maskS);
+        ReportOldMaskOuts(stPO, nnameS, outPF);
     }
     /***
     *   Special output names for All-Missmatch-Base case
     */
     if(stPO->do_amb) {
-        fprintf(outPF,"%s_x\t%s\n",nameS,seqS);
-        fprintf(outPF,"%s_y\t%s\n",nameS,sseqS);
-        fprintf(outPF,"%s_z\t%s\n",nameS,tseqS);
+        fprintf(outPF,"%s_x\t%s\n", stPO->seqname, stPO->tseq1);
+        fprintf(outPF,"%s_y\t%s\n", stPO->seqname, stPO->tseq2);
+        fprintf(outPF,"%s_z\t%s\n", stPO->seqname, stPO->tseq3);
     }
     else {
-        fprintf(outPF,"%s \t%s\n",nnameS,seqS);
+        fprintf(outPF,"%s\t%s\n", nnameS, stPO->tseq1);
     }
     if(verb) {
         fprintf(outPF,"\n");
     }
     return(TRUE);
 }
-/**************************************************************************
-*   Shuffle sequence 
-*/
-int TweakShuffleSeqI(SEQTWEAK *stPO,int verb, FILE *outPF)
+/**************************************************************************/
+void ReportOldMaskOuts(SEQTWEAK *stPO, char *nnameS, FILE *outPF)
 {
-    int shuffIA[MAX_TWEAKSEQ];
-    int i, firstb, lastb, slen, mlen;
-    char *seqPC, nameS[NSIZE], nnameS[NSIZE], newS[MAX_TWEAKSEQ];
-    SEQ *seqPO;
+    int padsize;
+    char bufS[NSIZE+1];
 
     HAND_NFILE(outPF);
-    INIT_S(newS);
-    if(stPO->do_fsh) {
-        printf("Full shuffle not yet implemented\n");
-        return(FALSE);
-    }
-    /***
-    *   Get starting seq & info
-    */
-    seqPO = stPO->seq;
-    if(!GetSeqSeqI(seqPO,&seqPC)) {
-        return(FALSE);
-    }
-    slen = GetSeqLenI(seqPO);
-    FillSeqNameStringI(seqPO,nameS,NSIZE);
-    if(slen > MAX_TWEAKSEQ) {
-        printf("Sequence %s is too long; %d > max = %d\n",nameS,slen,MAX_TWEAKSEQ);
-        return(FALSE);
-    }
-    /***
-    *   Bound region to be modified and check things fit
-    */
-    firstb = IS_BOG(stPO->firstb) ? 0: stPO->firstb - 1;
-    lastb = IS_BOG(stPO->lastb) ? slen: stPO->lastb;
-    LIMIT_NUM(firstb,0,slen);
-    LIMIT_NUM(lastb,0,slen);
-    if( (lastb-firstb) < 2) {
-        printf("Cannot shuffle less than 2 bases: %d to %d won't work\n",firstb+1,lastb);
-        return(FALSE);
-    }
-    /***
-    *   Copy starting seq so we don't mess with it
-    */
-    strcpy(newS, seqPC);
-    mlen = lastb - firstb;
-    /***
-printf("first = %d, last = %d, mlen=%d, slen=%d\n",firstb,lastb,mlen,slen);
-    *   Get shuffle index array; Only need the number we're shuffling 
-    *   Shuffled indices should be unique (i.e. 0 to mlen)
-    */
-    ArrayRandSequenceI(shuffIA,mlen,mlen,TRUE);
-/*
-    DumpArray(shuffIA,mlen,NULL,IS_INT,NULL);
+    padsize = stPO->do_amb ? strlen(stPO->seqname)+2 : strlen(nnameS);
+    sprintf(bufS,"#%s", stPO->seqname);
+    PadString(bufS, ' ', padsize, bufS);
+    fprintf(outPF,"%s\t%s\n",bufS, stPO->seqseq);
+    sprintf(bufS,"#");
+    PadString(bufS, ' ', padsize, bufS);
+    stPO->mask[stPO->seqlen] = '\0';
+    fprintf(outPF,"%s\t%s\n", bufS, stPO->mask);
+}
+/**************************************************************************
+*   Change distruption masking and sequence case depending on settings
 */
-    if(verb) {
-        fprintf(outPF,"# Shuffling sequence bases %d to %d\n",firstb+1,lastb); 
+void ChangeDisMaskSeqCase(SEQTWEAK *stPO) 
+{
+    int i;
+
+    stPO->mask[stPO->seqlen] = '\0';
+    if(stPO->do_muc) {
+        Lowerize(stPO->tseq1);
+        Lowerize(stPO->tseq2);
+        Lowerize(stPO->tseq3);
     }
-    for(i=0;i<mlen;i++) {
-        if(verb) {
-            printf("# Switching [%d %d]\n",i + firstb,shuffIA[i] + firstb);
+    else if(stPO->do_mlc) {
+        Upperize(stPO->tseq1);
+        Upperize(stPO->tseq2);
+        Upperize(stPO->tseq3);
+    }
+    for(i=0; i<stPO->seqlen; i++)
+    {
+        /***
+        * If open (YES) ignore; If masked (NO), set yes then ignore
+        */
+        if(stPO->mask[i]==MASK_YES) {
+            continue;
         }
-        newS[i + firstb] = seqPC[shuffIA[i] + firstb];
+        if(stPO->mask[i]==MASK_NO) {
+            if(! stPO->do_dmask) {
+                stPO->mask[i] = MASK_YES; 
+            }
+            continue;
+        }
+        /***
+        *   Marking changes with case? The mbase masking has modified bases
+        */
+        if(stPO->mbase[i]) {
+            if(stPO->do_muc) {
+                stPO->tseq1[i] = TOUPPER(stPO->tseq1[i]);
+                stPO->tseq2[i] = TOUPPER(stPO->tseq2[i]);
+                stPO->tseq3[i] = TOUPPER(stPO->tseq3[i]);
+            }
+            else if (stPO->do_mlc) {
+                stPO->tseq1[i] = TOLOWER(stPO->tseq1[i]);
+                stPO->tseq2[i] = TOLOWER(stPO->tseq2[i]);
+                stPO->tseq3[i] = TOLOWER(stPO->tseq3[i]);
+            }
+        }
     }
-    newS[slen] = '\0';
-    SetTweakedName(stPO,nameS,nnameS,slen);
-    fprintf(outPF,"%s-orig\t%s\n",nameS,seqPC);
-    fprintf(outPF,"%s-shuf\t%s\n",nnameS,newS);
+    return;
+}
+/**************************************************************************
+*   Fill disruption annotation string based on mask
+*/
+void FillDisruptString(SEQTWEAK *stPO, char *twkS) 
+{
+    int i,k;
+    char bufS[DEF_BS];
+
+    INIT_S(twkS);
+    k = 0;
+    for(i=0; i<stPO->seqlen; i++)
+    {
+        if( (stPO->mask[i]==MASK_YES) || (stPO->mask[i]==MASK_NO) ) {
+            continue;
+        }
+        /***
+        * Annotation of indel or single base collected, then appended
+        */
+        if( (stPO->mask[i]==MASK_INSERT) || (stPO->mask[i]==MASK_DELETE) ) {
+            sprintf(bufS,"%c%d=%d", stPO->mask[i], stPO->ids, i+1);
+            i+= (stPO->ids-1);
+        }
+        else if(stPO->mask[i]==MASK_MISMATCH) {
+            sprintf(bufS,"%c=%d", stPO->mask[i], i+1);
+        }
+        /* Add space if we've already got a change */
+        if(k>0) {
+            strcat(twkS," ");
+        }
+        strcat(twkS,bufS);
+        k++;
+    }
+    return;
+}
+/**************************************************************************
+*   Initialize tweak mask for current seq
+*   Return FALSE if tweaks can't fit in sequence
+*/
+int InitTweakSeqMaskI(SEQTWEAK *stPO)
+{
+    int firstb, lastb, i;
+
+    /***
+    * Initialize mask to non-modifable, seqs to NULL
+    */
+    InitArrayI(stPO->mask, IS_CHAR, 0, MAX_TWEAKSEQ, MASK_NO);
+    InitArrayI(stPO->tseq1, IS_CHAR, 0, MAX_TWEAKSEQ, '\0');
+    InitArrayI(stPO->tseq2, IS_CHAR, 0, MAX_TWEAKSEQ, '\0');
+    InitArrayI(stPO->tseq3, IS_CHAR, 0, MAX_TWEAKSEQ, '\0');
+    InitArrayI(stPO->mbase, IS_CHAR, 0, MAX_TWEAKSEQ, FALSE);
+    /***
+    *   Bound region to be modified? (if fisrtb has been set)
+    */
+    if( ! IS_BOG(stPO->firstb) ) {
+        firstb = (stPO->do_rre) ? (stPO->seqlen - stPO->lastb + 1)  : stPO->firstb - 1;
+        lastb = (stPO->do_rre)  ? (stPO->seqlen - stPO->firstb + 1) : stPO->lastb;
+    }
+    else {
+        firstb = 0;
+        lastb = stPO->seqlen;
+    }
+    LIMIT_NUM(firstb,0,stPO->seqlen);
+    LIMIT_NUM(lastb,0,stPO->seqlen);
+    /*** 
+    *   Set modifiable part
+    */
+    stPO->sti = firstb;
+    stPO->eni = lastb;
+    stPO->ntpos = 0;
+    for(i=stPO->sti; i<stPO->eni; i++)
+    {
+        /* Ignore uppercase? */
+        if(stPO->do_iuc && ISUPPER(stPO->seqseq[i])) {
+            continue;
+        }
+        /* Ignore lowercase? */
+        if(stPO->do_ilc && ISLOWER(stPO->seqseq[i])) {
+            continue;
+        }
+        stPO->mask[i] = MASK_YES;
+        stPO->ntpos++;
+    }
+    /***
+    *   If already not enough space, bail (doesn't count between spacing)
+    */
+    if(stPO->ntpos < stPO->tmod) {
+        printf("# Too many modifications %d\n", stPO->tmod);
+        printf("#   Only %d total positions available\n", stPO->ntpos);
+        return(FALSE);
+    }
     return(TRUE);
 }
 /**************************************************************************
-*   Fill passed mask with positions for tweaks
-*   tlen = working length
-*   firstb = ofset into working length
-*   maskS = mask to be filled
-*   slen = length of mask
+*   Fill mask with positions for tweaks
 */
-int FillTweakMaskI(SEQTWEAK *stPO, int tlen, int firstb, char *maskS, int slen)
+int FillTweakMaskI(SEQTWEAK *stPO)
 {
-    int n,i;
-    char *maskPC;
+    int n;
 
     /***
-    *   Fill mask with what to do before doing anything
-    *   Then get sub-seq to actually mess with
-    */
-    for(i=0;i<slen;i++)
-    {
-        maskS[i]='.';
-    }
-    maskPC = &maskS[firstb];
-    /***
-    *   Ins/dels are first, as these may be in blocks of size ids; 
-    *       mismatches can fill in holes after
+    *   Ins/dels are first, as these may be bigger (blocks of size ids); 
+    *   If don't get requested number of indels, bail false
     */
     if( (stPO->ins + stPO->del) > 0) {
-        n = FillTweakInDelMaskI(stPO, maskPC, tlen);
+        n = FillTweakInDelMaskI(stPO);
         if( n < (stPO->ins + stPO->del) ) {
             return(FALSE);
         }
     }
     /***
-    *   Now mismatches
+    *   Now mismatches; Close pack or random; Not enough, bail false
     */
-    if(stPO->do_smm) {
-        n = FillTweakMissSpeedMaskI(stPO, maskPC,tlen);
-    }
-    else if(stPO->do_cpm) {
-        n = FillTweakMissClosePackMaskI(stPO, maskPC,tlen);
+    if(stPO->do_cpm) {
+        n = FillTweakMissClosePackMaskI(stPO);
     }
     else {
-        n = FillTweakMissShotgunMaskI(stPO, maskPC,tlen);
+        n = FillTweakMissShotgunMaskI(stPO);
     }
     if(n<stPO->mis) {
         return(FALSE);
-    }
-    /***
-    *   Clean temp markings in mask
-    */
-    for(i=0;i<slen;i++)
-    {
-        if(maskS[i] != toupper(maskS[i])) {
-            maskS[i]='.';
-        }
     }
     return(TRUE);
 }
 /**************************************************************************
 *   Fill passed mask with positions for InDel tweaks
+*   Updates (decrements) the number of tweakable positions remaining
 *   Returns the number of InDels inserted
 */
-int FillTweakInDelMaskI(SEQTWEAK *stPO, char *maskS, int slen)
+int FillTweakInDelMaskI(SEQTWEAK *stPO)
 {
-    int i,n,ndel,nins,ran,rran,trys,mark;
+    int i,n,ndel,nins,ran,rran,trys,dis;
 
     ndel = stPO->del;
     nins = stPO->ins;
-    rran = slen - stPO->ids + 1;
+    rran = stPO->seqlen - stPO->ids + 1;
+    /***
+    *   Random placements while number tweakable positions > indel size,
+    *   number indels > 0, and not too many tries
+    */
     trys = n = 0;
-    while( ((nins+ndel)>0) && (trys<MAX_TWK_TRYS) )
+    while( (stPO->ntpos >= stPO->ids) && ((nins+ndel) > 0) && (trys < MAX_TWK_TRYS) )
     {
         trys++;
+        /***
+        *   Random start has to be followed by open (YES) space for indel
+        */
         ran = RandI(rran); 
-        mark = TRUE;
-        for(i=0;i<stPO->ids;i++)
-        {
-            if(maskS[ran+i]!='.') {
-                mark=FALSE;
-                break;
-            }
-        }
-        if(!mark) {
+        if(stPO->mask[ran] != MASK_YES) {
             continue;
         }
+        dis = ClosestDisruption(stPO, ran, stPO->ids);
+        if(dis < stPO->mds) {
+            continue;
+        }
+        /***
+        *   Mark and up counts
+        */
         if(nins>0) {
             for(i=0;i<stPO->ids;i++)
             {
-                maskS[ran+i]='I';
+                stPO->mask[ran+i] = MASK_INSERT;
+                stPO->ntpos--;
             }
             nins--;
             n++;
@@ -699,162 +756,146 @@ int FillTweakInDelMaskI(SEQTWEAK *stPO, char *maskS, int slen)
         else if(ndel>0) {
             for(i=0;i<stPO->ids;i++)
             {
-                maskS[ran+i]='D';
+                stPO->mask[ran+i] = MASK_DELETE;
+                stPO->ntpos--;
             }
             ndel--;
             n++;
         }
+        /* Mask any adjacents */
+        MaskDisruption(stPO, ran, stPO->ids);
     }
     return(n);
 }
 /**************************************************************************
-*   Place masking in a smart (fast) way 
+*   Place mismatches at random
 */
-int FillTweakMissShotgunMaskI(SEQTWEAK *stPO, char *maskS,int slen)
+int FillTweakMissShotgunMaskI(SEQTWEAK *stPO)
 {
-    int n,trys,ran,rran,nmis;
+    int n,trys,ran,rran,nmis,dis;
 
     nmis = stPO->mis;
-    trys = 0;
-    rran = slen;
-    n = 0;
-    while( (nmis>0) && (trys<MAX_TWK_TRYS) )
+    rran = stPO->seqlen;
+    /***
+    *   Random placements while number tweakable positions > 0,
+    *   number mismatchs > 0, and not too many tries
+    */
+    trys = n = 0;
+    while( (stPO->ntpos > 0) && (n < stPO->mis) && (trys < MAX_TWK_TRYS) )
     {
         trys++;
         ran = RandI(rran);
-        if(OkDisSpaceI(ran,maskS,slen,stPO->mds)) {
-            MaskDisruption(ran,maskS,slen,stPO->mds);
-            nmis--;
-            n++;
+        if(stPO->mask[ran] == MASK_YES) {
+            dis = ClosestDisruption(stPO, ran, 1);
+            if(dis >= stPO->mds) {
+                stPO->mask[ran] = MASK_MISMATCH;
+                MaskDisruption(stPO, ran, 1);
+                nmis--;
+                n++;
+            }
         }
     }
     return(n);
 }
 /**************************************************************************
-*   Place masking in a close packed way
+*   Place mismatches in a close packed way
 */
-int FillTweakMissClosePackMaskI(SEQTWEAK *stPO, char *maskS, int slen)
+int FillTweakMissClosePackMaskI(SEQTWEAK *stPO)
 {
-    int i,n;
+    int i,n,dis;
 
     i = n = 0;
-    while( (n < stPO->mis) && (i<slen) )
+    while( (stPO->ntpos > 0) && (n < stPO->mis) && (i < stPO->seqlen) )
     {
-        MaskDisruption(i,maskS,slen,stPO->mds);
-        i += (1 + stPO->mds);
-        n++;
+        if(stPO->mask[i] == MASK_YES) {
+            dis = ClosestDisruption(stPO, i, 1);
+            if(dis >= stPO->mds) {
+                stPO->mask[i] = MASK_MISMATCH;
+                stPO->ntpos--;
+                MaskDisruption(stPO, i, 1);
+                n++;
+            }
+        }
+        i++;
     }
     return(n);
-}
-/**************************************************************************
-*   Place masking in a smart (fast) way 
-*/
-int FillTweakMissSpeedMaskI(SEQTWEAK *stPO, char *maskS,int slen)
-{
-    int n,m,k,len,min,ran,rran;
-
-    m = stPO->mis;
-    n = k = 0;
-    while(m>0)
-    {
-        len = slen - k;
-        /***
-        *   Minimum space sequence, given spacing between disruptions
-        */
-        min = m + (m-1) * stPO->mds;
-        /***
-        *   Range to disrupt = full seq - minimum 
-        */
-        rran = len - min;
-        ran = RandI(rran);
-/*
-printf("m=%d len=%d min=%d rran=%d k=%d ran=%d dis=%d\n", m,len,min,rran,k,ran,ran|k);
-*/
-        MaskDisruption(ran+k,maskS,slen,stPO->mds);
-        k += (ran + stPO->mds + 1);
-        n++;
-        m--;
-    }
-/*
-    printf("Smarty |");
-    PrintString(maskS,slen,NULL);
-    printf("|\n");
-    n = FillTweakMissInDelMaskI(nmis, mds, maskS,slen);
-*/
-    return(n);
-}
-/**************************************************************************
-*   Check that the spacing between things is ok
-*/
-int OkDisSpaceI(int ran,char *maskS,int slen,int mds)
-{
-    int i;
-
-    if(isupper(INT(maskS[ran]))) {
-        return(FALSE);
-    }
-    for(i=1;i<=mds;i++)
-    {
-        if((ran+i)>=slen) {
-            break;
-        }
-        if(isupper(INT(maskS[ran+i]))) {
-            return(FALSE);
-        }
-    }
-    for(i=1;i<=mds;i++)
-    {
-        if((ran-i)<0) {
-            break;
-        }
-        if(isupper(INT(maskS[ran-i]))) {
-            return(FALSE);
-        }
-    }
-    return(TRUE);
 }
 /**************************************************************************
 *   Mask out adjacent parts of mask
+*   Also decrements number of tweakable positions for any added mask
 */
-void MaskDisruption(int ran,char *maskS,int slen,int mds)
+void MaskDisruption(SEQTWEAK *stPO, int pos, int size)
 {
-    int i;
+    int i,up,down;
 
-    maskS[ran]='M';
-    for(i=1;i<=mds;i++)
+    for(i=0;i<stPO->mds;i++)
     {
-        if((ran+i)>=slen) {
-            break;
+        up = pos - i - 1;
+        down = pos + i + size;
+        if( up >= 0) {
+            if(stPO->mask[up] == MASK_YES) {
+                stPO->mask[up] = MASK_NO;
+                stPO->ntpos--;
+            }
         }
-        maskS[ran+i]='m';
+        if( down < stPO->seqlen) {
+            if(stPO->mask[down] == MASK_YES) {
+                stPO->mask[down] = MASK_NO;
+                stPO->ntpos--;
+            }
+        }
     }
-    for(i=1;i<=mds;i++)
+}
+/**************************************************************************
+*   Find the closest 'set' position in mask relative to pos
+*/
+int ClosestDisruption(SEQTWEAK *stPO, int pos, int size)
+{
+    int up,down,dis;
+
+    dis = 0;
+    up = pos - 1;
+    down = pos + size;
+    while( (up>=0) || (down<stPO->seqlen) )
     {
-        if((ran-i)<0) {
-            break;
+        /***
+        *   YES and NO are not set = disruption (MIS, IN, DEL)
+        *   (only if index is legit)
+        */
+        if(up>=0) {
+            if( (stPO->mask[up] != MASK_YES) && (stPO->mask[up] != MASK_NO) ) {
+                break;
+            }
         }
-        maskS[ran-i]='m';
+        if(down<stPO->seqlen) {
+            if( (stPO->mask[down] != MASK_YES) && (stPO->mask[down] != MASK_NO) ) {
+                break;
+            }
+        }
+        /* Up distance and expand window */
+        dis++;
+        up--;
+        down++;
     }
+    return(dis);
 }
 /************************************************************************
 *   Modify name of new guy
 */
-void SetTweakedName(SEQTWEAK *stPO,char *nameS, char *newS, int len)
+void SetTweakedName(SEQTWEAK *stPO, char *newS)
 {
     char ntsufS[DEF_BS];
 
-    strcpy(newS,nameS);
+    strcpy(newS, stPO->seqname);
     if(!NO_S(stPO->bname)) {
         strcat(newS,"_");
         strcat(newS,stPO->bname);
     }
-    else if(DoingShuffle(stPO)) {
-    }
-    else if (stPO->do_nsim) {
-        SetTweakedSimName(stPO, nameS, newS);
+    else if(stPO->do_sh) {
+        strcat(newS,"_shuf");
     }
     else {
-        SetTweakedNmodName(stPO, nameS, newS, len);
+        SetTweakedSimName(stPO, newS);
     }
     /***
     * Any num-tweak suffix?
@@ -868,7 +909,7 @@ void SetTweakedName(SEQTWEAK *stPO,char *nameS, char *newS, int len)
 /************************************************************************
 *   Simple (old) naming 
 */
-void SetTweakedSimName(SEQTWEAK *stPO,char *nameS, char *newS)
+void SetTweakedSimName(SEQTWEAK *stPO, char *newS)
 {
     char bufS[DEF_BS];
 
@@ -884,22 +925,5 @@ void SetTweakedSimName(SEQTWEAK *stPO,char *nameS, char *newS)
         sprintf(bufS,"_M=%d",stPO->mis);
         strcat(newS,bufS);
     }
-    return;
-}
-/************************************************************************
-*   Number-modification naming 
-*/
-void SetTweakedNmodName(SEQTWEAK *stPO,char *nameS, char *newS, int len)
-{
-    char bufS[DEF_BS];
-
-    stPO->smm_sub[3] = '\0';
-    if(stPO->do_nre) {
-        sprintf(bufS,"_mmR:%d:%s", len - stPO->smm_pos, stPO->smm_sub);
-    }
-    else {
-        sprintf(bufS,"_mmF:%d:%s", stPO->smm_pos + 1, stPO->smm_sub);
-    }
-    strcat(newS,bufS);
     return;
 }

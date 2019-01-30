@@ -71,26 +71,26 @@ void FillNumDateString(char *dateS)
     *   Tue Oct 21 11:25:59 2003
     */
     sscanf(tmpS,"%*s %s %d %*s %d",wS,&d,&y);
-    switch(UPPER(wS[0]))
+    switch(TOUPPER(wS[0]))
     {
         case 'J':
-            if(UPPER(wS[1])=='A')
+            if(TOUPPER(wS[1])=='A')
                 m = 1;
-            else if(UPPER(wS[2])=='N')
+            else if(TOUPPER(wS[2])=='N')
                 m = 6;
-            else if(UPPER(wS[2])=='L')
+            else if(TOUPPER(wS[2])=='L')
                 m = 7;
             break;
         case 'F':   m = 2;  break;
         case 'M':   
-            switch(UPPER(wS[2]))
+            switch(TOUPPER(wS[2]))
             {
                 case 'R':   m = 3;  break;
                 case 'Y':   m = 5;  break;
             }
             break;
         case 'A':   
-            switch(UPPER(wS[1]))
+            switch(TOUPPER(wS[1]))
             {
                 case 'P':   m = 4;  break;
                 case 'U':   m = 8;  break;
@@ -290,22 +290,50 @@ int RemoveSomeCharsI(char sC, char *sS, char *rS, int lim)
 }
 /************************************************************************
 *   Pads non-graph/print characters in a string up to len 
-*   DOES NOT CAP THE STRING WITH \0 at the end
 */
-void PadString(char *sS,char pC,int len)
+void PadString(char *sS, char pC, int len, char *pS)
 {
     int i,all;
 
+    /* Default char if non-graphic passed */
+    if(!isgraph(INT(pC))) {
+        pC = ' ';
+    }
     all = FALSE;
     for(i=0; i<len; i++)
     {
+        /* ISLINE = graph or whitespace */
         if(!ISLINE(sS[i])) {
             all++;
         }
-        if((!isgraph(INT(sS[i])))||(all)) {
-            sS[i] = pC;
+        /* non-graph or passed end of line */
+        if( (!isgraph(INT(sS[i]))) || all ) {
+            pS[i] = pC;
+        }
+        else {
+            pS[i] = sS[i];
         }
     }
+    pS[i] = '\0';
+    return;
+}
+/*************************************************************************
+*/
+void PadStringToMin(char *inS, int min, char *outS)
+{
+    int i, max;
+
+    max = MAX_NUM(min, strlen(inS));
+    for(i=0; i<max; i++)
+    {
+        if ( isgraph(INT(inS[i])) ) {
+            outS[i] = inS[i];
+        }
+        else {
+            outS[i] = ' ';
+        }
+    }
+    outS[i+1] = '\0';
     return;
 }
 /*************************************************************************
@@ -419,25 +447,6 @@ void KillTrailStringBlanks(char *sS)
         i--;
     }
     sS[i+1] = '\0';
-    return;
-}
-/*************************************************************************
-*/
-void PadStringToMin(char *inS, int min, char *outS)
-{
-    int i, max;
-
-    max = MAX_NUM(min, strlen(inS));
-    for(i=0; i<max; i++)
-    {
-        if ( isgraph(INT(inS[i])) ) {
-            outS[i] = inS[i];
-        }
-        else {
-            outS[i] = ' ';
-        }
-    }
-    outS[i+1] = '\0';
     return;
 }
 /*************************************************************************/
@@ -731,9 +740,9 @@ int ParseTrueFalseI(char *wordS,int warn)
 {
     int a;
 
-    if( (UPPER(wordS[0])=='T') || (UPPER(wordS[0])=='Y') )
+    if( (TOUPPER(wordS[0])=='T') || (TOUPPER(wordS[0])=='Y') )
     {   a=TRUE;     }
-    else if( (UPPER(wordS[0])=='F') || (UPPER(wordS[0])=='N') )
+    else if( (TOUPPER(wordS[0])=='F') || (TOUPPER(wordS[0])=='N') )
     {   a=FALSE; }
     else
     {

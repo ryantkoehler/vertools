@@ -91,10 +91,10 @@ void DumpHistogram(HISTOGRAM *hisPO, int bins, FILE *outPF)
     fprintf(outPF,"Histogram bins at %p\n",hisPO->bins);
     if(hisPO->bins) {
         if(bins) {
-            DumpNumlist(hisPO->bins,-1,-1,outPF);
+            DumpNumlist(hisPO->bins,-1,-1, NULL, outPF);
         }
         else {
-            DumpNumlist(hisPO->bins,0,0,outPF);
+            DumpNumlist(hisPO->bins,0,0, NULL, outPF);
         }
     }
     return;

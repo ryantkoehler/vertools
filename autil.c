@@ -766,7 +766,7 @@ int ArrayHistI(void *aPO, int vt, int start, int end, DOUB bsD,
 *   Fill passed array, seq[len], with random ints 0 to max
 *   If unique is true, no two random numbers should be the same
 */
-int ArrayRandSequenceI(int *seq,int len,int max,int unique)
+int ArrayRandSequenceI(int *seq, int len, int max, int unique)
 {
     int i,u,d,ntake;
 

@@ -502,7 +502,7 @@ int CleanUpSeqI(char *inS, int slen, char *outS, int ols, int mlc)
             case 'c': case 'C':
             case 'g': case 'G':
             case 't': case 'T':
-                outS[j++] = UPPER(inS[i++]);
+                outS[j++] = TOUPPER(inS[i++]);
                 break;
             case '[': 
                 s = mn = nn = 0;

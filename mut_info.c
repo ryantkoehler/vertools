@@ -99,8 +99,8 @@ int NumlistMutInfoI(NUMLIST *nums1PO, NUMLIST *nums2PO, int maxb, DOUB *minfPD,
 
     DB_MINF {
         printf("\n xxxxxxxxxxxxxxxxxxxxxx\n");
-        DumpNumlist(his1PO->bins,-1,-1,NULL);
-        DumpNumlist(his2PO->bins,-1,-1,NULL);
+        DumpNumlist(his1PO->bins,-1,-1, NULL, NULL);
+        DumpNumlist(his2PO->bins,-1,-1, NULL, NULL);
         AutoTableOutFormattingI(tabPO,TRUE,TRUE);
         DumpTable(tabPO,TRUE,FALSE,NULL);
     }

@@ -239,7 +239,7 @@ NUMLIST *DuplicateNumlistPO(NUMLIST *nlPO, int ntype)
     return(newPO);
 }
 /*************************************************************************/
-void DumpNumlist(NUMLIST *nlPO, int st, int en, FILE *outPF)
+void DumpNumlist(NUMLIST *nlPO, int st, int en, char *formS, FILE *outPF)
 {
     int n;
 
@@ -253,14 +253,14 @@ void DumpNumlist(NUMLIST *nlPO, int st, int en, FILE *outPF)
         fprintf(outPF,"Contains %d integers\n",n);
         if(en > st) {
             fprintf(outPF,"Dumping %d to %d\n",st,en);
-            DumpArray(nlPO->ivals, IS_INT, st, en, NULL, outPF);
+            DumpArray(nlPO->ivals, IS_INT, st, en, formS, outPF);
         }
     }
     else if(nlPO->type == IS_DOUB) {
         fprintf(outPF,"Contains %d doubles\n",n);
         if(en > st) {
             fprintf(outPF,"Dumping %d to %d\n",st,en);
-            DumpArray(nlPO->dvals, IS_DOUB, st, en, NULL, outPF);
+            DumpArray(nlPO->dvals, IS_DOUB, st, en, formS, outPF);
         }
     }
     else {

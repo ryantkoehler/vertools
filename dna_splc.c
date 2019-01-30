@@ -168,7 +168,7 @@ int NeedExtensionI(char *seqS,int ov, char *upS, int dir, int ext)
     for(u=0;u<ext;u++)
     {
         DB_SPLC DB_PrI("+  %d |%c| |%c|\n",u,seqS[i],upS[j]);
-        if( UPPER(seqS[i]) == UPPER(upS[j]) )
+        if( TOUPPER(seqS[i]) == TOUPPER(upS[j]) )
         {
             DB_SPLC DB_PrI("<< NeedExtensionI TRUE\n");
             return(TRUE);
@@ -278,7 +278,7 @@ int ProbeTargOverlapI(char *probS,int plen,char *targS,int tlen,int dir)
             switch(dir)
             {
                 case REVERSE:
-                    if(UPPER(probS[j]) != UPPER(targS[tlen-i+j]))
+                    if(TOUPPER(probS[j]) != TOUPPER(targS[tlen-i+j]))
                     {
                         DB_SPLC DB_PrI(" P[%2d]%c != T[%2d]%c\n",j,probS[j],
                             tlen-i+j,targS[tlen-i+j]);
@@ -286,7 +286,7 @@ int ProbeTargOverlapI(char *probS,int plen,char *targS,int tlen,int dir)
                     }
                     break;
                 case FORWARD:
-                    if(UPPER(probS[plen-i+j]) != UPPER(targS[j]))
+                    if(TOUPPER(probS[plen-i+j]) != TOUPPER(targS[j]))
                     {
                         DB_SPLC DB_PrI(" P[%2d]%c != T[%2d]%c\n",plen-i+j,
                             probS[plen-i+j],j,targS[j]);

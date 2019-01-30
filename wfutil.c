@@ -112,7 +112,7 @@ int DumpWordsI(WORDFREQ *wfPO, int dgen, DOUB loD, DOUB hiD, FILE *outPF)
 {
     int i,cind;
     char wordS[NSIZE],compS[NSIZE];
-    DOUB wcD,ccD,bothD,totD;
+    DOUB wcD,ccD,bothD,totD,tsumD;
 
     VALIDATE(wfPO,WORDFREQ_ID);
     HAND_NFILE(outPF);
@@ -121,6 +121,7 @@ int DumpWordsI(WORDFREQ *wfPO, int dgen, DOUB loD, DOUB hiD, FILE *outPF)
         printf("No word counts to report!\n");
         return(FALSE);
     }
+    tsumD = TotalWordsD(wfPO, 0.0, TOO_BIG_D);
     fprintf(outPF,"#ALPHDIM %d\n",wfPO->ald);
     /***
     *   Header line (still commented so can reload
@@ -172,11 +173,11 @@ int DumpWordsI(WORDFREQ *wfPO, int dgen, DOUB loD, DOUB hiD, FILE *outPF)
         */
         if(dgen) {
             fprintf(outPF,"%s\t%s\t%5.0f\t%8.5f\t%5.0f\t%5.0f\n",wordS, compS,
-                bothD, PERCENT_R(bothD,totD), wcD, ccD);
+                bothD, PERCENT_R(bothD,tsumD), wcD, ccD);
         }
         else {
             fprintf(outPF,"%s\t%8.0f\t%8.5f\n",wordS, bothD,
-                 PERCENT_R(bothD,totD));
+                 PERCENT_R(bothD,tsumD));
         }
     }
     return(TRUE);
@@ -559,13 +560,13 @@ int CompatWordfreqsI(WORDFREQ *fPO, WORDFREQ *sPO,int verb)
     if( (!fPO) || (!sPO) ) {
         return(FALSE);
     }
-    if(fPO->size != fPO->size) {
+    if(fPO->size != sPO->size) {
         if(verb) {
             printf("Incompatable word sizes: %d %d\n",fPO->size,sPO->size);
         }
         return(FALSE);
     }
-    if(fPO->ald != fPO->ald) {
+    if(fPO->ald != sPO->ald) {
         if(verb) {
             printf("Incompatable alphabet sizes: %d %d\n",fPO->ald,sPO->ald);
         }

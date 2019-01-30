@@ -34,7 +34,7 @@ int HandleSetPartitioningI(SCORETAB *stPO, TABLE *tabPO)
 {
     int p,npools;
     TABLE *poolsPO, *dupPO;
-    char dnameS[NSIZE];
+    char dnameS[NSIZE + 20];
 
     DB_PART DB_PrI(">> HandleSetPartitioningI\n");
     /***

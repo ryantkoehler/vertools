@@ -450,7 +450,7 @@ REAL MaxSeqCompareScoreR(PPARS *pparPO,char *seqPC,int len)
     scR = 0.0;
     for(i=0;i<len;i++)
     {
-        switch(UPPER(seqPC[i]))
+        switch(TOUPPER(seqPC[i]))
         {
             case 'A':   scR += pparPO->mA;  break;
             case 'C':   scR += pparPO->mC;  break;

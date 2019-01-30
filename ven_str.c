@@ -345,7 +345,7 @@ int PrepViennaInputSeqI(char *seqS, int len,char *newS)
                         seqS[i],i);
                     return(FALSE);
                 }
-                newS[i] = UPPER(seqS[i]);
+                newS[i] = TOUPPER(seqS[i]);
         }
     }
     newS[i] = '\0';

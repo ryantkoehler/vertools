@@ -272,10 +272,10 @@ int ParseColorNameI(char *colS, int warn)
     int col;
 
     col = BOGUS;
-    switch(UPPER(colS[0]))
+    switch(TOUPPER(colS[0]))
     {
         case 'B':
-            switch(UPPER(colS[1]))
+            switch(TOUPPER(colS[1]))
             {
                 case 'K':   col = BLACK;    break;
                 case 'L':   col = BLUE; break;
@@ -283,7 +283,7 @@ int ParseColorNameI(char *colS, int warn)
             }
             break;
         case 'C':
-            switch(UPPER(colS[1]))
+            switch(TOUPPER(colS[1]))
             {
                 case 'G':   col = CYANGREEN;    break;
                 case 'Y':   col = CYAN; break;
@@ -291,28 +291,28 @@ int ParseColorNameI(char *colS, int warn)
             }
             break;
         case 'D':
-            switch(UPPER(colS[1]))
+            switch(TOUPPER(colS[1]))
             {
                 case 'B':   col = DBROWN;   break;
                 case 'G':   col = DGREY;    break;
             }
             break;
         case 'G':
-            switch(UPPER(colS[1]))
+            switch(TOUPPER(colS[1]))
             {
                 case 'R':   col = GREEN;    break;
                 case 'D':   col = DGREEN;   break;
             }
             break;
         case 'L':
-            switch(UPPER(colS[1]))
+            switch(TOUPPER(colS[1]))
             {
                 case 'B':   col = LBROWN;   break;
                 case 'G':   col = LGREY;    break;
             }
             break;
         case 'M':
-            switch(UPPER(colS[1]))
+            switch(TOUPPER(colS[1]))
             {
                 case 'A':   col = MAGENTA;  break;
                 case 'G':   col = GREY; break;
@@ -326,7 +326,7 @@ int ParseColorNameI(char *colS, int warn)
             col = PURPLE;
             break;
         case 'R':
-            switch(UPPER(colS[1]))
+            switch(TOUPPER(colS[1]))
             {
                 case 'E':   col = RED;  break;
                 case 'M':   col = REDMAGENTA;   break;
@@ -337,7 +337,7 @@ int ParseColorNameI(char *colS, int warn)
             col = WHITE;
             break;
         case 'Y':
-            switch(UPPER(colS[1]))
+            switch(TOUPPER(colS[1]))
             {
                 case 'O':   col = YELLOWORANGE; break;
                 case 'E':   col = YELLOW;   break;

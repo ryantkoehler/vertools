@@ -779,19 +779,19 @@ REAL AlignedSeqBmatchScoreR(PPARS *ppPO,char *fS,int fi,char *sS,int si,int n)
                 /***
                 *   Self then one-back, one-up
                 */
-                if(UPPER(fS[fi+i]) != UPPER(sS[si+i]))
+                if(TOUPPER(fS[fi+i]) != TOUPPER(sS[si+i]))
                 {
                     continue;
                 }
                 mat += 2;
                 if(i>0)
                 {
-                    if(UPPER(fS[fi+i-1]) == UPPER(sS[si+i-1]))
+                    if(TOUPPER(fS[fi+i-1]) == TOUPPER(sS[si+i-1]))
                         mat++;
                 }
                 if(i<(n-1))
                 {
-                    if(UPPER(fS[fi+i+1]) == UPPER(sS[si+i+1]))
+                    if(TOUPPER(fS[fi+i+1]) == TOUPPER(sS[si+i+1]))
                         mat++;
                 }
             }
@@ -800,12 +800,12 @@ REAL AlignedSeqBmatchScoreR(PPARS *ppPO,char *fS,int fi,char *sS,int si,int n)
             for(i=0;i<n;i++)
             {
                 c = 0;
-                switch(UPPER(fS[fi+i]))
+                switch(TOUPPER(fS[fi+i]))
                 {
-                    case 'A': if(UPPER(sS[si+i])=='T') c++; break;
-                    case 'C': if(UPPER(sS[si+i])=='G') c++; break;
-                    case 'G': if(UPPER(sS[si+i])=='C') c++; break;
-                    case 'T': if(UPPER(sS[si+i])=='A') c++; break;
+                    case 'A': if(TOUPPER(sS[si+i])=='T') c++; break;
+                    case 'C': if(TOUPPER(sS[si+i])=='G') c++; break;
+                    case 'G': if(TOUPPER(sS[si+i])=='C') c++; break;
+                    case 'T': if(TOUPPER(sS[si+i])=='A') c++; break;
                 }
                 if(!c)
                 {
@@ -814,22 +814,22 @@ REAL AlignedSeqBmatchScoreR(PPARS *ppPO,char *fS,int fi,char *sS,int si,int n)
                 mat += 2;
                 if(i>0)
                 {
-                    switch(UPPER(fS[fi+i-1]))
+                    switch(TOUPPER(fS[fi+i-1]))
                     {
-                        case 'A': if(UPPER(sS[si+i-1])=='T') mat++; break;
-                        case 'C': if(UPPER(sS[si+i-1])=='G') mat++; break;
-                        case 'G': if(UPPER(sS[si+i-1])=='C') mat++; break;
-                        case 'T': if(UPPER(sS[si+i-1])=='A') mat++; break;
+                        case 'A': if(TOUPPER(sS[si+i-1])=='T') mat++; break;
+                        case 'C': if(TOUPPER(sS[si+i-1])=='G') mat++; break;
+                        case 'G': if(TOUPPER(sS[si+i-1])=='C') mat++; break;
+                        case 'T': if(TOUPPER(sS[si+i-1])=='A') mat++; break;
                     }
                 }
                 if(i<(n-1))
                 {
-                    switch(UPPER(fS[fi+i+1]))
+                    switch(TOUPPER(fS[fi+i+1]))
                     {
-                        case 'A': if(UPPER(sS[si+i+1])=='T') mat++; break;
-                        case 'C': if(UPPER(sS[si+i+1])=='G') mat++; break;
-                        case 'G': if(UPPER(sS[si+i+1])=='C') mat++; break;
-                        case 'T': if(UPPER(sS[si+i+1])=='A') mat++; break;
+                        case 'A': if(TOUPPER(sS[si+i+1])=='T') mat++; break;
+                        case 'C': if(TOUPPER(sS[si+i+1])=='G') mat++; break;
+                        case 'G': if(TOUPPER(sS[si+i+1])=='C') mat++; break;
+                        case 'T': if(TOUPPER(sS[si+i+1])=='A') mat++; break;
                     }
                 }
             }
@@ -839,12 +839,12 @@ REAL AlignedSeqBmatchScoreR(PPARS *ppPO,char *fS,int fi,char *sS,int si,int n)
             for(i=0;i<n;i++)
             {
                 c = 0;
-                switch(UPPER(fS[fi+i]))
+                switch(TOUPPER(fS[fi+i]))
                 {
-                    case 'A': if(UPPER(sS[j])=='T') c++;    break;
-                    case 'C': if(UPPER(sS[j])=='G') c++;    break;
-                    case 'G': if(UPPER(sS[j])=='C') c++;    break;
-                    case 'T': if(UPPER(sS[j])=='A') c++;    break;
+                    case 'A': if(TOUPPER(sS[j])=='T') c++;    break;
+                    case 'C': if(TOUPPER(sS[j])=='G') c++;    break;
+                    case 'G': if(TOUPPER(sS[j])=='C') c++;    break;
+                    case 'T': if(TOUPPER(sS[j])=='A') c++;    break;
                 }
                 if(!c)
                 {
@@ -854,22 +854,22 @@ REAL AlignedSeqBmatchScoreR(PPARS *ppPO,char *fS,int fi,char *sS,int si,int n)
                 mat += 2;
                 if( (i>0) && (j<(n-1)) )
                 {
-                    switch(UPPER(fS[fi+i-1]))
+                    switch(TOUPPER(fS[fi+i-1]))
                     {
-                        case 'A': if(UPPER(sS[j+1])=='T') mat++;    break;
-                        case 'C': if(UPPER(sS[j+1])=='G') mat++;    break;
-                        case 'G': if(UPPER(sS[j+1])=='C') mat++;    break;
-                        case 'T': if(UPPER(sS[j+1])=='A') mat++;    break;
+                        case 'A': if(TOUPPER(sS[j+1])=='T') mat++;    break;
+                        case 'C': if(TOUPPER(sS[j+1])=='G') mat++;    break;
+                        case 'G': if(TOUPPER(sS[j+1])=='C') mat++;    break;
+                        case 'T': if(TOUPPER(sS[j+1])=='A') mat++;    break;
                     }
                 }
                 if( (i<(n-1)) && (j>0) )
                 {
-                    switch(UPPER(fS[fi+i+1]))
+                    switch(TOUPPER(fS[fi+i+1]))
                     {
-                        case 'A': if(UPPER(sS[j-1])=='T') mat++;    break;
-                        case 'C': if(UPPER(sS[j-1])=='G') mat++;    break;
-                        case 'G': if(UPPER(sS[j-1])=='C') mat++;    break;
-                        case 'T': if(UPPER(sS[j-1])=='A') mat++;    break;
+                        case 'A': if(TOUPPER(sS[j-1])=='T') mat++;    break;
+                        case 'C': if(TOUPPER(sS[j-1])=='G') mat++;    break;
+                        case 'G': if(TOUPPER(sS[j-1])=='C') mat++;    break;
+                        case 'T': if(TOUPPER(sS[j-1])=='A') mat++;    break;
                     }
                 }
                 j--;

@@ -44,7 +44,7 @@ typedef struct SNPREC
     char genen[CFMAX];  /* Gene name from HGBASE */
     char gener[CFMAX];  /* Gene region data from HGBASE */
 
-    char seq[SEQMAX];   /* Sequence */
+    char seq[SEQMAX * 2 + SNPMAX];   /* Sequence */
     char snp[SNPMAX];   /* SNP Sequence (full polymorphism) */
     int slen,snplen;    /* Sequence / SNP lengths */
     char ales[N_SNP][SNPMAX];     /* llele sequences */

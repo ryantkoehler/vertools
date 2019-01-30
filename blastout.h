@@ -59,7 +59,7 @@ typedef struct BLASTOUT
     int do_fnot;            /* Flag for NOT logic on minimum match qualifications */
     int firstq,lastq;       /* First and last query to report */
     int firsth,lasth;       /* First and last hit to report */
-    char opq[NSIZE];        /* Output per query file extension string */
+    char opq[NSIZE-10];     /* Output per query file extension string */
     struct BLASTANS *ans;   /* Anwsers structure */
 }BLASTOUT;
 

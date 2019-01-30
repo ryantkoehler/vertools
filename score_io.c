@@ -125,8 +125,8 @@ int LoadScfieldI(FILE *inPF, int error, SCFIELD **sfPPO)
     if( !NumlistIsSortedI(sfPO->xvals, 1, MIN_SCF_XSTEP) ) {
         if(error) {
             sprintf(bufS,"X values must increase by at least (%f) for %s",MIN_SCF_XSTEP,nameS);
-            DumpNumlist(sfPO->xvals, -1, -1, NULL);
-            DumpNumlist(sfPO->yvals, -1, -1, NULL);
+            DumpNumlist(sfPO->xvals, -1, -1, NULL, NULL);
+            DumpNumlist(sfPO->yvals, -1, -1, NULL, NULL);
             ReportParseErrorLine(NULL,"LoadScfieldI",bufS);
         }
         CHECK_SCFIELD(sfPO);

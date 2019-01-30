@@ -54,6 +54,10 @@ void WfUtilUse(void)
     printf("   -rre       Base range relative to end; i.e. Backwards\n");
     printf("   -pmat # #  Position-specific matrix from bases # to #\n");
     printf("   -sif XXX   Score input sequences via frequency tab XXX\n");
+    printf("   -ssc       Score standard count values, e.g. first, second, etc\n");
+    printf("   -scnl XXX  Score count list; comma delimited as \"1,2,5\"\n");
+    printf("   -ssp       Score standard percentile values\n");
+    printf("   -sprl XXX  Score percentile list; comma delimited as \"90,80,50\"\n");
     printf("   -ds        Dump (report) sequences appended as last column\n");
     printf("   -quiet     Suppress warnings about non-ACGT chars\n");
 }
@@ -69,14 +73,16 @@ int WfUtilI(int argc, char **argv)
     iraw = iseq = ifas = quiet = FALSE;
     if(!ParseArgsI(argc,argv,
         "S -out S -iraw B -ifas B -siz I -deg B -bran I2 -rre B\
-        -sran I2 -ran I2 -norm B -sif S -pmat I2\
-        -ilc B -iuc B -step I -quiet B -ds B -iseq B",
+        -sran I2 -range I2 -norm B -sif S -pmat I2\
+        -ilc B -iuc B -step I -quiet B -ds B -iseq B\
+        -ssc B -ssp B -sprl S -scnl S",
         wfPO->inname, wfPO->outname, &iraw, &ifas, &wfPO->size, 
         &wfPO->do_deg, &wfPO->firstb,&wfPO->lastb, &wfPO->do_rre,
         &wfPO->firsts,&wfPO->lasts, &wfPO->min,&wfPO->max, &wfPO->do_norm,
         &wfPO->lisname, &wfPO->pmat_s,&wfPO->pmat_e,
         &wfPO->do_ilc, &wfPO->do_iuc, &wfPO->step, 
         &quiet, &wfPO->do_ds, &iseq,
+        &wfPO->do_ssc, &wfPO->do_ssp, wfPO->sprl, wfPO->scnl,
         (int *)NULL))
     {
         WfUtilUse();
@@ -237,6 +243,9 @@ void InitWf_util(WF_UTIL *wfPO)
     wfPO->owhat = BOGUS;
     wfPO->do_not = FALSE;
     INIT_S(wfPO->lisname);
+    wfPO->do_ssc = wfPO->do_ssp = FALSE;
+    INIT_S(wfPO->sprl);
+    INIT_S(wfPO->scnl);
     wfPO->do_ds = FALSE;
     wfPO->wf = NULL;
     wfPO->size = DEF_WSIZE;
@@ -321,7 +330,7 @@ int OpenWfuFilesI(WF_UTIL *wfPO)
     return(TRUE);
 }
 /***************************************************************************
-*   Set up auxillary data structs
+*   Set up auxillary data structs / settings
 */
 int SetUpWfuAuxDataI(WF_UTIL *wfPO)
 {
@@ -344,7 +353,7 @@ int SetUpWfuAuxDataI(WF_UTIL *wfPO)
         }
     }
     /***
-    *   Position speicif matrix; rows = N-mer, cols = base position
+    *   Position specific matrix; rows = N-mer, cols = base position
     */
     if(wfPO->pmat_s > 0) {
         wfPO->pmat_r = CalcInDimI(wfPO->size,ALPHDIM);
@@ -355,6 +364,24 @@ int SetUpWfuAuxDataI(WF_UTIL *wfPO)
             return(FALSE);
         }
         SetPosMatLablesI(wfPO);
+    }
+    /***
+    *   Score percent or count list?
+    */
+    if(wfPO->do_ssc) {
+        strcpy(wfPO->scnl, SSC_LIST_S);
+    }
+    if(wfPO->do_ssp) {
+        strcpy(wfPO->sprl, SSP_LIST_S);
+    }
+    /***
+    *   Replace any commas in list strings with space (tabs for header print)
+    */
+    if(!NO_S(wfPO->scnl)) {
+        ReplaceChars(',', wfPO->scnl, '\t', wfPO->scnl);
+    }
+    if(!NO_S(wfPO->sprl)) {
+        ReplaceChars(',', wfPO->sprl, '\t', wfPO->sprl);
     }
     return(TRUE);
 }
@@ -472,68 +499,150 @@ void HandleWfuStats(WF_UTIL *wfPO,FILE *outPF)
     }
 }
 /***************************************************************************
-*   Score current seq against 
+*   Score current seq against (already loaded) wordfreqs
 */
 int HandleWfuSeqOutputI(WF_UTIL *wfPO, SEQ *seqPO, SEQ *fseqPO, FILE *outPF)
 {
-    int i,n,ind,len;
-    char nameS[NSIZE], *seqPC, *fseqPC;
-    WORDFREQ *wordfPO;
-    DOUB sD,minD,maxD;
+    int n,seqlen;
+    char nameS[NSIZE], *seqPC;
+    NUMLIST *numsPO;
+    DOUB avD,minD,maxD;
 
     HAND_NFILE(outPF);
     GetSeqSeqI(seqPO,&seqPC);
-    len = GetSeqLenI(seqPO);
-    GetSeqSeqI(fseqPO,&fseqPC);
-    wordfPO = wfPO->wf;
-    minD = TOO_BIG_R;
-    maxD = -TOO_BIG_R;
-    sD = 0.0;
-    n = 0;
-    for(i=0; i<=(len - wordfPO->size); i += wfPO->step)
-    {
-/* xxx
-        ind = IndexFromSeqI(seqPC[i], wordfPO->size, wordfPO->n, wordfPO->ald);
+    seqlen = GetSeqLenI(seqPO);
+    /* Output name regardless */
+    FillSeqNameStringI(seqPO, nameS, NSIZE);
+    fprintf(outPF,"%s\t", nameS);
+    /* List to collect counts */
+    numsPO = CreateNumlistPO(IS_DOUB, NULL, seqlen);
+    n = CollectWfuSeqValsI(wfPO, seqPO, numsPO);
+    if(n<1) {
+        CHECK_NUMLIST(numsPO);
+        fprintf(outPF,"No words to count!\n");
+        return(FALSE);
+    }
+    /***
+    *   Outputing what numbers?
+    */
+    if(!NO_S(wfPO->scnl)) {
+        if(!DumpListedNumlistValsI(numsPO, wfPO->scnl, FALSE, outPF)) {
+            fprintf(outPF,"Problem score counts |%s|\n",wfPO->scnl);
+        }
+    }
+    else if(!NO_S(wfPO->sprl)) {
+        if(!DumpListedNumlistValsI(numsPO, wfPO->sprl, TRUE, outPF)) {
+            fprintf(outPF,"Problem score percentiles |%s|\n",wfPO->sprl);
+        }
+    }
+    else {
+        NumlistStatsI(numsPO, -1,-1, &minD, &maxD, &avD, NULL);
+        fprintf(outPF,"%5.4f\t%5.4f\t%5.4f",minD,avD,maxD);
+    }
+    /* Dump seq too? */
+    if(wfPO->do_ds) {
+        GetSeqSeqI(fseqPO, &seqPC);
+        fprintf(outPF,"\t%s", seqPC);
+    }
+    fprintf(outPF,"\n");
+/*
+DumpNumlist(numsPO, -1, -1, "[%d]\t%5.4f\n", NULL);
 */
+    CHECK_NUMLIST(numsPO);
+    return(TRUE);
+}
+/***************************************************************************
+*   Dump numlist values based on numbers in list string. 
+*   If do_perc, treat as percentiles, else count (rank index)
+*/
+int DumpListedNumlistValsI(NUMLIST *valsPO, char *lisS, int do_per, FILE *outPF)
+{
+    int i,n,len;
+    DOUB vD;
+    char *cPC;
+    
+    HAND_NFILE(outPF);
+    len = GetNumlistLengthI(valsPO);
+    cPC = lisS;
+    PASS_BLANK(cPC);
+    n = 0;
+    while(ISLINE(*cPC))
+    {
+        /* Parse number from string */
+        vD = -1.0;
+        sscanf(cPC,"%lf",&vD);
+        if(vD < 0.0)
+        {
+            PROBLINE;
+            printf("Bad number list |%s|\n", lisS); 
+            printf("Here: %s\n",cPC); 
+            return(FALSE);
+        }
+        /***
+        *   Count index or percentile index; Percentile backwards
+        */
+        if(do_per) {
+            i = len - INT(vD * DNUM(len) / 100.0);
+        }
+        else {
+            i = INT(vD) - 1;
+        }
+        LIMIT_NUM(i, 0, len-1);
+        /* Get value ... or don't */
+        GetNumlistDoubI(valsPO, i, &vD); 
+        if(n>0) {
+            fprintf(outPF,"\t");
+        }
+        fprintf(outPF,"%5.4f",vD);
+        n++;
+        NEXT_WORD(cPC);
+    }
+    return(n);
+}
+/***************************************************************************
+*   Set word freq count values for seq into numlist
+*/
+int CollectWfuSeqValsI(WF_UTIL *wfPO, SEQ *seqPO, NUMLIST *valsPO)
+{
+    int i,n,ind,seqlen;
+    DOUB valD;
+    char *seqPC;
+    WORDFREQ *wordfPO;
+
+    wordfPO = wfPO->wf;
+    GetSeqSeqI(seqPO,&seqPC);
+    seqlen = GetSeqLenI(seqPO);
+    n = 0;
+    for(i=0; i<=(seqlen - wordfPO->size); i += wfPO->step)
+    {
         ind = IndexFromSeqI(&seqPC[i], wordfPO->size, wordfPO->n, wordfPO->ald);
         if( (ind >= wordfPO->n) || (ind<0) ) {
-            printf("Bogus index: %d\n",ind);
-            ERR("HandleWfuSeqOutputI","bad index");
+            printf("Bogus index: %d i=%d seq|%s|\n",ind,i,seqPC);
+            ERR("CollectWfuSeqValsI","bad index");
+            return(FALSE);
         }
-        if(ind < 0) {
-            continue;
-        }
-        maxD = MAX_NUM(maxD, wordfPO->freqs[ind].n);
-        minD = MIN_NUM(minD, wordfPO->freqs[ind].n);
-        sD += wordfPO->freqs[ind].n;
-        n++;
-        /***
-        *   If degenerate words, need to add compliment too
+        valD = wordfPO->freqs[ind].n;
+        /*** 
+        * Degenerate means need to add in compliment too
         */
         if(wfPO->do_deg) {
             ind = CompIndexI(ind, wordfPO->pmax, wordfPO->ald);
             if( (ind >= wordfPO->n) || (ind<0) ) {
-                printf("Bogus index: %d\n",ind);
-                ERR("HandleWfuSeqOutputI","bad index");
+                printf("Bogus comp index: %d i=%d seq|%s|\n",ind,i,seqPC);
+                ERR("CollectWfuSeqValsI","bad index");
+                return(FALSE);
             }
-            maxD = MAX_NUM(maxD, wordfPO->freqs[ind].n);
-            minD = MIN_NUM(minD, wordfPO->freqs[ind].n);
-            sD += wordfPO->freqs[ind].n;
-            n++;
+            valD += wordfPO->freqs[ind].n;
         }
+        AddNumlistDoubI(valsPO, i, valD);
+        n++;
     }
-    FillSeqNameStringI(seqPO, nameS, NSIZE);
-    if(n<1) {
-        fprintf(outPF,"# %-15s\tNo words to count!\n",nameS);
-        return(FALSE);
-    }
-    sD /= DNUM(n);
-    fprintf(outPF,"%-15s\t%5.4f\t%5.4f\t%5.4f",nameS,minD,sD,maxD);
-    if(wfPO->do_ds) {
-        fprintf(outPF,"\t%s",fseqPC);
-    }
-    fprintf(outPF,"\n");
-    return(TRUE);
+    /***
+    *   Set length populated and sort decending
+    */
+    SetNumlistLengthI(valsPO, n);
+    SortNumlistI(valsPO, -1);
+    return(n);
 }
 /***************************************************************************
 *   Report position-specific matrix
@@ -654,8 +763,19 @@ void SummaryHeader(WF_UTIL *wfPO, FILE *outPF)
     }
     if(!NO_S(wfPO->lisname)) {
         fprintf(outPF,"# Scoring sequences by normalized frequencies\n");
-        fprintf(outPF,"# Word freq table: %s\n",wfPO->lisname);
-        fprintf(outPF,"# <name>\t<min>\t<mean>\t<max>\n");
+        fprintf(outPF,"# Word freq table: %s\n", wfPO->lisname);
+        if(!NO_S(wfPO->scnl)) {
+            fprintf(outPF,"# Score count (rank index) values\n");
+            fprintf(outPF,"# <name>\t%s\n", wfPO->scnl);
+        }
+        else if(!NO_S(wfPO->sprl)) {
+            fprintf(outPF,"# Score percentile values\n");
+            fprintf(outPF,"# <name>\t%s\n", wfPO->sprl);
+        }
+        else {
+            fprintf(outPF,"# Score simple stats\n");
+            fprintf(outPF,"# <name>\t<min>\t<mean>\t<max>\n");
+        }
     }
     else {
         WordfreqSummary(wfPO->wf, wfPO->min,wfPO->max, outPF);

@@ -47,6 +47,7 @@ void DnaUtilUse(void)
     printf("   -rev       Reverse direction;  e.g. CCCAT >-> TACCC\n");
     printf("   -nan       No automatic added naming for -com -inv -rev\n");
     printf("   -cln -cll  Clean non-ACGT / lowercase chars to N\n");
+    printf("   -isc       Invert sequence case; e.g. AcGt >-> aCgT\n");
     printf("   -cls -exi  Clean SNP [X/Y] to IUB codes / Expand to [X/Y]\n");
     printf("   -cstat     Case-base stat report (UPPER lower ambigN)\n");
     printf("   -csep      Case-base separation of subseqs\n");
@@ -115,7 +116,8 @@ int DnaUtilI(int argc, char **argv)
         -flg B -psj I2 -inwf I2 -insh B -inbr B -inbp B\
         -cll B -pat I -exi B -tnb B -b2u B\
         -pco B -pml I2\
-        -cstat B -csep B -wst B -tsub B -nan B -nfl I -nfb I -ds B -di B -iseq B",
+        -cstat B -csep B -wst B -tsub B -nan B -nfl I -nfb I -ds B -di B\
+        -iseq B -isc B",
         duPO->inname, duPO->outname, &oraw, &duPO->do_comp, &duPO->do_inv, 
         &duPO->do_rev, &ofas, &nfas, &stat, &duPO->min_len,&duPO->max_len, 
         &duPO->do_famb, &duPO->do_not,  
@@ -135,7 +137,7 @@ int DnaUtilI(int argc, char **argv)
         &duPO->do_cstat, &duPO->do_csep, 
         &duPO->do_wst, &duPO->do_wsub, &duPO->do_nan,
         &duPO->nfline, &duPO->nfblock, &duPO->do_ds, &duPO->do_di,
-        &iseq,
+        &iseq, &duPO->do_isc,
         (int *)NULL))
     {
         DnaUtilUse();
@@ -258,6 +260,9 @@ int DnaUtilI(int argc, char **argv)
                 break;
             }
             HandleDuSeqFlipsI(duPO, duPO->seq);
+            if(duPO->do_isc) {
+                InvertSeqCase(duPO->seq);
+            }
             /***
             *   If outputting listed / to-length probes, handle here
             */
@@ -1054,5 +1059,25 @@ void HandCaSepOneSeqOut(DNA_UTIL *duPO, char *seqS, int s, int e, char *nameS, c
     }
     else if(duPO->do_cstat) {
         fprintf(outPF,"%s\t%s\t%d\t%d\n",nameS,baseS,s,e);
+    }
+}
+/*************************************************************************
+*   
+*/
+void InvertSeqCase(SEQ *seqPO)
+{
+    int i,len;
+    char *seqPC;
+
+    len = GetSeqLenI(seqPO);
+    GetSeqSeqI(seqPO, &seqPC);
+    for(i=0; i<len; i++)
+    {
+        if( ISUPPER(seqPC[i]) ) {
+            seqPC[i] = TOLOWER(seqPC[i]);
+        }
+        else if( ISLOWER(seqPC[i]) ) {
+            seqPC[i] = TOUPPER(seqPC[i]);
+        }
     }
 }
