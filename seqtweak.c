@@ -42,6 +42,7 @@ void SeqTweakUse(void)
     printf("   -rre       Base range relative to end; i.e. backwards\n");
     printf("   -iuc -ilc  Ignore (don't modify) Upper / Lower case\n");
     printf("   -mis #     Randomly put in # mismatches\n");
+    printf("   -mip #     Randomly put in # percent mismatches (of allowed positions)\n");
     printf("   -del #     Randomly put in # deletions\n");
     printf("   -ins #     Randomly put in # insertions\n");
     printf("   -ids #     Insert/deletion word size (i.e. how many bases)\n");
@@ -70,7 +71,7 @@ int SeqTweakI(int argc,char **argv)
         "S -out S -iraw B -ifas B -mis I -del I -ins I -ids I -bran I2\
         -seed I -mds I -quiet B -amb B -cpm B -bname S\
         -sh B -rre B -nre B -iseq B -num I\
-        -muc B -mlc B -iuc B -ilc B -dmask B",
+        -muc B -mlc B -iuc B -ilc B -dmask B -mip I",
         stPO->inname, stPO->outname, &iraw, &ifas, 
         &stPO->mis, &stPO->del, &stPO->ins, &stPO->ids, 
         &stPO->firstb,&stPO->lastb, &stPO->seed, 
@@ -78,7 +79,7 @@ int SeqTweakI(int argc,char **argv)
         &stPO->do_sh, &stPO->do_rre,
         &stPO->do_nre, &iseq, &stPO->num,
         &stPO->do_muc, &stPO->do_mlc, &stPO->do_iuc, &stPO->do_ilc, 
-        &stPO->do_dmask,
+        &stPO->do_dmask, &stPO->mip,
         (int *)NULL))
     {
         SeqTweakUse();
@@ -212,6 +213,7 @@ void InitSeqtweak(SEQTWEAK *stPO)
     stPO->firstb = stPO->lastb = BOGUS;
     stPO->do_rre = FALSE;
     stPO->mis = 0;
+    stPO->mip = BOGUS;
     stPO->ins = 0;
     stPO->del = 0;
     stPO->ids = 1;
@@ -242,7 +244,7 @@ int OkSeqTweakOptsI(SEQTWEAK *stPO)
         printf("# In-del size %d too big (max %d)\n",stPO->ids,MAX_IDSIZE);
         return(FALSE);
     }
-    if( (!stPO->do_sh) && (stPO->mis<1) && (stPO->del<1) && (stPO->ins<1) ) {
+    if((!stPO->do_sh) && (stPO->mis<1) && (IS_BOG(stPO->mip)) && (stPO->del<1) && (stPO->ins<1)){
         printf("# No mismatch, No insert, No deletion, Not shuffle = nothing to do!\n");
         return(FALSE);
     }
@@ -287,7 +289,8 @@ void WriteSeqtweakHeader(SEQTWEAK *stPO,FILE *outPF)
     fprintf(outPF,"# Input: %s\n",stPO->inname);
     FillRandSeedString(stPO->seed,sS);
     fprintf(outPF,"# Random seed: %s\n",sS);
-    fprintf(outPF,"# Mismatchs: %d\n",stPO->mis);
+    fprintf(outPF,"# Mismatchs: %d (count)\n",stPO->mis);
+    fprintf(outPF,"# Mismatchs: %d (percent)\n",stPO->mip);
     fprintf(outPF,"# Insertions: %d (%d bases each)\n",stPO->ins,stPO->ids);
     fprintf(outPF,"# Deletions:  %d (%d bases each)\n",stPO->del,stPO->ids);
     fprintf(outPF,"# Minimum disruption separation: %d\n",stPO->mds);
@@ -695,6 +698,14 @@ int FillTweakMaskI(SEQTWEAK *stPO)
         if( n < (stPO->ins + stPO->del) ) {
             return(FALSE);
         }
+    }
+    /***
+    *   If percentage mismatch, set actual number
+    */
+    if(!IS_BOG(stPO->mip)) {
+        n = INT( DNUM(stPO->ntpos * stPO->mip) / 100.0);
+        LIMIT_NUM(n,0,stPO->ntpos);
+        stPO->mis = n;
     }
     /***
     *   Now mismatches; Close pack or random; Not enough, bail false

@@ -17,7 +17,7 @@
 */
 
 
-#define VERSION_S "SeqTweak Version 0.8"
+#define VERSION_S "SeqTweak Version 0.81"
 
 
 #define MAX_TWEAKSEQ    200     /* Max seq len; buffer size */
@@ -47,6 +47,7 @@ typedef struct SEQTWEAK
     int firstb,lastb;       /* First / last base (as specified) */
     int do_rre;             /* Flag for range releative to end (backwards) */
     int mis;                /* Number of missmatches */
+    int mip;                /* Percentage of missmatches */
     int ins;                /* Number of inserts */
     int del;                /* Number of deletions */
     int ids;                /* In/Del word size */
