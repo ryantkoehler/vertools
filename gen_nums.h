@@ -16,7 +16,7 @@
 *
 */
 
-#define VERSION_S "Gen_Nums version 1.5"
+#define VERSION_S "Gen_Nums version 1.51"
 
 #define DEF_FORM_W  1
 #define DEF_FORM_P  0

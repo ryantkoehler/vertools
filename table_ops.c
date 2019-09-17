@@ -92,8 +92,8 @@ int NormTableI(TABLE *tabPO, int mask, int what)
     DOUB vD,avD,sdD;
 
     VALIDATE(tabPO,TABLE_ID);
-    nr = GetTableRowsI(tabPO,TRUE);
-    nc = GetTableColsI(tabPO,TRUE);
+    nr = GetTableRowsI(tabPO, mask);
+    nc = GetTableColsI(tabPO, mask);
     switch(what)
     {
         case TABLE_COL:
@@ -158,6 +158,30 @@ int NormTableI(TABLE *tabPO, int mask, int what)
                     }
                     GetTableValI(tabPO,r,c,&vD);
                     vD = (vD - avD) / sdD;
+                    SetTableValI(tabPO,r,c,vD);
+                }
+            }
+            break;
+        case TABLE_DIAG:
+            /* Norm rows by diagonal value */
+            for(r=0;r<nr;r++) {
+                if( (mask) && (!tabPO->rmask[r]) ) {
+                    continue;
+                }
+                if(r >= nc) {
+                    break;
+                }
+                /* Diag; If zero, ignore this row (sham? do something else?) */
+                GetTableValI(tabPO,r,r,&avD);
+                if(avD == 0.0) {
+                    continue;
+                }
+                for(c=0;c<nc;c++) {
+                    if( (mask) && (!tabPO->cmask[c]) ) {
+                        continue;
+                    }
+                    GetTableValI(tabPO,r,c,&vD);
+                    vD = vD / avD;
                     SetTableValI(tabPO,r,c,vD);
                 }
             }

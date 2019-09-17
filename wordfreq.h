@@ -19,7 +19,7 @@
 
 #include "dna.h"
 
-#define VERSION_S   "WordFreq, version 1.0"
+#define VERSION_S   "WordFreq, version 1.01"
 
 #define WFU_NLEN        255
 

@@ -99,6 +99,7 @@ void InitScoretab(SCORETAB *stPO)
     stPO->quiet = FALSE;
     stPO->do_mrow = FALSE;
     stPO->do_ncv = FALSE;
+    stPO->do_nrd = FALSE;
     stPO->do_qcv = 0;
     stPO->minrow = stPO->mincol = 0;
     stPO->maxrow = stPO->maxcol = TOO_BIG;

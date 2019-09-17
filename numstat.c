@@ -42,10 +42,13 @@ void NumstatUse()
     printf("Usage: <infile> ['-' for stdin] [...options]\n");
     printf("    <infile>   File containing data\n");
     printf("    -out XXX   Output file XXX\n");
-    printf("    -col #     Take data from column #; Default is column %d\n",DEF_COL);
+    printf("    -col #     Take data from column #; Default first col with number\n");
     printf("    -scol #    Second data col #\n");
     printf("    -dif       Report difference [scol] - [col]\n");
-    printf("    -ic #      Ignore characters up to position # on data lines\n");
+    printf("    -iline #   Ignore first # data lines (non-comment, non-blank)\n");
+    printf("    -ichar #   Ignore first # characters (on data lines)\n");
+    printf("    -tsv       Input is tab separated value format\n");
+    printf("    -csv       Input is comma separated value format\n");
     printf("    -sk        Skip bogus / missing data; Default is abort\n");
     printf("    -hb #      Histogram data in bins of #\n");
     printf("    -his # #   Histogram data in bins of # starting at #\n");
@@ -75,14 +78,16 @@ int NumstatI(int argc, char **argv)
     nsPO = CreateNumstatPO();
     if(!ParseArgsI(argc,argv,
         "S -sl B -his D2 -echo S -efi B -col I -out S -hlr D2\
-        -sk B -ic I -hp B -pi B -hb D -prs D\
-        -prl S -hmb I -hwd I -hne B -scol I -sp B -hntb B -htxf D -dif B",
+        -sk B -ichar I -hp B -pi B -hb D -prs D\
+        -prl S -hmb I -hwd I -hne B -scol I -sp B -hntb B -htxf D -dif B\
+        -csv B -tsv B -iline I",
         nsPO->inname, &nsPO->do_sl, &nsPO->h_bin,&nsPO->h_lo, nsPO->echo, 
         &nsPO->do_efi, &nsPO->col,
-        nsPO->outname, &nsPO->h_lo,&nsPO->h_hi, &nsPO->do_sk, &nsPO->do_ic, 
+        nsPO->outname, &nsPO->h_lo,&nsPO->h_hi, &nsPO->do_sk, &nsPO->do_ichar, 
         &nsPO->do_hplot, &nsPO->do_ploti, &nsPO->h_bin, &nsPO->prsd, nsPO->prls, 
         &nsPO->h_maxbin, &nsPO->h_pwide, &nsPO->do_hends, 
         &nsPO->scol, &nsPO->do_splot, &nsPO->do_hntb, &nsPO->htb_xfold, &nsPO->do_dif,
+        &nsPO->do_csv, &nsPO->do_tsv, &nsPO->do_iline,
         (int *)NULL))
     {
         NumstatUse();
@@ -415,9 +420,11 @@ NUMSTAT *CreateNumstatPO()
     nsPO->ID = NUMSTAT_ID;
     InitNumstat(nsPO);
     /***    
-    *   Create empty numlist; will populate later
+    *   Create lists for values and tokens-per-line
     */
-    if(!(nsPO->vals = CreateNumlistPO(IS_DOUB, NULL, 0)) ) {
+    nsPO->vals = CreateNumlistPO(IS_DOUB, NULL, 0);
+    nsPO->sw = CreateStringwordsPO(-1, 0);
+    if( (!nsPO->vals) || (!nsPO->sw) ) {
         CHECK_NUMSTAT(nsPO);
         return(NULL);
     }
@@ -431,6 +438,7 @@ int DestroyNumstatI(NUMSTAT *nsPO)
     CHECK_NFILE(nsPO->out,nsPO->outname);
     CHECK_NUMLIST(nsPO->vals);
     CHECK_NUMLIST(nsPO->svals);
+    CHECK_STRINGWORDS(nsPO->sw);
     FREE(nsPO);
     return(TRUE);
 }
@@ -454,6 +462,7 @@ void InitNumstat(NUMSTAT *nsPO)
     INIT_S(nsPO->outname);
     nsPO->out = NULL;
     nsPO->vals = nsPO->svals = NULL;
+    nsPO->sw = NULL;
     nsPO->num = nsPO->lines = 0;
     nsPO->h_bin = nsPO->h_lo = nsPO->h_hi = BAD_D;
     nsPO->h_abin = nsPO->h_alo = nsPO->h_ahi = BAD_D;
@@ -468,15 +477,17 @@ void InitNumstat(NUMSTAT *nsPO)
     strcpy(nsPO->h_pfmt,DEF_H_PTMF_S);
     strcpy(nsPO->hvsep,DEF_H_SEP_S);
     nsPO->do_perc = FALSE;  
-    nsPO->col = nsPO->scol = BOGUS;
-    nsPO->col_set = FALSE;
+    nsPO->col = nsPO->scol = BAD_I;
     INIT_S(nsPO->prls);
     nsPO->prsd = BAD_D;
     INIT_S(nsPO->echo);
     nsPO->do_efi = FALSE;
     nsPO->do_sk = FALSE;
     nsPO->do_sl = FALSE;
+    nsPO->do_ichar = nsPO->do_iline = 0;
     nsPO->do_hplot = nsPO->do_ploti = FALSE;
+    nsPO->do_csv = nsPO->do_tsv = FALSE;
+    nsPO->sep_char = 0;
     return;
 }
 /**************************************************************************
@@ -485,14 +496,25 @@ void InitNumstat(NUMSTAT *nsPO)
 */
 int LoadColValsFromFileI(NUMSTAT *nsPO)
 {
-    int ok;
+    int ok, iline;
     char bufS[MAX_WIDTH+1];
     DOUB rD, sD;
 
+    iline = nsPO->do_iline;
     while(fgets(bufS,MAX_WIDTH,nsPO->in) != NULL)
     {
         nsPO->lines++;
-        ok = GetLineDataValI(nsPO, bufS, &rD, &sD);
+        /* Comment? blank? */
+        if( COM_LINE(bufS) || BlankStringI(bufS) ) {
+            continue;
+        }
+        /* Ignoring data lines? */
+        if(iline > 0) {
+            iline--;
+            continue;
+        }
+        /* Get data val(s) from line */
+        ok = GetLineDataValsI(nsPO, bufS, &rD, &sD);
         if(IS_BOG(ok)) {
             PROBLINE;
             printf("Error reading data from line %d\n",nsPO->lines);
@@ -538,7 +560,7 @@ int OpenNumstatFilesI(NUMSTAT *nsPO)
     return(TRUE);
 }
 /*****************************************************************************
-*
+*   Check options / set option-specific vars
 */
 int CheckNumstatOptionsI(NUMSTAT *nsPO)
 {
@@ -590,15 +612,9 @@ int CheckNumstatOptionsI(NUMSTAT *nsPO)
         strcat(nsPO->echo,"\t");
     }
     /***
-    *   Input column set already?
-    */
-    if(nsPO->col > 0) {
-        nsPO->col_set = TRUE;
-    }
-    /***
     *   Second data column
     */
-    if(nsPO->scol > 0) {
+    if(nsPO->scol != BAD_I) {
         if(!AddNumstatSecValsI(nsPO)) {
             return(FALSE);
         }
@@ -617,6 +633,16 @@ int CheckNumstatOptionsI(NUMSTAT *nsPO)
         printf("Difference needs second column\n");
         return(FALSE);
     }
+    /***
+    *   Input format (col separator)
+    */
+    if( nsPO->do_csv ) {
+        nsPO->sep_char = ',';
+    }
+    if( nsPO->do_tsv ) {
+        nsPO->sep_char = '\t';
+    }
+    SetStringwordsSep(nsPO->sw, nsPO->sep_char);
     return(TRUE);
 }
 /*****************************************************************************/
@@ -632,80 +658,112 @@ int HandleHisMaxBinsI(NUMSTAT *nsPO)
 }
 /*****************************************************************************
 *   Get a value from data line
+*
+*   Returns TRUE for value(s), FALSE for no vals, BOGUS for problem
 */
-int GetLineDataValI(NUMSTAT *nsPO, char *bufS, DOUB *rPD, DOUB *sPD)
+int GetLineDataValsI(NUMSTAT *nsPO, char *bufS, DOUB *rPD, DOUB *sPD)
 {
-    int j,ok,col;
+    int j,n,ok;
     DOUB rD,sD;
-    char *cPC;
+    char *cPC, wordS[BBUFF_SIZE+1];
 
-    /***
-    *   Comment? blank? Then ignore any set chars up front
-    */
-    if(COM_LINE(bufS)) {
-        return(FALSE);
-    }
-    if(BlankStringI(bufS)) {
-        return(FALSE);
-    }
-    cPC = bufS;
     /* Ignore chars up to? */
-    for(j=0; j<nsPO->do_ic; j++)
+    cPC = bufS;
+    for(j=0; j<nsPO->do_ichar; j++)
     {
         if(!ISLINE(*cPC)) {
             break;
         }
         cPC++;
     }
+    /* Parse line into words */
+    n = LoadStringwordsI(nsPO->sw, cPC, -1);
+    if(n < 1) {
+        ok = (nsPO->do_sk) ? FALSE : BOGUS;
+        return(ok);
+    }
     /***
     *   If data col not set, try to find first value on line
     */
-    if(!nsPO->col_set) {
-        col = 1;
-        ok = GetWordDataValI(cPC, col, TRUE, NULL);
-        while(ok == FALSE)
-        {
-            col++;
-            ok = GetWordDataValI(cPC, col, FALSE, NULL);
-        }
-        if(ok == TRUE) {
-            nsPO->col = col;
-            nsPO->col_set = TRUE;
-        }
-        else {
-            return(FALSE);
+    if(nsPO->col == BAD_I) {
+        if(!GuessAndSetDataColI(nsPO)) {
+            ok = (nsPO->do_sk) ? FALSE : BOGUS;
+            return(ok);
         }
     }
-    /***
-    *   Get first data col, maybe second too
-    */
-    ok = GetWordDataValI(cPC, nsPO->col, nsPO->do_sk, &rD);
-    if(ok && sPD && (nsPO->scol >= 0)) {
-        ok = GetWordDataValI(cPC, nsPO->scol, nsPO->do_sk, &sD);
+    /* Get word from string and number from that; Words zero-base index */
+    rD = sD = BAD_D;
+    ok = FALSE;
+    if(GetStringwordsWordI(nsPO->sw, nsPO->col - 1, wordS, -1)) {
+        ok = GetWordDataValI(wordS, nsPO->do_sk, &rD);
     }
-    if(ok) {
-        *rPD = rD;
-        if(sPD && (nsPO->scol >= 0)) {
-            *sPD = sD;
+    if(ok != TRUE) {
+        return(ok);
+    }
+    /* Second column data? */
+    if(nsPO->scol != BAD_I) {
+        ok = FALSE;
+        if(GetStringwordsWordI(nsPO->sw, nsPO->scol - 1, wordS, -1)) {
+            ok = GetWordDataValI(wordS, nsPO->do_sk, &sD);
+        }
+        if(ok != TRUE) {
+            return(ok);
         }
     }
-    return(ok);
+    /* Set values */
+    *rPD = rD;
+    if(sPD && (nsPO->scol >= 0)) {
+        *sPD = sD;
+    }
+    return(TRUE);
 }
 /**************************************************************************
-*   Try to get value from word in col
-*   skip makes this permissive of missing values, extra chars: ([,])
+*   Try to find first column (word) with value 
 */
-int GetWordDataValI(char *linePC, int col, int skip, DOUB *vPD)
+int GuessAndSetDataColI(NUMSTAT *nsPO)
+{
+    int n, col, ok;
+    char wordS[BBUFF_SIZE+1];
+
+/*
+    printf(">> GuessAndSetDataColI bad sham so set\n");
+*/
+    n = GetStringwordsNumI(nsPO->sw);
+    col = 0;
+    ok = FALSE;
+    while( (ok != TRUE) && (col<n) )
+    {
+        if(!GetStringwordsWordI(nsPO->sw, col++, wordS, -1)) {
+            break;
+        }
+        ok = GetWordDataValI(wordS, nsPO->do_sk, NULL);
+/*
+        printf("+ col=%d |%s| ok=%d\n",col,wordS,ok);
+*/
+    }
+    if(ok == TRUE) {
+        nsPO->col = col;
+/*
+        printf("<< GuessAndSetDataColI Good = %d\n",nsPO->col);
+*/
+        return(TRUE);
+    }
+/*
+    printf("<< GuessAndSetDataColI Bad = %d\n",nsPO->col);
+*/
+    return(FALSE);
+}
+/**************************************************************************
+*   Try to get number value from word 
+*   skip makes this permissive of missing values, extra chars: ([,])
+*
+*   Returns TRUE for value(s), FALSE for no val (and skip), BOGUS no val
+*/
+int GetWordDataValI(char *wordS, int skip, DOUB *vPD)
 {
     DOUB vD;
-    char wordS[DEF_BS],cwordS[DEF_BS];
+    char cwordS[BBUFF_SIZE+1];
 
-    if(!GetNthWordI(linePC,col,wordS)) {
-        if(skip) {
-            return(FALSE);
-        }
-        return(BOGUS);
-    }
     /***
     *   Possibly clean up extra chars in / around number
     */

@@ -56,6 +56,7 @@ void ScoreTabUse(void)
     printf("   -sdf XXX     Score definition file to transform values\n");
     printf("   -scg         Score globally (not one per column)\n");
     printf("   -ncv         Normalize column values (i.e. 0 +/- 1 s.d.)\n");
+    printf("   -nrd         Normalize rows by diagonal (i.e. val / diag)\n");
     printf("   -qcv #       Quantile column values into # classes\n");
     printf("   -symu -symd  Make symmetric with Up (Max) or Down (Min) values\n");
     printf("   -mult #      Multiply values by #\n");
@@ -79,7 +80,7 @@ void ScoreTabUse(void)
     printf("   -ofull       Output full table\n");
     printf("   -orc -ocr    Output list in Row-Col / Col-Row order\n");
     printf("   -ocsv -ossv  Output comma-seperated value / space-separated value\n");
-    printf("   -pfm # #     Output print format # wide # precision (%%#.#f)\n");
+    printf("   -pfmt # #    Output print format # wide # precision (%%#.#f)\n");
     printf("   -rstat       Stats; Row statisticics (i.e. per row)\n");
     printf("   -cstat       Stats; Column statisticics (i.e. per col)\n");
     printf("   -fstat       Stats; Full table statisticics (whole thing)\n");
@@ -105,7 +106,7 @@ void ScoreTabUse(void)
 */
 int ScoreTabI(int argc, char **argv)
 {
-    int r,c,ofull,rstat,cstat,fstat,rpro,fmtw,fmtp;
+    int r,c,ofull,rstat,cstat,fstat,rpro,fmtw,fmtp, ok;
     int fccm,orc,ocr,poolsize;
     SCORETAB *stPO;
 
@@ -116,14 +117,14 @@ int ScoreTabI(int argc, char **argv)
     if(!ParseArgsI(argc,argv,
         "S -sdf S -out S -ofull B -nrlab B -nclab B -ncorn B -rpro B\
         -quiet B -cran I2 -mrow B -rran I2 -rlis S -clis S\
-        -pfm I2 -cstat B -rstat B\
+        -pfmt I2 -cstat B -rstat B\
         -ccor I -fccm B -fstat B -igd B -mult D -shif D -wfm B -ncv B\
         -bval D2 -merg S -mlis B -msub B -mmul B\
         -mdiv B -orc B -ocr B -flg D2 -not B -dwfm B -scg B -symu B -symd B\
         -part I -pmin D -mmin B -mmax B -dmat S -wst B -kc B -wsub B\
         -tsp B -seed I -gaxr D -gaxc D -gamf D -gamg D -srow I -scol I\
         -stru B -strd B -ocsv B -ossv B -mapc B -sk B -abs B -exp D\
-        -macp S -macs S -qcv I -cinf I -ifmh I"
+        -macp S -macs S -qcv I -cinf I -ifmh I -nrd B"
         ,
         stPO->inname, stPO->sdfname, stPO->outname, &ofull,
         &stPO->rlab, &stPO->clab, &stPO->corn, &rpro, &stPO->quiet, 
@@ -142,7 +143,7 @@ int ScoreTabI(int argc, char **argv)
         &stPO->do_srow, &stPO->do_scol, &stPO->do_stru, &stPO->do_strd,
         &stPO->do_ocsv, &stPO->do_ossv, &stPO->do_mapc, &stPO->do_skp,
         &stPO->do_abs, &stPO->exp, stPO->macpre, stPO->macsuf, &stPO->do_qcv,
-        &stPO->cinfo, &stPO->inf_maxhb,
+        &stPO->cinfo, &stPO->inf_maxhb, &stPO->do_nrd,
         (int *)NULL))
     {
         ScoreTabUse();
@@ -247,25 +248,39 @@ int ScoreTabI(int argc, char **argv)
         }
     }
     /***
+    *   Flag to keep track of success (so don't bail each step) 
+    */
+    ok = TRUE;
+    /***
     *   Merging?     (GA cross over here too)
     */
     if(!NO_S(stPO->mergname)) {
-        if(!HandleSctTableMergingI(stPO)) {
-            ABORTLINE;
-            CHECK_SCORETAB(stPO);
-            return(FALSE);
-        }
+        ok = HandleSctTableMergingI(stPO);
     }
     /***
     *   Scale / shift table values  (GA mutation here too)
     */
-    AdjustTableValuesI(stPO,stPO->tab);
-    HandleSmoothingI(stPO,stPO->tab);
-    HandleNormalizationI(stPO,stPO->tab);
+    if(ok) {
+        ok = AdjustTableValuesI(stPO,stPO->tab);
+    }
+    if(ok) {
+        ok = HandleSmoothingI(stPO,stPO->tab);
+    }
+    if(ok) {
+        ok = HandleNormalizationI(stPO,stPO->tab);
+    }
     /***
     *   Score transform of values?
     */
-    if( (stPO->nscores>0) && (!HandleScoreTransformI(stPO,stPO->tab)) ) {
+    if(ok) {
+        if( (stPO->nscores>0) && (!HandleScoreTransformI(stPO,stPO->tab)) ) {
+            ok = FALSE;
+        }
+    }
+    /***
+    *   Bail on problem
+    */
+    if(!ok) {
         ABORTLINE;
         CHECK_SCORETAB(stPO);
         return(FALSE);
@@ -377,19 +392,32 @@ int HandleScoreRowMergeI(SCORETAB *stPO,TABLE *tabPO)
 */
 int HandleNormalizationI(SCORETAB *stPO,TABLE *tabPO)
 {
+    int ok;
+
+    ok = TRUE;
     if(stPO->do_qcv > 1) {
-        QuantileTableColsI(tabPO, stPO->do_qcv, TRUE, !stPO->quiet);
-        if(!stPO->quiet) {
+        ok = QuantileTableColsI(tabPO, stPO->do_qcv, TRUE, !stPO->quiet);
+        if(ok && (!stPO->quiet)) {
             printf("# Column values split into %d quantiles\n",stPO->do_qcv);
         }
     }
     else if(stPO->do_ncv) {
-        NormTableI(tabPO,TRUE,TABLE_COL);
-        if(!stPO->quiet) {
+        ok = NormTableI(tabPO,TRUE,TABLE_COL);
+        if(ok && (!stPO->quiet)) {
             printf("# Column values normalized\n");
         }
     }
-    return(TRUE);
+    else if(stPO->do_nrd) {
+        ok = NormTableI(tabPO, TRUE, TABLE_DIAG); 
+        if(!ok) {
+            PROBLINE;
+            printf("Failed to normalize rows by diagonal values\n");
+        }
+        if(ok && (!stPO->quiet)) {
+            printf("# Column values normalized\n");
+        }
+    }
+    return(ok);
 }
 /**************************************************************************
 *   Handle smoothing of table

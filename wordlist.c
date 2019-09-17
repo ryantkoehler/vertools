@@ -212,10 +212,17 @@ int SetWordlistWordI(WORDLIST *wlPO, int w, char *wS, int fit)
 }
 /****************************************************************************
 *   Get null-terminated string from word list
+*       w = 0-based index; Negative = backwards from top of list
+*       wS = word destination
 */
 int GetWordlistWordI(WORDLIST *wlPO, int w, char *wS, int max)
 {
     VALIDATE(wlPO,WORDLIST_ID);
+    /* Negative word index = backwards from end of list */
+    if(w < 0) {
+        w = wlPO->n + w;
+    }
+    /* Out of range */
     if( (w < 0) || (w >= wlPO->n) ) {
         return(FALSE);
     }
@@ -275,6 +282,66 @@ int WordlistAutoFormatStringI(WORDLIST *wlPO, int *wPI, char *formS)
         *wPI = max;
     }
     return(TRUE);
+}
+/****************************************************************************
+*   Load words from passed string
+*   If sepC is supplied, use this as word separator, else white space
+*       Does NOT load any empty 'words'
+*
+*   Returns number of words added; BOGUS if error
+*/
+int LoadWordlistFromStringI(WORDLIST *wlPO, char *bufS, char sepC)
+{
+    int n,sep,i;
+    char *cPC, wordS[BBUFF_SIZE+1];
+
+    VALIDATE(wlPO,WORDLIST_ID);
+    cPC = bufS;
+    INIT_S(wordS);
+    n = i = 0;
+    while(ISLINE(*cPC)) {
+        /***
+        *   End-of-word separater?
+        */
+        sep = 0;
+        if(sepC) {
+            if(*cPC == sepC) {
+                sep++;
+            }
+        }
+        else {
+            if( !isgraph(INT(*cPC)) ) {
+                sep++;
+            }
+        }
+        /***
+        *   If sep, keep word and reset, else collect char to word
+        */
+        if(sep) {
+            if(i>0) {
+                wordS[i] = '\0';
+                if(! AddWordlistWordI(wlPO, n++, wordS, TRUE) ) {
+                    return(BOGUS);
+                }
+            }
+            i=0;
+        }
+        else {
+            if(i>=BBUFF_SIZE) {
+                return(BOGUS);
+            }
+            wordS[i++] = *cPC;
+        }
+        cPC++;
+    }
+    /* Last one? */
+    if(i>0) {
+        wordS[i] = '\0';
+        if(! AddWordlistWordI(wlPO, n++, wordS, TRUE) ) {
+            return(BOGUS);
+        }
+    }
+    return(n);
 }
 /****************************************************************************
 *   Check if word is in wordlist
@@ -423,4 +490,230 @@ int LoadWordStringFromFileI(FILE *fPF, int max, char **arrayPPC)
     *arrayPPC = arrayPC;
     DB_DFU DB_PrI("<< LoadWordStringFromFileI %p n=%d\n",arrayPC,n);
     return(n);
+}
+/**************************************************************************
+*   STRINGWORDS object
+*   Intended to allow easy indexing of 'words' in string parsed in various
+*       ways (e.g. different 'word' seperator) *without copying* the strings
+*       as with wordlist
+*
+*   n = max words (size of allocated index arrays); Default if < 1
+*   sepC = word-separator (see set function)
+*/
+STRINGWORDS *CreateStringwordsPO(int n, char sepC)
+{
+    STRINGWORDS *swPO;
+
+    if(!(swPO=(STRINGWORDS *)ALLOC(1,sizeof(STRINGWORDS)))) {
+        return(NULL);
+    }
+    swPO->ID = STRINGWORDS_ID;
+    if(n < 1) {
+        n = DEF_SWNUM;
+    }
+    swPO->n_pos = n;
+    swPO->st_pos = (int *)ALLOC(n, sizeof(int));
+    swPO->en_pos = (int *)ALLOC(n, sizeof(int));
+    if( (!(swPO->st_pos)) || (!(swPO->en_pos)) ) {
+        CHECK_STRINGWORDS(swPO);
+        return(NULL);
+    }
+    /* Init string-specific vars and separater char */
+    InitStringwords(swPO);
+    SetStringwordsSep(swPO, sepC);
+    return(swPO);
+}
+/*************************************************************************
+*   Clean up / de-allocate structure
+*/
+int DestroyStringwordsI(STRINGWORDS *swPO)
+{
+    VALIDATE(swPO,STRINGWORDS_ID);
+    CHECK_FREE(swPO->st_pos);
+    CHECK_FREE(swPO->en_pos);
+    FREE(swPO);
+    return(TRUE);
+}
+/************************************************************************
+*   Set string-specific vars to initial values
+*/
+void InitStringwords(STRINGWORDS *swPO)
+{
+    VALIDATE(swPO,STRINGWORDS_ID);
+    swPO->string = NULL;
+    swPO->slen = 0;
+    swPO->num = 0;
+}
+/************************************************************************
+*   Dump stringwords structure; st and en are start and end word[w]
+*/
+void DumpStringwords(STRINGWORDS *swPO, int st, int en, FILE *outPF)
+{
+    int i,n,spos,epos;
+    char tS[NSIZE];
+
+    VALIDATE(swPO,STRINGWORDS_ID);
+    HAND_NFILE(outPF);
+    fprintf(outPF,"Stringwords at %p\n",swPO);
+    fprintf(outPF,"n_pos: %d\n",swPO->n_pos);
+    n = GetStringwordsNumI(swPO);
+    if(swPO->string) {
+        fprintf(outPF,"string: |%s|\n",swPO->string);
+    }
+    else {
+        fprintf(outPF,"string: <none>\n");
+    }
+    if(swPO->sep) {
+        fprintf(outPF,"sep:    |%c|\n",swPO->sep);
+    }
+    else {
+        fprintf(outPF,"sep:    <whitespace>\n");
+    }
+    fprintf(outPF,"num:   %d\n",swPO->num);
+    st = (st<0) ? 0 : st;
+    en = (en<0) ? n : en;
+    LIMIT_NUM(st,0,n);
+    LIMIT_NUM(en,0,n);
+    for(i=st;i<en;i++) {
+        GetStringwordsCoordsI(swPO, i, &spos, &epos);
+        GetStringwordsWordI(swPO, i, tS, -1);
+        fprintf(outPF,"w[%d] = %d %d |%s|\n",i,spos,epos,tS);
+    }
+}
+/************************************************************************
+*   Set word-separator char
+*   sepC = word-separator char
+*       If char given, only that will be used as separator
+*       If zero (0), then any whitespace is used
+*/
+void SetStringwordsSep(STRINGWORDS *swPO, char sepC)
+{
+    VALIDATE(swPO,STRINGWORDS_ID);
+    swPO->sep = sepC;
+}
+/*************************************************************************
+*   Set up stringwords for passed string; i.e. parse string and remember
+*   Passed string is bufS
+*   Length of string to parse is slen; If < 0, call strlen(bufS)
+*
+*   Consequtive separators are ignored; Only non-sep = words
+*   
+*   Returns number of words
+*/
+int LoadStringwordsI(STRINGWORDS *swPO, char *bufS, int slen)
+{
+    int i,w,is_sep,inword;
+
+    VALIDATE(swPO,STRINGWORDS_ID);
+    InitStringwords(swPO);
+    if(slen < 0) {
+        slen = strlen(bufS);
+    }
+    swPO->slen = slen;
+    /* Point to string ... though don't know who owns space */
+    swPO->string = bufS;
+    /* Each char, saving start / end of words */
+    inword = FALSE;
+    i = w = 0;
+    while(i < swPO->slen) {
+        /* Sep char? */
+        if(swPO->sep) {
+            is_sep = (bufS[i] == swPO->sep) ? TRUE : FALSE;
+        }
+        else {
+            is_sep = (isspace(bufS[i])) ? TRUE : FALSE;
+        }
+        /* Now handle token / word accounting */
+        if(is_sep) {
+            if(inword) {
+                BOG_CHECK(w >= swPO->n_pos);
+                swPO->en_pos[w] = i;
+                w++;
+            }
+            inword = FALSE;
+        }
+        else {
+            if(!inword) {
+                swPO->st_pos[w] = i;
+            }
+            inword = TRUE;
+        }
+        i++;
+    }
+    /* Final end position */
+    if(inword) {
+        BOG_CHECK(w >= swPO->n_pos);
+        swPO->en_pos[w] = i;
+        w++;
+    }
+    swPO->num = w;
+    return(w);
+}
+/************************************************************************
+*   Get number of words
+*/
+int GetStringwordsNumI(STRINGWORDS *swPO)
+{
+    VALIDATE(swPO,STRINGWORDS_ID);
+    return(swPO->num);
+}
+/************************************************************************
+*   Get (start, end) coords for word[w]; Negative w is from list end
+*   Sets values in passed pointers if word is good
+*/
+int GetStringwordsCoordsI(STRINGWORDS *swPO, int w, int *sPI, int *ePI)
+{
+    VALIDATE(swPO,STRINGWORDS_ID);
+    /* No words == no answers */
+    if(swPO->num < 1) {
+        return(FALSE);
+    }
+    /* Negative index = backwards offset */
+    w = (w < 0) ? swPO->num + w : w;
+    /* Out of bounds == no answers */
+    if( (w < 0) || (w >= swPO->num) ) {
+        return(FALSE);
+    }
+    /* Set pointer values only if real */
+    if(sPI) {
+        *sPI = swPO->st_pos[w];
+    }
+    if(ePI) {
+        *ePI = swPO->en_pos[w];
+    }
+    return(TRUE);
+}
+/************************************************************************
+*   Get string (i.e. word) for word[w]; Negative w is from list end
+*   Copies into passed wordS (up to max)
+*/
+int GetStringwordsWordI(STRINGWORDS *swPO, int w, char *wordS, int max)
+{
+    int wlen;
+
+    VALIDATE(swPO,STRINGWORDS_ID);
+    INIT_S(wordS);
+    /* No words == no answers */
+    if(swPO->num < 1) {
+        return(FALSE);
+    }
+    /* Negative index = backwards offset */
+    w = (w < 0) ? swPO->num + w + 1 : w;
+    /* Out of bounds == no answers */
+    if( (w < 0) || (w >= swPO->num) ) {
+        return(FALSE);
+    }
+    /* Should have string to copy from */
+    BOG_CHECK(! swPO->string);
+    /* Unless max not set (neg), set to smaller of max and word len */
+    wlen = swPO->en_pos[w] - swPO->st_pos[w];
+    if(max > 0) {
+        wlen = MIN_NUM(max, wlen);
+    }
+/*
+printf("www %d wlen = %d (%d %d)\n",w,wlen,swPO->st_pos[w],swPO->en_pos[w]);
+*/
+    strncpy(wordS, &swPO->string[swPO->st_pos[w]], wlen);
+    wordS[wlen] = '\0';
+    return(TRUE);
 }

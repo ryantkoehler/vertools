@@ -147,6 +147,18 @@ int SameDimTableColsI(TABLE *tabPO, TABLE *stabPO, int mask,int error)
     return(TRUE);
 }
 /**************************************************************************
+*   Is table a square matrix?
+*/
+int IsTableSquareI(TABLE *tabPO, int mask)
+{
+    int r,c,sq;
+
+    r = GetTableColsI(tabPO,mask);
+    c = GetTableColsI(tabPO,mask);
+    sq = (r == c) ? TRUE : FALSE;
+    return(sq);
+}
+/**************************************************************************
 *   Set masking for row in table 
 */
 int SetTableRowMaskI(TABLE *tabPO,int row,int what)

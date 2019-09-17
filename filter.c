@@ -38,11 +38,14 @@ void Filter_numsUse()
     printf("   -out XXX  Output to file XXX\n");
     printf("   -col #    Take values from column # (def = 1)\n");
     printf("   -sc #     Skip (ignore) characters up to position # / line\n");
+    printf("   -tsv      Input is tab separated value format\n");
+    printf("   -csv      Input is comma separated value format\n");
     printf("   -rg # #   Qualify line if value is in range from # to # inclusive\n");
     printf("   -gt #     Qualify line if value is greater than or equal to #\n");
     printf("   -lt #     Qualify line if value is less than or equal to #\n");
     printf("   -vex      Value exclusive filtering; e.g. make -rg, -lt, -gt NOT inclusive\n");
     printf("   -abs      Use absolute value\n");
+    printf("   -rsum     Use running sum value\n");
     printf("   -lrg # #  Qualify line number range # to #     [NOTE: Only data lines count]\n");
     printf("   -brg # #  Qualify block number range # to #    [NOTE: Only data lines count]\n");
     printf("   -wlis XXX Qualify line with words (first token) listed in XXX\n");
@@ -68,6 +71,7 @@ void Filter_numsUse()
     printf("   -pfn      Preceed lines with filename (i.e. echo input name like grep -H)\n");
     printf("   -pre XXX  Prefix lines with XXX\n");
     printf("   -suf XXX  Suffix lines with XXX\n");
+    printf("   -ssuf     Suffix lines with running sum value\n");
     printf("   -stat     Report only stats about values\n");
     printf("   -quiet    No summary report\n");
     printf("\n");
@@ -77,7 +81,7 @@ void Filter_numsUse()
 /**************************************************************************/
 int Filter_numsI(int argc, char **argv)
 {
-    char bufS[FILTBUF_SIZE+1], *cPC;
+    char bufS[FILTBUF_SIZE+1];
     int ok,nok,prev_ok,b_line,line,outline,pout,extra;
     FILTER *filtPO;
     
@@ -89,7 +93,7 @@ int Filter_numsI(int argc, char **argv)
         -lrg I2 -wlis S -kc B -wst B -wsub B\
         -pln B -A I -B I -qu B -vex B -all B -bof I -blk I\
         -brg I2 -bnot B -blis S -maxout I -abs B -pfn B\
-        -pre S -suf S",
+        -pre S -suf S -rsum B -ssuf B -csv B -tsv B",
         filtPO->inname, &filtPO->do_not, &filtPO->do_stat, 
         &filtPO->min,&filtPO->max, &filtPO->min, &filtPO->max, 
         &filtPO->col, filtPO->outname, 
@@ -104,6 +108,8 @@ int Filter_numsI(int argc, char **argv)
         &filtPO->do_bm_not, filtPO->blk_mlis, &filtPO->maxout,
         &filtPO->do_abs, &filtPO->do_pfn,
         filtPO->do_pre, filtPO->do_suf,
+        &filtPO->do_rsum, &filtPO->do_ssuf,
+        &filtPO->do_csv, &filtPO->do_tsv, 
         (int *)NULL))
     {
         Filter_numsUse();
@@ -137,8 +143,7 @@ int Filter_numsI(int argc, char **argv)
         */
         b_line = LineInFiltBlockI(filtPO, line);
         if( b_line == 1 ) {
-            cPC = GetLineStartPC(filtPO, bufS);
-            ok = IsFiltLineOkI(filtPO, line, cPC, TRUE); 
+            ok = IsFiltLineOkI(filtPO, line, bufS, TRUE); 
             prev_ok = ok;
         }
         /*  Before blocks start */
@@ -187,13 +192,9 @@ int Filter_numsI(int argc, char **argv)
                     fprintf(filtPO->out,"%d\t",ok);
                 }
                 /*** 
-                * Suffix? Need to strip newline first, else just dump
+                * Suffix? If not dump line with suffix, just dump
                 */
-                if(!NO_S(filtPO->do_suf)) {
-                    Chomp(bufS);
-                    fprintf(filtPO->out,"%s\t%s\n",bufS, filtPO->do_suf);
-                }
-                else {
+                if(! DumpLineWithSufI(filtPO, bufS)) {
                     fputs(bufS,filtPO->out);
                 }
             }
@@ -204,6 +205,39 @@ int Filter_numsI(int argc, char **argv)
     CHECK_FILTER(filtPO);
     return(TRUE);
 }
+/*************************************************************************
+*   If dumping suffix, print out here and return TRUE
+*   Return FALSE if nothing printed
+*/
+int DumpLineWithSufI(FILTER *filtPO, char *bufS)
+{
+    int dump;
+
+    dump = FALSE;
+/*
+printf("\n>> DumpLineWithSufI |%s|\n",bufS);
+*/
+    /* Anything to append? Strip newline and dump line */
+    if( (filtPO->do_ssuf) || (!NO_S(filtPO->do_suf)) ) {
+        Chomp(bufS);
+        fprintf(filtPO->out,"%s",bufS);
+        dump++;
+    }
+    if(filtPO->do_ssuf) {
+        fprintf(filtPO->out, DEF_RSUM_PRINT, filtPO->rsum);
+    }
+    if(!NO_S(filtPO->do_suf)) {
+        fprintf(filtPO->out,"\t%s", filtPO->do_suf);
+    }
+    if(dump) {
+        fprintf(filtPO->out,"\n");
+    }
+/*
+printf("\n<< DumpLineWithSufI\n\n");
+*/
+    return(dump);
+}
+
 /*************************************************************************/
 int SkipThisLineI(FILTER *filtPO, char *bufS)
 {
@@ -216,32 +250,12 @@ int SkipThisLineI(FILTER *filtPO, char *bufS)
             skip++;
         }
     }
-    /*  Not a data line; Nothing to check? */
-    if( ! GetLineStartPC(filtPO, bufS) ) {
-        skip++;
-    }
     return(skip);
-}
-/*************************************************************************/
-char *GetLineStartPC(FILTER *filtPO, char *bufS)
-{
-    int j;
-    char *cPC;
-
-    cPC = bufS;
-    for(j=0;j<filtPO->skipc;j++)
-    {
-        if(!ISLINE(*cPC)) {
-            break;
-        }
-        cPC++;
-    }
-    return(cPC);
 }
 /*************************************************************************/
 int SetBeforeMaskingI(FILTER *filtPO) 
 {
-    char bufS[FILTBUF_SIZE+1], *cPC;
+    char bufS[FILTBUF_SIZE+1];
     int line, keep, rand;
 
     /***
@@ -251,12 +265,11 @@ int SetBeforeMaskingI(FILTER *filtPO)
     line = 0;
     while(fgets(bufS,FILTBUF_SIZE,filtPO->in) != NULL) 
     {
-        if(SkipThisLineI(filtPO, bufS)) {
+        if( SkipThisLineI(filtPO, bufS) ) {
             continue;
         }
         line ++;
-        cPC = GetLineStartPC(filtPO, bufS);
-        if(IsFiltLineOkI(filtPO, line, cPC, rand)) {
+        if(IsFiltLineOkI(filtPO, line, bufS, rand)) {
             filtPO->mask[line-1] = 1;
         }
     }
@@ -288,6 +301,12 @@ FILTER *CreateFilterPO()
     }
     fpPO->ID = FILTER_ID;
     InitFilter(fpPO);
+    /* String word token struc */
+    fpPO->sw = CreateStringwordsPO(-1, 0);
+    if( ! fpPO->sw ) {
+        CHECK_FILTER(fpPO);
+        return(NULL);
+    }
     return(fpPO);
 }
 /*************************************************************************/
@@ -299,6 +318,7 @@ int DestroyFilterI(FILTER *fpPO)
     CHECK_FREE(fpPO->mask);
     CHECK_FREE(fpPO->blk_mask);
     CHECK_WORDLIST(fpPO->wlis);
+    CHECK_STRINGWORDS(fpPO->sw);
     FREE(fpPO);
     return(TRUE);
 }
@@ -316,6 +336,7 @@ void InitFilter(FILTER *fpPO)
     fpPO->out = NULL;
     INIT_S(fpPO->wlisname);
     fpPO->wlis = NULL;
+    fpPO->sw = NULL;
     fpPO->col = DEF_COL;
     fpPO->min = -TOO_BIG_D;
     fpPO->max = TOO_BIG_D;
@@ -343,10 +364,18 @@ void InitFilter(FILTER *fpPO)
     fpPO->do_vex = FALSE;
     fpPO->do_all = FALSE;
     fpPO->do_abs = FALSE;
+    fpPO->rsum = 0.0;
+    fpPO->do_rsum = FALSE;
+    fpPO->do_ssuf = FALSE;
+    fpPO->do_csv = fpPO->do_tsv = FALSE;
 }
-/*************************************************************************/
+/*************************************************************************
+*   Initialize things
+*/
 int CheckFilterOptionsI(FILTER *filtPO)
 {
+    char sepC;
+
     Srand(filtPO->seed);
     /*  Set up line block story */
     if(!HandleFilterBlocksI(filtPO)) {
@@ -363,6 +392,12 @@ int CheckFilterOptionsI(FILTER *filtPO)
     if(!HandleFilterListSetsI(filtPO)) {
         return(FALSE);
     }
+    /*  Input format (col separator); 0 = default = whitespace */
+    sepC = 0;
+    sepC = (filtPO->do_csv) ? ',' : sepC;
+    sepC = (filtPO->do_tsv) ? '\t' : sepC;
+    SetStringwordsSep(filtPO->sw, sepC);
+
     return(TRUE);
 }
 /*************************************************************************/
@@ -538,7 +573,9 @@ int DoingRandFilterI(FILTER *filtPO, int do_ranp)
     }
     return(rand);
 }
-/************************************************************************/
+/************************************************************************
+*   Do we need to mask lines? Some options require two passes
+*/
 int NeedFilterMaskingI(FILTER *filtPO)
 {
     int need;
@@ -638,9 +675,9 @@ int FiltGetWordNumValI(FILTER *filtPO, char *wordS, DOUB *valPD)
 */
 int IsFiltLineOkI(FILTER *filtPO, int line, char *cPC, int use_mask) 
 {
-    char wordS[NSIZE];
+    char wordS[FILTBUF_SIZE+1];
+    int j, n, ok, test, block;
     DOUB rD;
-    int ok, test, block;
 
     ok = TRUE;
     test = 0;
@@ -683,7 +720,22 @@ int IsFiltLineOkI(FILTER *filtPO, int line, char *cPC, int use_mask)
     *   If can't get word or number from column, simply set not ok
     */
     if( !test ) {
-        ok = GetNthWordI(cPC,filtPO->col,wordS);
+        /* Ignore chars up to? */
+        for(j=0;j<filtPO->skipc;j++)
+        {
+            if(!ISLINE(*cPC)) {
+                break;
+            }
+            cPC++;
+        }
+        /* Parse line into words */
+        n = LoadStringwordsI(filtPO->sw, cPC, -1);
+        if(n > 0) {
+            ok = GetStringwordsWordI(filtPO->sw, filtPO->col - 1, wordS, -1);
+        }
+        else {
+            ok = FALSE;
+        }
         /***    
         *   Get number from word (if not token or number list)
         */
@@ -694,6 +746,15 @@ int IsFiltLineOkI(FILTER *filtPO, int line, char *cPC, int use_mask)
             */
             if( ok && filtPO->do_abs && (rD < 0.0) ) {
                 rD = -rD;
+            }
+            /*** 
+            *   Running sum
+            */
+            if(ok) {
+                filtPO->rsum += rD;
+            }
+            if( filtPO->do_rsum ) {
+                rD = filtPO->rsum;
             }
             /***
             *   Too big or small? Inclusive or exclusive bounds differ
@@ -721,3 +782,4 @@ int IsFiltLineOkI(FILTER *filtPO, int line, char *cPC, int use_mask)
     }
     return(ok);
 }
+

@@ -33,7 +33,7 @@ int main(int argc, char **argv)
 void Gen_numsUse()
 {
     VersionSplash(NULL,VERSION_S,"#  ",TRUE);
-    printf("Usage: [options...]\n");
+    printf("Usage: -num # [options...]\n");
     printf("   -num #     Is the number of items (lines) to output\n");
     printf("   -st #      Start at number # (default = 1)\n");
     printf("   -end #     End value # (For step increment)\n");
@@ -73,6 +73,7 @@ int Gen_numsI(int argc, char **argv)
     INIT_S(preS); INIT_S(sufS);
     do_zp = do_tab = FALSE;
     numpl = 1;
+    num = BOGUS;
     mrandD = randD = gmeanD = gsdD = BAD_R;
     bitsR = BAD_R;
     seed = BAD_I;
@@ -94,6 +95,10 @@ int Gen_numsI(int argc, char **argv)
         &do_tab, &endD, &p_pdp, &letS, preS, sufS,
         (int *)NULL))
     {
+        Gen_numsUse();
+        return(FALSE);
+    }
+    if(IS_BOG(num)) {
         Gen_numsUse();
         return(FALSE);
     }

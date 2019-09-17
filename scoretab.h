@@ -16,7 +16,7 @@
 *
 */
 
-#define VERSION_S   "ScoreTab Version 1.12"
+#define VERSION_S   "ScoreTab Version 1.13"
 
 #define SCORETAB_ID     5131
 typedef struct SCORETAB
@@ -43,52 +43,53 @@ typedef struct SCORETAB
     int do_mrow;            /* eport row merges */
     int do_abs;             /* lag to replace with absolute value */
     int do_symu,do_symd;    /* lag to symmetrize up (max) or down (min) */
-    int do_tran;            /* ranspose tables */
-    int do_stru,do_strd;    /* lags to sort rows up / down */
-    int ccor;               /* orrelate this column to others */
-    int cinfo;              /* alculate info in this column relative to others */
-    int inf_maxhb;          /* nformation calc max histogram bins */
-    int minrow,maxrow;      /* ounds on rows to consider */
-    int mincol,maxcol;      /* ounds on cols to consider */
-    char rlisname[NSIZE];   /* ile with row subset list */
-    char clisname[NSIZE];   /* ile with col subset list */
-    int do_kc;              /* lag to keep case in name comparisions */
-    int do_wst;             /* lag for word start only for name compare */
-    int do_wsub;            /* lag for word substr only for name compare */
-    int do_igd;             /* lag to ignore diagonal */
-    int do_wfm;             /* lag to do weak-first matching */
-    int do_dwfm;            /* lag to dump weak-first matching matrix */
-    int do_ncv;             /* lag to normalize column values */
-    int do_qcv;             /* lag / number to quantize column values */
-    int do_srow;            /* lag to smooth rows */
-    int do_scol;            /* lag to smooth rows */
-    int partalg;            /* artition algorithm */
-    int psize;              /* lag to partition into pools of this size */
-    DOUB pmin;              /* artition minimum compatibility value allowed */
-    char dumpbase[NSIZE];   /* artition matrix dumping file basename */
-    char pvsep[NSIZE];      /* rinted column separator string */
+    int do_tran;            /* transpose tables */
+    int do_stru,do_strd;    /* flags to sort rows up / down */
+    int ccor;               /* correlate this column to others */
+    int cinfo;              /* calculate info in this column relative to others */
+    int inf_maxhb;          /* information calc max histogram bins */
+    int minrow,maxrow;      /* bounds on rows to consider */
+    int mincol,maxcol;      /* bounds on cols to consider */
+    char rlisname[NSIZE];   /* file with row subset list */
+    char clisname[NSIZE];   /* file with col subset list */
+    int do_kc;              /* flag to keep case in name comparisions */
+    int do_wst;             /* flag for word start only for name compare */
+    int do_wsub;            /* flag for word substr only for name compare */
+    int do_igd;             /* flag to ignore diagonal */
+    int do_wfm;             /* flag to do weak-first matching */
+    int do_dwfm;            /* flag to dump weak-first matching matrix */
+    int do_ncv;             /* flag to normalize column values */
+    int do_nrd;             /* flag to normalize rows to diagonal values */
+    int do_qcv;             /* flag / number to quantize column values */
+    int do_srow;            /* flag to smooth rows */
+    int do_scol;            /* flag to smooth rows */
+    int partalg;            /* partition algorithm */
+    int psize;              /* flag to partition into pools of this size */
+    DOUB pmin;              /* partition minimum compatibility value allowed */
+    char dumpbase[NSIZE];   /* partition matrix dumping file basename */
+    char pvsep[NSIZE];      /* printed column separator string */
     int do_ocsv, do_ossv;   /* lag for output comma-sep-value or space-sep-value */
-    int usp_form;           /* lag for user specific formatting */
-    DOUB mval,sval;         /* alue multipy and shift coefficients */
-    DOUB blval,bhval;       /* ound low and high values */
-    DOUB exp;               /* xponent */
-    struct TABLE *tab;      /* able with numbers */
-    struct TABLE *stab;     /* econd table structure */
-    struct NUMLIST *tvals1; /* rray to hold temp row or col values */ 
-    struct NUMLIST *tvals2; /* rray to hold temp row or col values */ 
-    int nscores;            /* umber of score fields */
-    struct SCFIELD **scores;/* rray to pointers to score fields */
-    int do_scg;             /* lag to apply score transforms globally */
+    int usp_form;           /* flag for user specific formatting */
+    DOUB mval,sval;         /* value multipy and shift coefficients */
+    DOUB blval,bhval;       /* bound low and high values */
+    DOUB exp;               /* exponent */
+    struct TABLE *tab;      /* table with numbers */
+    struct TABLE *stab;     /* second table structure */
+    struct NUMLIST *tvals1; /* array to hold temp row or col values */ 
+    struct NUMLIST *tvals2; /* array to hold temp row or col values */ 
+    int nscores;            /* number of score fields */
+    struct SCFIELD **scores;/* array to pointers to score fields */
+    int do_scg;             /* flag to apply score transforms globally */
     int quiet;
-    DOUB flglo,flghi;       /* lagging low and high values */
-    int do_not;             /* nvert flagging criteria */
-    int seed;               /* andom number seed */
-    int do_gax;             /* lag for some GA crossover operation */
-    DOUB gaxr;              /* A row crossover fraction */
-    DOUB gaxc;              /* A col crossover fraction */
-    int do_gam;             /* lag for some GA mutation operation */
-    DOUB gamf;              /* A mutation fraction */
-    DOUB gamg;              /* A mutation gaussian */
+    DOUB flglo,flghi;       /* flagging low and high values */
+    int do_not;             /* invert flagging criteria */
+    int seed;               /* random number seed */
+    int do_gax;             /* flag for some GA crossover operation */
+    DOUB gaxr;              /* GA row crossover fraction */
+    DOUB gaxc;              /* GA col crossover fraction */
+    int do_gam;             /* flag for some GA mutation operation */
+    DOUB gamf;              /* GA mutation fraction */
+    DOUB gamg;              /* GA mutation gaussian */
 }SCORETAB;
 
 #define CHECK_SCORETAB(tu)    if(tu){DestroyScoretabI(tu); tu=NULL;}

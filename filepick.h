@@ -30,18 +30,18 @@ typedef struct FILEPICK
     FILE *out;              /* Outpuf file */
     char stok[NSIZE];       /* Start token for block delineation */
     char etok[NSIZE];       /* End token for block delineation */
-    int first, last;        /* irst / last records to qualify */
-    char wlisname[NSIZE];   /* ame for subset file */
-    struct WORDLIST *wlis;  /* ubset names list structure */
-    int do_ner;             /* lag to not dump end record line */
-    int do_kc;              /* lag to keep case for name comparison */
-    int do_wst;             /* lag to check start for word comparison */
-    int do_wsub;            /* lag to check substring for word comparison */
-    int do_not;             /* lag to invert record qualifcations */
-    int do_dh;              /* lag to dump header (before first record) */
-    int do_oh;              /* lag to dump only header */
-    int do_snl;             /* lag to separate records with new lines */
-    int do_srn;             /* lag to separate records with record number line */
+    int first, last;        /* First / last records to qualify */
+    char wlisname[NSIZE];   /* Name for subset file */
+    struct WORDLIST *wlis;  /* Subset names list structure */
+    int do_ner;             /* Flag to not dump end record line */
+    int do_kc;              /* Flag to keep case for name comparison */
+    int do_wst;             /* Flag to check start for word comparison */
+    int do_wsub;            /* Flag to check substring for word comparison */
+    int do_not;             /* Flag to invert record qualifcations */
+    int do_dh;              /* Flag to dump header (before first record) */
+    int do_oh;              /* Flag to dump only header */
+    int do_snl;             /* Flag to separate records with new lines */
+    int do_srn;             /* Flag to separate records with record number line */
     int do_rsany;
     int do_esf;             /* Flag to extract separate files */
     char esbase[NSIZE];     /* Extracted file base name */
