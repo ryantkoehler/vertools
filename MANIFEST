@@ -1,4 +1,4 @@
-9/18/18 RTK 
+12/11/19 RTK 
 List of all C, H and makefiles for VerTools
 
 alphcont.c
@@ -13,6 +13,7 @@ bpaste.c
 ccase.c
 chardump.c
 cmake.c
+cmakeC.c
 color.c
 comp_seq.c
 competfb.c
@@ -148,6 +149,7 @@ bpaste.makefile
 ccase.makefile
 chardump.makefile
 cmake.makefile
+cmakeC.makefile
 comp_seq.makefile
 dna_util.makefile
 filepick.makefile

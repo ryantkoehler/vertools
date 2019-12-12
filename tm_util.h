@@ -7,16 +7,17 @@
 * They are distributed in the hope that they will be useful,
 * WITHOUT ANY WARRANTY OF FITNESS FOR ANY PARTICULAR PURPOSE.  
 * 
-* Permission is granted for research, educational, and commercial use and 
-* modification as long as 1) Code and any derived works are not redistributed
-* for any fee, and 2) Proper credit is given to the authors. If you wish to 
-* include this software in a product, please contact the authors.
+* Permission is granted for research, educational, and possibly commercial use 
+*   and modification as long as 1) Code and any derived works are not 
+*   redistributed for any fee, and 2) Proper credit is given to the authors. 
+*   If you wish to include this software in a product, or use it commercially,
+*   please contact the authors.
 *
 * See https://www.verdascend.com/ for more
 *
 */
 
-#define VERSION_S   "Tm_Util Version 1.21"
+#define VERSION_S   "Tm_Util Version 1.22"
 
 #define TMU_NLEN        255
 
@@ -73,6 +74,7 @@ typedef struct TM_UTIL
     int do_emin;            /* Flag to extract only min-length flagged seqs */
     int do_emax;            /* Flag to extract only max-length flagged seqs */
     int do_emid;            /* Flag to extract only mid-length flagged seqs */
+    int do_rc;              /* Flag to reverse compliment (input) seqs */
     struct TABLE *ltm_tab;  /* Length-Tm table */
     int firstb,lastb;       /* First/last base for restricted base range */
     int do_rre;             /* Restrict range relative to end */

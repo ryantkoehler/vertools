@@ -7,10 +7,11 @@
 * They are distributed in the hope that they will be useful,
 * WITHOUT ANY WARRANTY OF FITNESS FOR ANY PARTICULAR PURPOSE.  
 * 
-* Permission is granted for research, educational, and commercial use and 
-* modification as long as 1) Code and any derived works are not redistributed
-* for any fee, and 2) Proper credit is given to the authors. If you wish to 
-* include this software in a product, please contact the authors.
+* Permission is granted for research, educational, and possibly commercial use 
+*   and modification as long as 1) Code and any derived works are not 
+*   redistributed for any fee, and 2) Proper credit is given to the authors. 
+*   If you wish to include this software in a product, or use it commercially,
+*   please contact the authors.
 *
 * See https://www.verdascend.com/ for more
 *
@@ -113,7 +114,7 @@ int TmUtilI(int argc, char **argv)
         -tlmin B -tes B -btes B -den B\
         -tcon D -eraw B -bran I2 -rre B -otls B\
         -iraw B -ifas B -dthe B -cmb B -pdc I -tab I2\
-        -emin B -emid B -emax B -tbj I -ds B -iseq B",
+        -emin B -emid B -emax B -tbj I -ds B -iseq B -rc B",
         tuPO->inname, tuPO->outname, tuPO->parname, &tuPO->con1, 
         &tuPO->salt, &tmoli, &tmelt, &tuPO->do_therm, &tuPO->do_dpar,
         &tuPO->do_tmpro, &tm24, &tmgb, &tuPO->mg, &tuPO->quiet, 
@@ -129,7 +130,7 @@ int TmUtilI(int argc, char **argv)
         &tuPO->do_tab_lo,&tuPO->do_tab_hi,
         &tuPO->do_emin, &tuPO->do_emid, &tuPO->do_emax, 
         &tuPO->do_tab_j, &tuPO->do_ds, 
-        &iseq,
+        &iseq, &tuPO->do_rc,
         (int *)NULL))
     {
         TmUtilUse();
@@ -355,6 +356,7 @@ int InitTm_utilI(TM_UTIL *tuPO)
     tuPO->do_padbad = TRUE;
     tuPO->firstb = tuPO->lastb = -1;
     tuPO->do_rre = FALSE;
+    tuPO->do_rc = FALSE;
     ClearTm_utilThermoVals(tuPO);
     return(TRUE);
 }
@@ -645,7 +647,13 @@ int LoadTmutilSequenceI(TM_UTIL *tuPO, int n)
         return(FALSE);
     }
     /***
-    *   Return length (minimum) of seq
+    *   Rev comp? Flip input here; Not allowed with two exp seqs
+    */
+    if(tuPO->do_rc) {
+        ReverseCompSeqSeqI(tuPO->seq);
+    }
+    /***
+    *   Length; If two explicit seqs, need to check this   
     */
     fok = sok = GetSeqLenI(tuPO->seq);
     HandleTmuSubseqI(tuPO, tuPO->seq, tuPO->fseq);
@@ -653,6 +661,9 @@ int LoadTmutilSequenceI(TM_UTIL *tuPO, int n)
         sok = GetSeqLenI(tuPO->sseq);
         HandleTmuSubseqI(tuPO, tuPO->sseq, tuPO->fseq);
     }
+    /*
+    *   Return length (minimum) of seq
+    */
     return(MIN_NUM(fok,sok));
 }
 /***************************************************************************
@@ -822,6 +833,11 @@ int CheckTmutilOptionsI(TM_UTIL *tuPO)
             printf("Two explicit seqs don't work with Tm target length\n");
             return(FALSE);
         }
+        if(tuPO->do_rc) {
+            PROBLINE;
+            printf("Two explicit seqs don't work with rev comp\n");
+            return(FALSE);
+        }
     }
     /***
     *   Dangling ends?
@@ -978,6 +994,9 @@ void ReportTmutilSettings(TM_UTIL *tuPO, FILE *outPF)
     /* printf(outPF,"#   Run on %s, %s (%s)\n",hostS,osS,verS); */
     fprintf(outPF,"#   Run on %s, %s\n",hostS,osS);
     fprintf(outPF,"# Input file  %s\n",tuPO->inname);
+    if(tuPO->do_rc) {
+        fprintf(outPF,"#  Seqs converted to Reverse Complement\n");
+    }
     ReportFlaggedOutputI(tuPO,outPF);
     if(tuPO->firstb > 0) {
         fprintf(outPF,"#   Base-Range:    %d to %d\t", tuPO->firstb, 
