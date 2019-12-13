@@ -139,12 +139,37 @@ int InitTableI(TABLE *tabPO, int vals)
     strcpy(tabPO->pvsep,DEF_TAB_PVSEP_S);
     SetTableMasks(tabPO, TRUE);
     tabPO->prefac = 1.0;
+    tabPO->defval = DEF_TAB_VALUE;
     if(vals) {
         InitTableValsI(tabPO, 0.0, FALSE);
     }
     SetTablePrecisionI(tabPO,DEF_TAB_PRENUM);
     SetNumlistNamesI(tabPO->vals, "Table_values", NULL, NSIZE);
     DB_TAB DB_PrI("<< InitTableI\n");
+    return(TRUE);
+}
+/**************************************************************************
+*   Add space to table up to maxrow (zero-based index)
+*   Update rmask, but only if we have actual data (ncol > 0)
+*/
+int AddTableRowSpaceI(TABLE *tabPO, int maxrow)
+{
+    VALIDATE(tabPO,TABLE_ID);
+    if((tabPO->nrow < (maxrow + 1)) && (tabPO->ncol > 0)) {
+        tabPO->nrow = maxrow + 1;
+        /* If exist, realloc, else newly alloc */
+        if(tabPO->rmask) {
+            tabPO->rmask = (char*)REALLOC(tabPO->rmask,tabPO->nrow,sizeof(char));
+        }
+        else {
+            tabPO->rmask = (char*)ALLOC(tabPO->nrow,sizeof(char));
+        }
+        if(!tabPO->rmask) {
+            printf("XXX row=%d\n",tabPO->nrow);
+            ERR("AddTableRowSpaceI","Failed to add row space");
+            return(FALSE);
+        }
+    }
     return(TRUE);
 }
 /*************************************************************************

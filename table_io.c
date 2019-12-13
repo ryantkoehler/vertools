@@ -148,7 +148,6 @@ int ParseTableI(FILE *inPF, int rlab, int clab, int corn, int skp, TABLE **tPPO)
                 /***
                 *   Ignore = reset already-collected values / maybe row lable
                 */
-printf("xxx Setting numlist len to %d, rlabs %d\n",tot,nrow);
                 SetNumlistLengthI(valsPO,tot);
                 if(rlabsPO) {
                     SetWordlistLengthI(rlabsPO,nrow);
@@ -346,7 +345,9 @@ void DumpTable(TABLE *tabPO, int settings, int mask, FILE *outPF)
             if( mask && (!tabPO->cmask[c]) ) {
                 continue;
             }
-            GetTableValI(tabPO,r,c,&vD);
+            if(!GetTableValI(tabPO,r,c,&vD)) {
+                vD = GetTableDefValueD(tabPO);
+            }
             fprintf(outPF,tabPO->pvform,vD); 
             if(c < (tabPO->ncol -1) ) {
                 fprintf(outPF,"%s",tabPO->pvsep); 

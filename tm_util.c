@@ -505,8 +505,6 @@ int HandleThermoSampleTableI(TM_UTIL *tuPO, FILE *outPF)
     row = 0;
     for(i=0; i<end; i += tuPO->do_tab_j) 
     {
-        sprintf(rowS,"%s__%02d\t",nameS,i+1);
-        SetTableRowLabI(tuPO->ltm_tab, row, rowS);
         col = 0;
         for(j = tuPO->do_tab_lo; j <= tuPO->do_tab_hi; j += tuPO->do_tab_j) 
         {
@@ -524,6 +522,10 @@ int HandleThermoSampleTableI(TM_UTIL *tuPO, FILE *outPF)
             }
             col++;
         }
+        /* Row label */
+        sprintf(rowS,"%s__%02d\t",nameS,i+1);
+        SetTableRowLabI(tuPO->ltm_tab, row, rowS);
+        /* Next start position */ 
         row++;
         seqPC++;
         slen--;
@@ -1031,7 +1033,8 @@ void ReportFlaggedOutputI(TM_UTIL *tuPO, FILE *outPF)
 */
 void ReportTmutilOutput(TM_UTIL *tuPO, FILE *outPF)
 {
-    int i;
+    int i,col;
+    char colS[NSIZE];
 
     HAND_NFILE(outPF);
     if( tuPO->do_tab_lo ) {
@@ -1040,11 +1043,13 @@ void ReportTmutilOutput(TM_UTIL *tuPO, FILE *outPF)
             fprintf(outPF,"# Extracting seqs for values %6.3f to %6.3f\n", tuPO->minv, tuPO->maxv);
         }
         else {
-            fprintf(outPF,"Sequence\t");
+            SetTableCornerLabI(tuPO->ltm_tab, "Sequence");
+            col = 0;
             for(i=tuPO->do_tab_lo; i <= tuPO->do_tab_hi; i += tuPO->do_tab_j) {
-                fprintf(outPF,"%d ",i);
+                sprintf(colS, "L_%02d", i+1);
+                SetTableColLabI(tuPO->ltm_tab, col, colS);
+                col++;
             }
-            fprintf(outPF,"\n");
         }
         return;
     }

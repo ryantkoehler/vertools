@@ -47,21 +47,28 @@ int RowColTableIndexI(TABLE *tabPO,int row,int col, int *inPI)
     return(FALSE);
 }
 /**************************************************************************
-*   Set table value, adding space if needed
+*   Set table value, adding row space if needed
+*   Can not change column dimension; If col out of bounds, fail
 */
 int AddTableValI(TABLE *tabPO,int row,int col,DOUB valD)
 {
     int i;
 
     VALIDATE(tabPO,TABLE_ID);
+    /***
+    *   Expand rows if needed
+    */
+    if(row >= tabPO->nrow) {
+        if(!AddTableRowSpaceI(tabPO, row)) {
+            return(FALSE);
+        }
+    }
+    /***
+    *   Get row-col index, limit precision and save
+    */
     if(RowColTableIndexI(tabPO,row,col,&i)) {
         SetTableValPrecisionI(tabPO,valD,&valD);
         if(AddNumlistDoubI(tabPO->vals,i,valD)) {
-            /***
-            *   Update number of rows and cols that we now have
-            */
-            tabPO->nrow = MAX_NUM(tabPO->nrow, row);
-            tabPO->ncol = MAX_NUM(tabPO->ncol, col);
             return(TRUE);
         }
     }

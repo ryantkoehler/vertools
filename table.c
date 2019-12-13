@@ -414,9 +414,6 @@ int AutoTableOutFormattingI(TABLE *tabPO, int val, int row)
     INIT_S(val2S);
     INIT_S(rowS);
     if(val) {
-/*
-xxx
-*/
         NumlistAutoFormatStringI(tabPO->vals, NULL, NULL, valS);
     }
     if(row) {
@@ -476,6 +473,12 @@ int GetTablePrintformI(TABLE *tabPO, char *valS, char *val2S, char *sepS,
     return(TRUE);
 }
 /*************************************************************************/
+DOUB GetTableDefValueD(TABLE *tabPO)
+{
+    VALIDATE(tabPO,TABLE_ID);
+    return(tabPO->defval);
+}
+/*************************************************************************/
 int IsTableCSVFormatI(TABLE *tabPO)
 {
     VALIDATE(tabPO,TABLE_ID);
@@ -516,6 +519,15 @@ int SetTableColLabI(TABLE *tabPO,int col,char *nameS)
         }
     }
     return(ok);
+}
+/**************************************************************************
+*   Set 'corner' label to nameS
+*/
+int SetTableCornerLabI(TABLE *tabPO, char *nameS)
+{
+    VALIDATE(tabPO,TABLE_ID);
+    sprintf(tabPO->corner, "%s", nameS);
+    return(TRUE);
 }
 /**************************************************************************
 *   Get row label from table and copy it into nameS up to max
