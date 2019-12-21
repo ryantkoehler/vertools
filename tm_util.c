@@ -44,6 +44,7 @@ void TmUtilUse(void)
     printf("   -iraw      Treat input as \"raw\" format; <name> <seq> / line\n");
     printf("   -iseq      Treat input as simmple sequence; <seq> / line\n");
     printf("   -ifas      Treat input as fasta format\n");
+    printf("   -rc        Reverse compliment input seqs\n");
     printf("   -out XXX   Set output to XXX\n");
     printf("   -par XXX   Use parameters in file XXX for Tm\n");
     printf("   -pdc #     Parameter \"default\" column set to # (1-base)\n");
